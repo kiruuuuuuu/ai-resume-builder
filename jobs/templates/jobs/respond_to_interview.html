@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Respond to Interview Invitation{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4">
+    <div class="bg-white p-8 rounded-xl shadow-lg border">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Interview Invitation</h1>
+        <p class="text-gray-600 mb-6">
+            You have been invited to an interview for the <strong>{{ interview.application.job_posting.title }}</strong> position at <strong>{{ interview.application.job_posting.employer.company_name }}</strong>.
+        </p>
+        
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700">Interview Details</h2>
+            <div class="mt-2 bg-gray-50 p-4 rounded-lg prose prose-sm max-w-none">
+                <p>{{ interview.interview_details|urlize|linebreaksbr }}</p>
+            </div>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <h2 class="text-lg font-semibold text-gray-700">Please select your preferred time slot:</h2>
+            <div class="mt-4 space-y-4">
+                {% for slot in interview.slots.all %}
+                    <label class="flex items-center p-4 border rounded-lg hover:bg-slate-50 cursor-pointer has-[:checked]:bg-indigo-50 has-[:checked]:border-indigo-500">
+                        <input type="radio" name="slot" value="{{ slot.id }}" class="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
+                        <span class="ml-3 text-gray-800">{{ slot.proposed_time|date:"F d, Y, P" }}</span>
+                    </label>
+                {% empty %}
+                    <p class="text-gray-500">The employer has not proposed any time slots yet.</p>
+                {% endfor %}
+            </div>
+            <div class="flex items-center justify-between mt-8 border-t pt-6">
+                <a href="{% url 'jobs:my-applications' %}" class="text-sm font-medium text-gray-600 hover:text-indigo-500">&larr; Back to Applications</a>
+                <button type="submit" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-green-700">Confirm Selected Time</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

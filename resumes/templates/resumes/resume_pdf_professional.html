@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ resume.profile.full_name }}'s Resume</title>
+    <style type="text/css">
+        @page { 
+            size: a4; 
+            margin: 1cm; /* Reduced margin for one-page layout */
+        }
+        body { 
+            font-family: 'Helvetica', 'Arial', sans-serif; 
+            color: #333; 
+            font-size: 9.5pt; /* Slightly smaller base font size */
+            line-height: 1.4; /* Tighter line spacing */
+        }
+
+        /* --- Header --- */
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1.5px solid #003366;
+        }
+        .name { 
+            font-size: 26pt; 
+            font-weight: bold;
+            color: #003366;
+            margin: 0;
+            padding: 0;
+            letter-spacing: 1px;
+        }
+        .contact-info {
+            font-size: 9pt;
+            color: #555;
+            margin-top: 8px;
+        }
+        .contact-info a {
+            color: #003366;
+            text-decoration: none;
+        }
+        .contact-info .separator {
+            margin: 0 8px;
+        }
+
+        /* --- Section Titles --- */
+        h2 {
+            font-size: 11pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #003366;
+            border-bottom: 1px solid #003366;
+            padding-bottom: 4px;
+            margin-top: 20px;
+            margin-bottom: 12px;
+            page-break-after: avoid;
+        }
+
+        /* --- Item Styling with Timeline --- */
+        .timeline-item {
+            margin-left: 8px;
+            padding-left: 20px;
+            border-left: 2px solid #ccc;
+            padding-bottom: 15px;
+            position: relative;
+        }
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -5px; /* Position the dot on the timeline */
+            top: 5px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #003366;
+        }
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 1px;
+        }
+        .title { 
+            font-weight: bold; 
+            font-size: 10.5pt; 
+            color: #000;
+        }
+        .subtitle { 
+            font-style: italic;
+            font-size: 9.5pt;
+            color: #555;
+        }
+        .date { 
+            font-size: 9pt; 
+            color: #333; 
+            font-weight: bold;
+        }
+        .description { margin-top: 4px; }
+        ul { padding-left: 16px; margin: 0; }
+        li { margin-bottom: 3px; text-align: justify; }
+
+        /* --- Other Sections --- */
+        .skills-container, .additional-info {
+            padding: 0 8px;
+        }
+        .additional-info p { margin-bottom: 6px; }
+        
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="name">{{ resume.profile.full_name|default:resume.profile.user.username }}</div>
+        <div class="contact-info">
+            {% if resume.profile.address %}{{ resume.profile.address }}<span class="separator">|</span>{% endif %}
+            {% if resume.profile.phone_number %}<a href="tel:{{ resume.profile.phone_number }}">{{ resume.profile.phone_number }}</a><span class="separator">|</span>{% endif %}
+            <a href="mailto:{{ resume.profile.user.email }}">{{ resume.profile.user.email }}</a>
+            {% if resume.profile.portfolio_url %}<span class="separator">|</span><a href="{{ resume.profile.portfolio_url }}">Portfolio</a>{% endif %}
+            {% if resume.profile.linkedin_url %}<span class="separator">|</span><a href="{{ resume.profile.linkedin_url }}">LinkedIn</a>{% endif %}
+        </div>
+    </div>
+
+    {% if resume.profile.professional_summary %}
+    <div class="section">
+        <h2>Professional Summary</h2>
+        <p style="text-align: justify;">{{ resume.profile.professional_summary|linebreaksbr }}</p>
+    </div>
+    {% endif %}
+
+    {% if skills_by_category %}
+    <div class="section">
+        <h2>Core Skills</h2>
+        <div class="skills-container">
+        {% for category, skills in skills_by_category.items %}
+            <p><strong>{{ category }}:</strong> {{ skills|join:", " }}</p>
+        {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if experiences %}
+    <div class="section">
+        <h2>Professional Experience</h2>
+        {% for exp in experiences %}
+            <div class="timeline-item">
+                <div class="item-header">
+                    <span class="title">{{ exp.job_title }}</span>
+                    <span class="date">{{ exp.start_date|date:"M Y" }} - {% if exp.end_date %}{{ exp.end_date|date:"M Y" }}{% else %}Present{% endif %}</span>
+                </div>
+                <p class="subtitle">{{ exp.company }}</p>
+                <div class="description">
+                    <ul>
+                    {% for line in exp.description.splitlines %}
+                        {% if line %}<li>{{ line|striptags }}</li>{% endif %}
+                    {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if educations %}
+    <div class="section">
+        <h2>Education</h2>
+        {% for edu in educations %}
+            <div class="timeline-item">
+               <div class="item-header">
+                    <span class="title">{{ edu.degree }}</span>
+                    <span class="date">{{ edu.start_date|date:"M Y" }} - {% if edu.end_date %}{{ edu.end_date|date:"M Y" }}{% else %}Present{% endif %}</span>
+                </div>
+                <p class="subtitle">{{ edu.institution }}{% if edu.address %}, {{ edu.address }}{% endif %}</p>
+                {% if edu.percentage %}<p style="margin-top: -5px;"><strong>Grade/Percentage:</strong> {{ edu.percentage }}</p>{% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if projects or certifications or languages or achievements or hobbies %}
+    <div class="section">
+        <h2>Additional Information</h2>
+        <div class="additional-info">
+            {% if projects %}
+                <p><strong>Projects:</strong></p>
+                <ul>
+                {% for p in projects %}
+                    <li>
+                        <strong>{{ p.title }}:</strong> {{ p.description }}
+                        {% if p.frontend or p.backend or p.database %}
+                            <br><em>Technologies: 
+                            {% if p.frontend %}{{ p.frontend }}{% if p.backend or p.database %}, {% endif %}{% endif %}
+                            {% if p.backend %}{{ p.backend }}{% if p.database %}, {% endif %}{% endif %}
+                            {% if p.database %}{{ p.database }}{% endif %}
+                            </em>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+            {% if certifications %}
+                <p><strong>Certifications:</strong> 
+                    {% for cert in certifications %}
+                        {{ cert.name }}{% if not forloop.last %}; {% endif %}
+                    {% endfor %}
+                </p>
+            {% endif %}
+            {% if languages %}
+                <p><strong>Languages:</strong>
+                    {% for lang in languages %}
+                        {{ lang.name }} ({{ lang.get_proficiency_display }}){% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </p>
+            {% endif %}
+             {% if achievements %}
+                <p><strong>Achievements:</strong></p>
+                <ul>
+                {% for a in achievements %}
+                    <li>{% if a.name %}<strong>{{ a.name }}:</strong> {% endif %}{{ a.description }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+            {% if hobbies %}
+                <p><strong>Hobbies:</strong> {{ hobbies|join:", " }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+</body>
+</html>

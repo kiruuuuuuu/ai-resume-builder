@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}My Applications{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+     <header class="py-10">
+        <h1 class="text-3xl font-bold tracking-tight text-gray-900">My Application History</h1>
+    </header>
+    <div class="space-y-8">
+        {% for item in apps_with_interview %}
+            <div class="bg-white rounded-xl shadow-md border overflow-hidden p-6">
+                <div class="grid grid-cols-12 gap-4">
+                    <!-- Job Info -->
+                    <div class="col-span-12 sm:col-span-6">
+                        <p class="text-lg font-semibold text-indigo-600">{{ item.application.job_posting.title }}</p>
+                        <p class="text-md text-gray-700">{{ item.application.job_posting.employer.company_name }}</p>
+                        <p class="text-sm text-gray-500 mt-1">Applied on {{ item.application.applied_at|date:"F d, Y" }}</p>
+                    </div>
+
+                    <!-- Action/Status Button -->
+                    <div class="col-span-12 sm:col-span-6 flex items-center justify-end">
+                        {% if item.application.status == 'Interview' and item.interview and item.interview.status == 'Proposed' and item.interview.slots.all %}
+                            <a href="{% url 'jobs:respond-to-interview' interview_id=item.interview.id %}" class="inline-block bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 text-sm">Respond to Interview</a>
+                        {% elif item.interview and item.interview.status == 'Scheduled' %}
+                            <div class="text-right">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">Interview Scheduled</span>
+                                <div class="text-xs text-gray-500 mt-2">
+                                   {{ item.interview.interview_details|urlize|linebreaksbr }}
+                                </div>
+                                <p class="text-xs text-gray-500">Time: {{ item.interview.confirmed_slot|date:"F d, Y, P" }}</p>
+                            </div>
+                        {% elif item.application.status == 'Offered' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">Offer Extended!</span>
+                        {% elif item.application.status == 'Rejected' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">Not selected</span>
+                        {% else %}
+                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                                {{ item.application.status }}
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Visual Timeline -->
+                    <div class="col-span-12 mt-6 mb-4">
+                        <nav aria-label="Progress">
+                            <ol role="list" class="flex items-center">
+                                {% for step in item.steps %}
+                                <li class="relative {% if not forloop.last %}pr-8 sm:pr-24{% endif %}">
+                                    {% if item.application.status == 'Rejected' and forloop.counter0 == item.current_index|add:1 %}
+                                        <!-- Rejected Step -->
+                                        <div class="absolute inset-0 flex items-center" aria-hidden="true"><div class="h-0.5 w-full bg-gray-200"></div></div>
+                                        <div class="relative w-8 h-8 flex items-center justify-center bg-red-600 rounded-full">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                        </div>
+                                    {% elif item.current_index != -1 and forloop.counter0 < item.current_index %}
+                                        <!-- Completed Step -->
+                                        <div class="absolute inset-0 flex items-center" aria-hidden="true"><div class="h-0.5 w-full bg-indigo-600"></div></div>
+                                        <div class="relative w-8 h-8 flex items-center justify-center bg-indigo-600 rounded-full">
+                                            <svg class="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                                        </div>
+                                    {% elif item.application.status == step %}
+                                        <!-- Current Step -->
+                                        <div class="absolute inset-0 flex items-center" aria-hidden="true"><div class="h-0.5 w-full bg-gray-200"></div></div>
+                                        <div class="relative w-8 h-8 flex items-center justify-center bg-white border-2 border-indigo-600 rounded-full">
+                                            <span class="h-2.5 w-2.5 bg-indigo-600 rounded-full" aria-hidden="true"></span>
+                                        </div>
+                                    {% else %}
+                                        <!-- Upcoming Step -->
+                                        <div class="absolute inset-0 flex items-center" aria-hidden="true"><div class="h-0.5 w-full bg-gray-200"></div></div>
+                                        <div class="relative w-8 h-8 flex items-center justify-center bg-white border-2 border-gray-300 rounded-full">
+                                            <span class="h-2.5 w-2.5 bg-transparent rounded-full" aria-hidden="true"></span>
+                                        </div>
+                                    {% endif %}
+                                    <p class="absolute -bottom-7 text-xs text-center w-20 -left-6 {% if item.application.status == step %}font-bold text-indigo-600{% elif item.application.status == 'Rejected' and forloop.counter0 == item.current_index|add:1 %}font-bold text-red-600{% else %}text-gray-500{% endif %}">
+                                        {% if item.application.status == 'Rejected' and forloop.counter0 == item.current_index|add:1 %}Rejected{% else %}{{ step }}{% endif %}
+                                    </p>
+                                </li>
+                                {% endfor %}
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="text-center py-16 bg-white rounded-lg border">
+                <h3 class="text-xl font-medium text-gray-900">No Applications Yet</h3>
+                <p class="text-gray-500 mt-2">You have not applied for any jobs yet.</p>
+                <a href="{% url 'jobs:job-list' %}" class="mt-4 inline-block bg-indigo-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-indigo-700">Browse Jobs</a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+

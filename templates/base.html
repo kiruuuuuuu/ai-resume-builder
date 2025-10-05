@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Resume Builder{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        [x-cloak] { display: none !important; }
+        .toast {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            transform: translateX(120%);
+            transition: transform 0.5s ease-in-out;
+            z-index: 1000;
+        }
+        .toast.show {
+            transform: translateX(0);
+        }
+        .prose {
+            --tw-prose-body: #374151;
+            --tw-prose-headings: #1f2937;
+            --tw-prose-links: #4f46e5;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <div class="flex-grow">
+        <nav class="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex-shrink-0 flex items-center">
+                        <a href="{% url 'home' %}" class="flex items-center space-x-2">
+                            <svg class="h-8 w-auto text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            <span class="text-xl font-bold text-gray-800 tracking-tight">AI Resume</span>
+                        </a>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        {% if user.is_authenticated %}
+                            <span class="hidden sm:block text-sm font-medium text-gray-700">Welcome, {{ user.username }}</span>
+                             <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
+                            {% if user.user_type == 'job_seeker' %}
+                                <a href="{% url 'jobs:job-list' %}" class="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Job Listings</a>
+                                <a href="{% url 'jobs:my-applications' %}" class="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">My Applications</a>
+                                <a href="{% url 'resumes:resume-dashboard' %}" class="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">My Resume</a>
+                            {% else %}
+                                <a href="{% url 'jobs:my-jobs' %}" class="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">My Jobs</a>
+                                <a href="{% url 'jobs:post-job' %}" class="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Post Job</a>
+                            {% endif %}
+                            <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
+                            <form action="{% url 'users:logout' %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 transition-colors">Logout</button>
+                            </form>
+                        {% else %}
+                            <a href="{% url 'users:login' %}" class="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Login</a>
+                            <a href="{% url 'users:register' %}" class="ml-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">Register</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="py-10">
+            {% block content %}{% endblock %}
+        </main>
+        
+        <div id="toast-container" class="fixed top-5 right-5 z-50 space-y-3">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="toast max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden" data-message>
+                        <div class="p-4">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    {% if message.tags == 'success' %}
+                                        <svg class="h-6 w-6 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    {% else %}
+                                        <svg class="h-6 w-6 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    {% endif %}
+                                </div>
+                                <div class="ml-3 w-0 flex-1 pt-0.5">
+                                    <p class="text-sm font-medium text-gray-900">{{ message }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+    <footer class="bg-white border-t border-gray-200 mt-auto">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
+            <p>&copy; {% now "Y" %} AI Resume Builder. Created by Kiran.</p>
+            <p class="mt-1"><a href="mailto:kiruk421@gmail.com" class="hover:text-indigo-600">kiruk421@gmail.com</a></p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const toasts = document.querySelectorAll('.toast[data-message]');
+            toasts.forEach((toast, index) => {
+                setTimeout(() => {
+                    toast.classList.add('show');
+                }, 100 * (index + 1));
+
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 500);
+                }, 5000 + (100 * index));
+            });
+        });
+    </script>
+</body>
+</html>
+

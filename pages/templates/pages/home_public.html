@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="bg-white">
+    <div class="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
+                <span class="block">Build Your Future with an</span>
+                <span class="block text-indigo-600">AI-Powered Resume</span>
+            </h1>
+            <p class="mt-6 max-w-2xl mx-auto text-xl text-gray-500">
+                Create a professional resume in minutes with our intelligent builder, get AI-driven feedback, and connect with the perfect job opportunities.
+            </p>
+            <div class="mt-8 flex justify-center gap-x-4">
+                 <a href="{% url 'users:register' %}" class="inline-block bg-indigo-600 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:bg-indigo-700 transition duration-300">
+                    Get Started Now
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Call to Action Sections -->
+<div class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Job Seeker Card -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 text-center border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+            <div class="flex justify-center items-center h-16 w-16 rounded-full bg-indigo-100 mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 11c0 3.517-1.009 6.79-2.731 9.566l-2.73-2.73a1.5 1.5 0 01-2.122 0l-2.12 2.122a1.5 1.5 0 01-2.122 0l-2.73-2.73A18.75 18.75 0 012.25 12c0-3.517 1.009-6.79 2.73-9.566l2.73 2.73a1.5 1.5 0 012.122 0l2.12-2.122a1.5 1.5 0 012.122 0l2.73 2.73A18.75 18.75 0 0112 11z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 11a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" />
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800">For Job Seekers</h2>
+            <p class="mt-4 text-gray-600">
+                Craft a standout resume, get instant AI analysis and scoring, and download professional templates to land your dream job.
+            </p>
+            <div class="mt-8">
+                <a href="{% url 'resumes:resume-dashboard' %}" class="inline-block text-indigo-600 font-semibold hover:text-indigo-800">
+                    Build Your Resume &rarr;
+                </a>
+            </div>
+        </div>
+
+        <!-- Employer Card -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 text-center border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+             <div class="flex justify-center items-center h-16 w-16 rounded-full bg-green-100 mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5zM12 15.75a3 3 0 01-3-3m3 3a3 3 0 00-3-3m-3.75 3H12m-2.25 3.75a3 3 0 01-3-3m3 3a3 3 0 00-3-3m-3.75 3H12m6.75-3.75a3 3 0 00-3-3m3 3a3 3 0 01-3-3m3.75 3H18m-2.25 3.75a3 3 0 00-3-3m3 3a3 3 0 01-3-3m3.75 3H18m-6.75-3.75a3 3 0 00-3-3m3 3a3 3 0 01-3-3m-3.75 3H6.75" />
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800">For Employers</h2>
+            <p class="mt-4 text-gray-600">
+                Post job openings and find the perfect candidates faster with our intelligent matching engine that ranks applicants for you.
+            </p>
+            <div class="mt-8">
+                <a href="{% url 'jobs:post-job' %}" class="inline-block text-green-600 font-semibold hover:text-green-800">
+                    Post a Job &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

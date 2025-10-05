@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Available Jobs{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-12">
+    <h1 class="text-4xl font-bold text-gray-800 mb-8 text-center">Find Your Next Opportunity</h1>
+
+    <div class="space-y-6">
+        {% if jobs_with_scores %}
+            {% for item in jobs_with_scores %}
+                <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">{{ item.job.title }}</h2>
+                            <p class="text-md font-semibold text-gray-700">{{ item.job.employer.company_name }}</p>
+                            <p class="text-sm text-gray-500 mt-1">{{ item.job.location }}</p>
+                        </div>
+                        <div class="text-right flex flex-col items-end">
+                             <div class="flex items-center gap-2 mb-2">
+                                <span class="text-sm font-medium text-gray-600">Your Match:</span>
+                                <span class="font-bold text-lg 
+                                    {% if item.score >= 80 %} text-green-600
+                                    {% elif item.score >= 60 %} text-blue-600
+                                    {% else %} text-yellow-600
+                                    {% endif %}
+                                ">{{ item.score }}%</span>
+                            </div>
+                             <a href="{% url 'jobs:job-detail' job_id=item.job.id %}" class="inline-block bg-blue-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                                View & Apply
+                            </a>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <p class="text-gray-600 text-sm prose max-w-none">
+                            {{ item.job.description|truncatewords:40 }}
+                        </p>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="text-center py-12">
+                    <p class="text-lg text-gray-500">No jobs posted yet. Please check back later!</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            {% if user.is_authenticated and user.user_type == 'job_seeker' %}
+            <div class="text-center py-12 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p class="text-lg text-yellow-800">Create a resume to see your job match scores!</p>
+                <a href="{% url 'resumes:resume-dashboard' %}" class="mt-4 inline-block bg-yellow-500 text-white font-semibold py-2 px-5 rounded-lg hover:bg-yellow-600 transition-colors duration-300">
+                    Go to Resume Dashboard
+                </a>
+            </div>
+            {% endif %}
+            {% for job in jobs %}
+                <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">{{ job.title }}</h2>
+                            <p class="text-md font-semibold text-gray-700">{{ job.employer.company_name }}</p>
+                            <p class="text-sm text-gray-500 mt-1">{{ job.location }}</p>
+                        </div>
+                        <div class="text-right">
+                             <a href="{% url 'jobs:job-detail' job_id=job.id %}" class="inline-block bg-blue-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                                View & Apply
+                            </a>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <p class="text-gray-600 text-sm prose max-w-none">
+                            {{ job.description|truncatewords:40 }}
+                        </p>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="text-center py-12">
+                    <p class="text-lg text-gray-500">No jobs posted yet. Please check back later!</p>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Applicants for {{ job.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Ranked Applicants for "{{ job.title }}"</h1>
+        <p class="text-gray-600 mt-2">Candidates are sorted by their AI-calculated match score.</p>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <ul class="divide-y divide-gray-200">
+            {% for item in ranked_applicants %}
+                <li class="p-4 sm:p-6 hover:bg-slate-50 transition-colors duration-200">
+                    <div class="grid grid-cols-12 gap-4 items-center">
+                        <div class="col-span-12 sm:col-span-5 flex items-center">
+                            {% if item.application.applicant.profile_photo %}
+                                <img class="h-14 w-14 rounded-full object-cover" src="{{ item.application.applicant.profile_photo.url }}" alt="Applicant photo">
+                            {% else %}
+                                 <span class="h-14 w-14 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-xl">
+                                    {% if item.application.applicant.full_name %}
+                                        {{ item.application.applicant.full_name|first|upper }}
+                                    {% else %}
+                                        {{ item.application.applicant.user.username|first|upper }}
+                                    {% endif %}
+                                </span>
+                            {% endif %}
+                            <div class="ml-4">
+                                <p class="text-lg font-semibold text-gray-900">{{ item.application.applicant.full_name|default:item.application.applicant.user.username }}</p>
+                                <p class="text-sm text-gray-500">{{ item.application.applicant.user.email|default:"No email provided" }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-span-4 sm:col-span-2 text-center">
+                             <p class="text-3xl font-bold text-indigo-600">{{ item.score }}%</p>
+                             <p class="text-xs text-gray-500 font-medium">Match Score</p>
+                        </div>
+                        
+                        <div class="col-span-8 sm:col-span-5 flex justify-end items-center gap-2 flex-wrap">
+                            <a href="{% url 'jobs:view-applicant-resume' application_id=item.application.id %}" target="_blank" class="text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 rounded-md px-3 py-1.5">View Resume</a>
+                            
+                            {% if item.application.status == 'Submitted' %}
+                                <a href="{% url 'jobs:update-application-status' application_id=item.application.id %}?action=review" class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md px-3 py-1.5">Review</a>
+                                <a href="{% url 'jobs:update-application-status' application_id=item.application.id %}?action=reject" class="text-sm font-medium text-gray-400 hover:text-gray-600 rounded-md px-3 py-1.5">Reject</a>
+                            {% elif item.application.status == 'Under Review' %}
+                                <a href="{% url 'jobs:update-application-status' application_id=item.application.id %}?action=shortlist" class="text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md px-3 py-1.5">Shortlist</a>
+                                <a href="{% url 'jobs:update-application-status' application_id=item.application.id %}?action=reject" class="text-sm font-medium text-gray-400 hover:text-gray-600 rounded-md px-3 py-1.5">Reject</a>
+                            {% elif item.application.status == 'Shortlisted' or item.application.status == 'Approved' or item.application.status == 'Approved for Interview' %}
+                                 <a href="{% url 'jobs:schedule-interview' application_id=item.application.id %}" class="text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md px-3 py-1.5">Schedule Interview</a>
+                            {% elif item.application.status == 'Interview' %}
+                                {% if item.interview_status == 'Proposed' %}
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">Awaiting Response</span>
+                                {% elif item.interview_status == 'Scheduled' %}
+                                    <div class="text-right">
+                                        <span class="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">Interview Scheduled</span>
+                                        <div class="text-xs text-gray-500 mt-2">
+                                           {{ item.interview.interview_details|urlize|linebreaksbr }}
+                                        </div>
+                                        <p class="text-xs text-gray-500">Time: {{ item.interview.confirmed_slot|date:"F d, Y, P" }}</p>
+                                    </div>
+                                    <a href="{% url 'jobs:update-application-status' application_id=item.application.id %}?action=offer" class="text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md px-3 py-1.5 self-start">Make Offer</a>
+                                {% endif %}
+                            {% elif item.application.status == 'Offered' %}
+                                <span class="px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">Offer Extended</span>
+                            {% elif item.application.status == 'Rejected' %}
+                                <span class="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">Rejected</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </li>
+            {% empty %}
+                <li class="p-10 text-center text-gray-500">
+                    There are no applicants for this job yet.
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
+

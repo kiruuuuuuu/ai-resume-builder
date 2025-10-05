@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags custom_filters %}
+
+{% block title %}Confirm Your Details{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-12 px-4" x-data="formsetManager()">
+    <div class="text-center">
+        <h1 class="text-4xl font-bold text-gray-800 mb-4">Confirm Your Details</h1>
+        <p class="text-lg text-gray-600 mb-10">Our AI has extracted the following information. Please review, correct, and add any missing details before saving.</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="space-y-4" novalidate>
+        {% csrf_token %}
+
+        <!-- Error Summary Box -->
+        {% if form.non_field_errors or profile_form.non_field_errors or experience_formset.non_form_errors or education_formset.non_form_errors or skill_formset.non_form_errors or project_formset.non_form_errors or certification_formset.non_form_errors or achievement_formset.non_form_errors or language_formset.non_form_errors or hobby_formset.non_form_errors %}
+        <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-md" x-data="{ open: true }" x-show="open">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3 flex-1">
+                    <div class="flex justify-between">
+                        <h3 class="text-sm font-medium text-red-800">Please correct the errors below:</h3>
+                        <button type="button" @click="open = false" class="text-red-800">&times;</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Personal Information -->
+        {% with title="Personal Details" form=profile_form key="personal" %}
+        <div class="bg-white rounded-xl shadow-lg transition-all duration-300 border">
+            <button type="button" @click="toggleSection('{{ key }}')" class="w-full text-left p-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">
+                        {{ title }} {% if form.errors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}
+                    </h2>
+                    <svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === '{{ key }}'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+            </button>
+            <div x-show="openSection === '{{ key }}'" x-cloak x-transition class="p-6 border-t">
+                {% crispy profile_form %}
+            </div>
+        </div>
+        {% endwith %}
+
+        <!-- Dynamic Formset Sections -->
+        {% with formset_data as formsets %}
+        {% for key, data in formsets.items %}
+        <div class="bg-white rounded-xl shadow-lg transition-all duration-300 border">
+            <button type="button" @click="toggleSection('{{ key }}')" class="w-full text-left p-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">
+                        {{ data.title }} {% if data.formset.non_form_errors or data.formset.errors %}
+                        <span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}
+                    </h2>
+                    <svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === '{{ key }}'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+            </button>
+            <div x-show="openSection === '{{ key }}'" x-cloak x-transition class="p-6 border-t" id="formset-{{ key }}">
+                {{ data.formset.management_form }}
+                <div id="forms-container-{{ key }}">
+                    {% for form in data.formset %}
+                    <div class="space-y-4 border-b pb-6 mb-6 relative form-row-{{key}}">
+                        <div class="absolute top-0 right-0">
+                            {% if form.instance.pk %}
+                            <input type="checkbox" name="{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" id="id_{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" class="hidden delete-checkbox">
+                            {% endif %}
+                            <button type="button" @click="removeForm($event, '{{ key }}')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button>
+                        </div>
+                        {% crispy form %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" @click="addForm('{{ key }}')" class="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-500">+ Add Another {{ data.title|underscore_to_space }}</button>
+            </div>
+        </div>
+        {% endfor %}
+        {% endwith %}
+        
+        <!-- Skills are handled separately due to different layout -->
+        <div class="bg-white rounded-xl shadow-lg transition-all duration-300 border">
+             <button type="button" @click="toggleSection('skill')" class="w-full text-left p-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">
+                        Skills {% if skill_formset.non_form_errors or skill_formset.errors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}
+                    </h2>
+                    <svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === 'skill'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+            </button>
+            <div x-show="openSection === 'skill'" x-cloak x-transition class="p-6 border-t" id="formset-skill">
+                {{ skill_formset.management_form }}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="forms-container-skill">
+                {% for form in skill_formset %}
+                    <div class="bg-gray-50 p-4 rounded-lg border relative form-row-skill">
+                         <div class="absolute top-1 right-1">
+                            {% if form.instance.pk %}
+                            <input type="checkbox" name="{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" id="id_{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" class="hidden delete-checkbox">
+                            {% endif %}
+                            <button type="button" @click="removeForm($event, 'skill')" class="text-gray-400 hover:text-red-600 font-bold text-lg px-2">&times;</button>
+                        </div>
+                        {% crispy form %}
+                    </div>
+                {% endfor %}
+                </div>
+                <button type="button" @click="addForm('skill')" class="mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-500">+ Add Another Skill</button>
+            </div>
+        </div>
+        
+        <div class="pt-5">
+            <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition duration-300 text-lg shadow-lg">Confirm & Build My Resume</button>
+        </div>
+    </form>
+</div>
+
+<!-- Empty Form Templates for AlpineJS -->
+{% for key, data in formset_data.items %}
+<template id="empty-form-template-{{ key }}">
+    <div class="space-y-4 border-b pb-6 mb-6 relative form-row-{{ key }}">
+        <div class="absolute top-0 right-0">
+            <button type="button" @click="removeForm($event, '{{ key }}')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button>
+        </div>
+        {% crispy data.formset.empty_form %}
+    </div>
+</template>
+{% endfor %}
+
+<template id="empty-form-template-skill">
+    <div class="bg-gray-50 p-4 rounded-lg border relative form-row-skill">
+        <div class="absolute top-1 right-1">
+            <button type="button" @click="removeForm($event, 'skill')" class="text-gray-400 hover:text-red-600 font-bold text-lg px-2">&times;</button>
+        </div>
+        {% crispy skill_formset.empty_form %}
+    </div>
+</template>
+
+<script>
+    function formsetManager() {
+        return {
+            openSection: '{{ first_error_section|default:"personal" }}',
+            init() {
+                // Open the first section that has an error
+                try {
+                    const errorData = JSON.parse('{{ validation_errors_json|escapejs|default:"{}" }}');
+                    const firstErrorKey = Object.keys(errorData)[0];
+                    if (firstErrorKey) {
+                        this.openSection = firstErrorKey;
+                    }
+                } catch(e) { console.error('Could not parse validation errors', e); }
+            },
+            toggleSection(section) {
+                this.openSection = (this.openSection === section) ? null : section;
+            },
+            addForm(prefix) {
+                const totalFormsInput = document.getElementById(`id_${prefix}-TOTAL_FORMS`);
+                if (!totalFormsInput) { console.error(`TOTAL_FORMS input for prefix ${prefix} not found.`); return; }
+                const formIdx = parseInt(totalFormsInput.value);
+                
+                const template = document.getElementById(`empty-form-template-${prefix}`);
+                if (!template) { console.error(`Template for prefix ${prefix} not found.`); return; }
+                
+                let newFormHtml = template.innerHTML.replace(/__prefix__/g, formIdx);
+                
+                const container = document.getElementById(`forms-container-${prefix}`);
+                if (!container) { console.error(`Container for prefix ${prefix} not found.`); return; }
+
+                container.insertAdjacentHTML('beforeend', newFormHtml);
+                totalFormsInput.value = formIdx + 1;
+            },
+            removeForm(event, prefix) {
+                const formRow = event.target.closest(`.form-row-${prefix}`);
+                const deleteCheckbox = formRow.querySelector('.delete-checkbox');
+                
+                if (deleteCheckbox) {
+                    deleteCheckbox.checked = true;
+                    formRow.style.display = 'none';
+                } else {
+                    formRow.remove();
+                }
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.body.addEventListener('click', function(event) {
+            if (event.target.classList.contains('enhance-btn')) {
+                const button = event.target;
+                const targetId = button.dataset.enhanceTarget;
+                const context = button.dataset.enhanceContext;
+                const textInput = document.getElementById(targetId);
+
+                if (!textInput || !textInput.value) {
+                    alert('Please enter some text to enhance.');
+                    return;
+                }
+
+                const originalButtonText = button.innerHTML;
+                button.innerHTML = 'Enhancing...';
+                button.disabled = true;
+
+                fetch("{% url 'resumes:enhance-api' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ text: textInput.value, context: context })
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.enhanced_text) {
+                        textInput.value = data.enhanced_text;
+                    } else {
+                        alert(data.error || 'Sorry, we encountered an error.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please check the console for details.');
+                })
+                .finally(() => {
+                    button.innerHTML = originalButtonText;
+                    button.disabled = false;
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

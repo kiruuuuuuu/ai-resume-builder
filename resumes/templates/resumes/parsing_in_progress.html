@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Parsing Your Resume...{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-20 px-4 text-center">
+    <div class="flex justify-center items-center mb-6">
+        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600"></div>
+    </div>
+    <h1 class="text-3xl font-bold text-gray-800">Parsing in Progress</h1>
+    <p class="text-lg text-gray-600 mt-4">
+        Our AI is analyzing your resume. This may take a moment. Please wait, you will be redirected automatically.
+    </p>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkStatus = () => {
+            fetch("{% url 'resumes:check-parsing-status' %}")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'SUCCESS') {
+                        // Redirect to the validation page
+                        window.location.href = data.redirect_url;
+                    } else if (data.status === 'PENDING') {
+                        // If still pending, check again in 2 seconds
+                        setTimeout(checkStatus, 2000);
+                    } else {
+                        // Handle an error case
+                        alert("An error occurred during parsing. Please try uploading again.");
+                        window.location.href = "{% url 'resumes:resume-dashboard' %}";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking status:', error);
+                    // Wait a bit longer before retrying on network error
+                    setTimeout(checkStatus, 5000);
+                });
+        };
+
+        // Start checking after an initial delay
+        setTimeout(checkStatus, 2000);
+    });
+</script>
+{% endblock %}
+

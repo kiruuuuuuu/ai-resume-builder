@@ -1,0 +1,22 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.[oa]
+*.so
+
+# C extensions
+*.pyd
+*.dll
+
+# Environment variables
+.env
+
+# SQLite databases
+*.sqlite3
+db.sqlite3
+
+# Media files
+/media/
+
+# Other
+.DS_Store
