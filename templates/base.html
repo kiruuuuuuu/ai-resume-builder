@@ -28,6 +28,23 @@
             --tw-prose-headings: #1f2937;
             --tw-prose-links: #4f46e5;
         }
+
+        /* *** THE FIX IS HERE: Styling for crispy-forms default elements *** */
+        /* Style for the red asterisk on required fields */
+        .asteriskField {
+            color: #ef4444; /* red-500 */
+            font-weight: bold;
+            margin-left: 2px;
+        }
+        /* Style for the input field when there is an error */
+        .is-invalid input, .is-invalid textarea, .is-invalid select {
+            border-color: #ef4444 !important; /* Tailwind's red-500 */
+        }
+        /* Style for the error message text below the field */
+        .is-invalid .text-red-600 {
+            font-size: 0.875rem; /* text-sm */
+            margin-top: 0.25rem; /* mt-1 */
+        }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
