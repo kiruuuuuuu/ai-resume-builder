@@ -2,8 +2,6 @@ from django import forms
 from .models import Experience, Education, Skill, Project, Certification, Achievement, Language, Hobby
 from datetime import date
 import re
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Field, Submit, HTML
 
 # --- Validation Helper Functions ---
 def _validate_text_field(value, field_label="This field", min_length=3):
@@ -42,22 +40,18 @@ class ExperienceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.layout = Layout(
-            'job_title', 'company', 'start_date', 'end_date', 'description',
-            HTML("""
-                <div class="flex justify-end -mt-2 mb-4">
-                    <button type="button" class="enhance-btn text-sm font-medium text-purple-600 hover:text-purple-800" 
-                            data-enhance-target="{{ form.description.id_for_label }}" 
-                            data-enhance-context="experience_description">✨ Enhance with AI</button>
-                </div>
-            """)
-        )
+        self.fields['job_title'].required = True
+        self.fields['company'].required = True
+        self.fields['start_date'].required = True
+        self.fields['description'].required = True
 
     def clean_job_title(self): return _validate_text_field(self.cleaned_data.get('job_title'), 'Job Title')
     def clean_company(self): return _validate_text_field(self.cleaned_data.get('company'), 'Company')
-    def clean_description(self): return _validate_text_field(self.cleaned_data.get('description'), 'Description', min_length=10)
+    def clean_description(self):
+        desc = self.cleaned_data.get('description')
+        if len(desc) > 300:
+            raise forms.ValidationError('Description cannot exceed 300 characters.')
+        return _validate_text_field(desc, 'Description', min_length=10)
     def clean(self): return _validate_end_date(super().clean())
 
 class EducationForm(forms.ModelForm):
@@ -93,20 +87,14 @@ class ProjectForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['description'].required = False
         self.fields['aim'].required = False
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.layout = Layout(
-            'title', 'aim', 'description',
-            HTML("""
-                <div class="flex justify-end -mt-2 mb-4">
-                    <button type="button" class="enhance-btn text-sm font-medium text-purple-600 hover:text-purple-800" 
-                            data-enhance-target="{{ form.description.id_for_label }}" 
-                            data-enhance-context="experience_description">✨ Enhance with AI</button>
-                </div>
-            """),
-            'frontend', 'backend', 'database', 'link'
-        )
+
     def clean_title(self): return _validate_text_field(self.cleaned_data.get('title'), 'Project Title')
+    
+    def clean_description(self):
+        desc = self.cleaned_data.get('description')
+        if desc and len(desc) > 200:
+            raise forms.ValidationError('Description cannot exceed 200 characters.')
+        return desc
 
 class CertificationForm(forms.ModelForm):
     class Meta:
@@ -120,18 +108,7 @@ class AchievementForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['name'].required = False
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.layout = Layout(
-            'name', 'description',
-            HTML("""
-                <div class="flex justify-end -mt-2 mb-4">
-                    <button type="button" class="enhance-btn text-sm font-medium text-purple-600 hover:text-purple-800" 
-                            data-enhance-target="{{ form.description.id_for_label }}" 
-                            data-enhance-context="experience_description">✨ Enhance with AI</button>
-                </div>
-            """)
-        )
+        
     def clean_description(self): return _validate_text_field(self.cleaned_data.get('description'), 'Description', min_length=10)
 
 class LanguageForm(forms.ModelForm):

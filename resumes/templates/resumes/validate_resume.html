@@ -24,7 +24,17 @@
                 </div>
             </button>
             <div x-show="openSection === 'personal'" x-cloak x-transition class="p-6 border-t">
-                {% crispy profile_form %}
+                {% for field in profile_form.visible_fields %}
+                    {{ field|as_crispy_field }}
+                    {% if field.name == 'professional_summary' %}
+                        <div class="flex justify-end -mt-2 mb-4">
+                            <button type="button" class="enhance-btn text-sm font-medium text-purple-600 hover:text-purple-800" 
+                                    data-enhance-target="{{ field.id_for_label }}" 
+                                    data-enhance-context="professional_summary">✨ Enhance with AI</button>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                {% for field in profile_form.hidden_fields %}{{ field }}{% endfor %}
             </div>
         </div>
 
@@ -33,7 +43,7 @@
             <button type="button" @click="toggleSection('experience')" class="w-full text-left p-6">
                 <div class="flex justify-between items-center">
                      <h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">
-                        Experience {% if experience_formset.non_form_errors or experience_formset.errors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}
+                        Experience {% if experience_formset.non_form_errors or experience_formset.errors|HasErrors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}
                     </h2>
                     <svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === 'experience'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                 </div>
@@ -42,9 +52,22 @@
                 {{ experience_formset.management_form }}
                 {% if experience_formset.non_form_errors %}<div class="text-red-600 text-sm mb-4 p-3 bg-red-50 rounded-md border border-red-200">{{ experience_formset.non_form_errors }}</div>{% endif %}
                 <div id="forms-container-experience">
-                    {% for form in experience_formset %}<div class="space-y-4 border-b pb-6 mb-6 relative form-row-experience">
+                    {% for form in experience_formset %}
+                    <div class="space-y-4 border-b pb-6 mb-6 relative form-row-experience">
                         <div class="absolute top-0 right-0">{% if form.instance.pk %}<input type="checkbox" name="{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" id="id_{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" class="hidden delete-checkbox">{% endif %}<button type="button" @click="removeForm($event, 'experience')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>
-                        {% crispy form %}</div>{% endfor %}
+                        {% for field in form.visible_fields %}
+                            {{ field|as_crispy_field }}
+                            {% if field.name == 'description' %}
+                                <div class="flex justify-end -mt-2 mb-4">
+                                    <button type="button" class="enhance-btn text-sm font-medium text-purple-600 hover:text-purple-800"
+                                            data-enhance-target="{{ field.id_for_label }}"
+                                            data-enhance-context="experience_description">✨ Enhance with AI</button>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+                    </div>
+                    {% endfor %}
                 </div>
                 <button type="button" @click="addForm('experience')" class="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-500">+ Add Another Experience</button>
             </div>
@@ -53,15 +76,19 @@
         <!-- Education -->
         <div class="bg-white rounded-xl shadow-lg transition-all duration-300 border">
             <button type="button" @click="toggleSection('education')" class="w-full text-left p-6">
-                 <div class="flex justify-between items-center"><h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">Education {% if education_formset.non_form_errors or education_formset.errors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}</h2><svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === 'education'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>
+                 <div class="flex justify-between items-center"><h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">Education {% if education_formset.non_form_errors or education_formset.errors|HasErrors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}</h2><svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === 'education'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>
             </button>
             <div x-show="openSection === 'education'" x-cloak x-transition class="p-6 border-t" id="formset-education">
                 {{ education_formset.management_form }}
                 {% if education_formset.non_form_errors %}<div class="text-red-600 text-sm mb-4 p-3 bg-red-50 rounded-md border border-red-200">{{ education_formset.non_form_errors }}</div>{% endif %}
                 <div id="forms-container-education">
-                    {% for form in education_formset %}<div class="space-y-4 border-b pb-6 mb-6 relative form-row-education">
+                    {% for form in education_formset %}
+                    <div class="space-y-4 border-b pb-6 mb-6 relative form-row-education">
                         <div class="absolute top-0 right-0">{% if form.instance.pk %}<input type="checkbox" name="{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" id="id_{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" class="hidden delete-checkbox">{% endif %}<button type="button" @click="removeForm($event, 'education')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>
-                        {% crispy form %}</div>{% endfor %}
+                        {% for field in form.visible_fields %}{{ field|as_crispy_field }}{% endfor %}
+                        {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+                    </div>
+                    {% endfor %}
                 </div><button type="button" @click="addForm('education')" class="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-500">+ Add Another Education</button>
             </div>
         </div>
@@ -69,15 +96,28 @@
         <!-- Projects -->
          <div class="bg-white rounded-xl shadow-lg transition-all duration-300 border">
             <button type="button" @click="toggleSection('project')" class="w-full text-left p-6">
-                 <div class="flex justify-between items-center"><h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">Projects {% if project_formset.non_form_errors or project_formset.errors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}</h2><svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === 'project'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>
+                 <div class="flex justify-between items-center"><h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">Projects {% if project_formset.non_form_errors or project_formset.errors|HasErrors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}</h2><svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === 'project'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>
             </button>
             <div x-show="openSection === 'project'" x-cloak x-transition class="p-6 border-t" id="formset-project">
                 {{ project_formset.management_form }}
                 {% if project_formset.non_form_errors %}<div class="text-red-600 text-sm mb-4 p-3 bg-red-50 rounded-md border border-red-200">{{ project_formset.non_form_errors }}</div>{% endif %}
                 <div id="forms-container-project">
-                    {% for form in project_formset %}<div class="space-y-4 border-b pb-6 mb-6 relative form-row-project">
+                    {% for form in project_formset %}
+                    <div class="space-y-4 border-b pb-6 mb-6 relative form-row-project">
                         <div class="absolute top-0 right-0">{% if form.instance.pk %}<input type="checkbox" name="{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" id="id_{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" class="hidden delete-checkbox">{% endif %}<button type="button" @click="removeForm($event, 'project')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>
-                        {% crispy form %}</div>{% endfor %}
+                        {% for field in form.visible_fields %}
+                            {{ field|as_crispy_field }}
+                            {% if field.name == 'description' %}
+                                <div class="flex justify-end -mt-2 mb-4">
+                                    <button type="button" class="enhance-btn text-sm font-medium text-purple-600 hover:text-purple-800"
+                                            data-enhance-target="{{ field.id_for_label }}"
+                                            data-enhance-context="experience_description">✨ Enhance with AI</button>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+                    </div>
+                    {% endfor %}
                 </div><button type="button" @click="addForm('project')" class="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-500">+ Add Another Project</button>
             </div>
         </div>
@@ -85,15 +125,19 @@
         <!-- Certifications -->
         <div class="bg-white rounded-xl shadow-lg transition-all duration-300 border">
             <button type="button" @click="toggleSection('certification')" class="w-full text-left p-6">
-                 <div class="flex justify-between items-center"><h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">Certifications {% if certification_formset.non_form_errors or certification_formset.errors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}</h2><svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === 'certification'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>
+                 <div class="flex justify-between items-center"><h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">Certifications {% if certification_formset.non_form_errors or certification_formset.errors|HasErrors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}</h2><svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === 'certification'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>
             </button>
             <div x-show="openSection === 'certification'" x-cloak x-transition class="p-6 border-t" id="formset-certification">
                 {{ certification_formset.management_form }}
                 {% if certification_formset.non_form_errors %}<div class="text-red-600 text-sm mb-4 p-3 bg-red-50 rounded-md border border-red-200">{{ certification_formset.non_form_errors }}</div>{% endif %}
                 <div id="forms-container-certification">
-                    {% for form in certification_formset %}<div class="space-y-4 border-b pb-6 mb-6 relative form-row-certification">
+                    {% for form in certification_formset %}
+                    <div class="space-y-4 border-b pb-6 mb-6 relative form-row-certification">
                         <div class="absolute top-0 right-0">{% if form.instance.pk %}<input type="checkbox" name="{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" id="id_{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" class="hidden delete-checkbox">{% endif %}<button type="button" @click="removeForm($event, 'certification')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>
-                        {% crispy form %}</div>{% endfor %}
+                        {% for field in form.visible_fields %}{{ field|as_crispy_field }}{% endfor %}
+                        {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+                    </div>
+                    {% endfor %}
                 </div><button type="button" @click="addForm('certification')" class="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-500">+ Add Another Certification</button>
             </div>
         </div>
@@ -101,15 +145,28 @@
         <!-- Achievements -->
         <div class="bg-white rounded-xl shadow-lg transition-all duration-300 border">
             <button type="button" @click="toggleSection('achievement')" class="w-full text-left p-6">
-                 <div class="flex justify-between items-center"><h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">Achievements {% if achievement_formset.non_form_errors or achievement_formset.errors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}</h2><svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === 'achievement'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>
+                 <div class="flex justify-between items-center"><h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">Achievements {% if achievement_formset.non_form_errors or achievement_formset.errors|HasErrors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}</h2><svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === 'achievement'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>
             </button>
             <div x-show="openSection === 'achievement'" x-cloak x-transition class="p-6 border-t" id="formset-achievement">
                 {{ achievement_formset.management_form }}
                 {% if achievement_formset.non_form_errors %}<div class="text-red-600 text-sm mb-4 p-3 bg-red-50 rounded-md border border-red-200">{{ achievement_formset.non_form_errors }}</div>{% endif %}
                 <div id="forms-container-achievement">
-                    {% for form in achievement_formset %}<div class="space-y-4 border-b pb-6 mb-6 relative form-row-achievement">
+                    {% for form in achievement_formset %}
+                    <div class="space-y-4 border-b pb-6 mb-6 relative form-row-achievement">
                         <div class="absolute top-0 right-0">{% if form.instance.pk %}<input type="checkbox" name="{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" id="id_{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" class="hidden delete-checkbox">{% endif %}<button type="button" @click="removeForm($event, 'achievement')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>
-                        {% crispy form %}</div>{% endfor %}
+                        {% for field in form.visible_fields %}
+                            {{ field|as_crispy_field }}
+                            {% if field.name == 'description' %}
+                                <div class="flex justify-end -mt-2 mb-4">
+                                    <button type="button" class="enhance-btn text-sm font-medium text-purple-600 hover:text-purple-800"
+                                            data-enhance-target="{{ field.id_for_label }}"
+                                            data-enhance-context="experience_description">✨ Enhance with AI</button>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+                    </div>
+                    {% endfor %}
                 </div><button type="button" @click="addForm('achievement')" class="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-500">+ Add Another Achievement</button>
             </div>
         </div>
@@ -117,15 +174,19 @@
         <!-- Languages -->
         <div class="bg-white rounded-xl shadow-lg transition-all duration-300 border">
             <button type="button" @click="toggleSection('language')" class="w-full text-left p-6">
-                 <div class="flex justify-between items-center"><h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">Languages {% if language_formset.non_form_errors or language_formset.errors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}</h2><svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === 'language'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>
+                 <div class="flex justify-between items-center"><h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">Languages {% if language_formset.non_form_errors or language_formset.errors|HasErrors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}</h2><svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === 'language'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>
             </button>
             <div x-show="openSection === 'language'" x-cloak x-transition class="p-6 border-t" id="formset-language">
                 {{ language_formset.management_form }}
                 {% if language_formset.non_form_errors %}<div class="text-red-600 text-sm mb-4 p-3 bg-red-50 rounded-md border border-red-200">{{ language_formset.non_form_errors }}</div>{% endif %}
                 <div id="forms-container-language">
-                    {% for form in language_formset %}<div class="space-y-4 border-b pb-6 mb-6 relative form-row-language">
+                    {% for form in language_formset %}
+                    <div class="space-y-4 border-b pb-6 mb-6 relative form-row-language">
                         <div class="absolute top-0 right-0">{% if form.instance.pk %}<input type="checkbox" name="{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" id="id_{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" class="hidden delete-checkbox">{% endif %}<button type="button" @click="removeForm($event, 'language')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>
-                        {% crispy form %}</div>{% endfor %}
+                        {% for field in form.visible_fields %}{{ field|as_crispy_field }}{% endfor %}
+                        {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+                    </div>
+                    {% endfor %}
                 </div><button type="button" @click="addForm('language')" class="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-500">+ Add Another Language</button>
             </div>
         </div>
@@ -133,15 +194,19 @@
         <!-- Hobbies -->
         <div class="bg-white rounded-xl shadow-lg transition-all duration-300 border">
             <button type="button" @click="toggleSection('hobby')" class="w-full text-left p-6">
-                 <div class="flex justify-between items-center"><h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">Hobbies {% if hobby_formset.non_form_errors or hobby_formset.errors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}</h2><svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === 'hobby'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>
+                 <div class="flex justify-between items-center"><h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">Hobbies {% if hobby_formset.non_form_errors or hobby_formset.errors|HasErrors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}</h2><svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === 'hobby'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>
             </button>
             <div x-show="openSection === 'hobby'" x-cloak x-transition class="p-6 border-t" id="formset-hobby">
                 {{ hobby_formset.management_form }}
                 {% if hobby_formset.non_form_errors %}<div class="text-red-600 text-sm mb-4 p-3 bg-red-50 rounded-md border border-red-200">{{ hobby_formset.non_form_errors }}</div>{% endif %}
                 <div id="forms-container-hobby">
-                    {% for form in hobby_formset %}<div class="space-y-4 border-b pb-6 mb-6 relative form-row-hobby">
+                    {% for form in hobby_formset %}
+                    <div class="space-y-4 border-b pb-6 mb-6 relative form-row-hobby">
                         <div class="absolute top-0 right-0">{% if form.instance.pk %}<input type="checkbox" name="{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" id="id_{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" class="hidden delete-checkbox">{% endif %}<button type="button" @click="removeForm($event, 'hobby')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>
-                        {% crispy form %}</div>{% endfor %}
+                        {% for field in form.visible_fields %}{{ field|as_crispy_field }}{% endfor %}
+                        {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+                    </div>
+                    {% endfor %}
                 </div><button type="button" @click="addForm('hobby')" class="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-500">+ Add Another Hobby</button>
             </div>
         </div>
@@ -149,15 +214,18 @@
         <!-- Skills -->
         <div class="bg-white rounded-xl shadow-lg transition-all duration-300 border">
              <button type="button" @click="toggleSection('skill')" class="w-full text-left p-6">
-                <div class="flex justify-between items-center"><h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">Skills {% if skill_formset.non_form_errors or skill_formset.errors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}</h2><svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === 'skill'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>
+                <div class="flex justify-between items-center"><h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">Skills {% if skill_formset.non_form_errors or skill_formset.errors|HasErrors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}</h2><svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === 'skill'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>
             </button>
             <div x-show="openSection === 'skill'" x-cloak x-transition class="p-6 border-t" id="formset-skill">
                 {{ skill_formset.management_form }}
                  {% if skill_formset.non_form_errors %}<div class="text-red-600 text-sm mb-4 p-3 bg-red-50 rounded-md border border-red-200">{{ skill_formset.non_form_errors }}</div>{% endif %}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="forms-container-skill">
-                {% for form in skill_formset %}<div class="bg-gray-50 p-4 rounded-lg border relative form-row-skill">
+                {% for form in skill_formset %}
+                <div class="bg-gray-50 p-4 rounded-lg border relative form-row-skill">
                          <div class="absolute top-1 right-1">{% if form.instance.pk %}<input type="checkbox" name="{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" id="id_{{ form.prefix }}-{{ forloop.counter0 }}-DELETE" class="hidden delete-checkbox">{% endif %}<button type="button" @click="removeForm($event, 'skill')" class="text-gray-400 hover:text-red-600 font-bold text-lg px-2">&times;</button></div>
-                        {% crispy form %}</div>
+                        {% for field in form.visible_fields %}{{ field|as_crispy_field }}{% endfor %}
+                        {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+                </div>
                 {% endfor %}
                 </div>
                 <button type="button" @click="addForm('skill')" class="mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-500">+ Add Another Skill</button>
@@ -171,18 +239,19 @@
 </div>
 
 <!-- Empty Form Templates -->
-<template id="empty-form-template-experience"><div class="space-y-4 border-b pb-6 mb-6 relative form-row-experience"><div class="absolute top-0 right-0"><button type="button" @click="removeForm($event, 'experience')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>{% crispy experience_formset.empty_form %}</div></template>
-<template id="empty-form-template-education"><div class="space-y-4 border-b pb-6 mb-6 relative form-row-education"><div class="absolute top-0 right-0"><button type="button" @click="removeForm($event, 'education')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>{% crispy education_formset.empty_form %}</div></template>
-<template id="empty-form-template-project"><div class="space-y-4 border-b pb-6 mb-6 relative form-row-project"><div class="absolute top-0 right-0"><button type="button" @click="removeForm($event, 'project')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>{% crispy project_formset.empty_form %}</div></template>
-<template id="empty-form-template-certification"><div class="space-y-4 border-b pb-6 mb-6 relative form-row-certification"><div class="absolute top-0 right-0"><button type="button" @click="removeForm($event, 'certification')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>{% crispy certification_formset.empty_form %}</div></template>
-<template id="empty-form-template-achievement"><div class="space-y-4 border-b pb-6 mb-6 relative form-row-achievement"><div class="absolute top-0 right-0"><button type="button" @click="removeForm($event, 'achievement')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>{% crispy achievement_formset.empty_form %}</div></template>
-<template id="empty-form-template-language"><div class="space-y-4 border-b pb-6 mb-6 relative form-row-language"><div class="absolute top-0 right-0"><button type="button" @click="removeForm($event, 'language')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>{% crispy language_formset.empty_form %}</div></template>
-<template id="empty-form-template-hobby"><div class="space-y-4 border-b pb-6 mb-6 relative form-row-hobby"><div class="absolute top-0 right-0"><button type="button" @click="removeForm($event, 'hobby')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>{% crispy hobby_formset.empty_form %}</div></template>
+<template id="empty-form-template-experience"><div class="space-y-4 border-b pb-6 mb-6 relative form-row-experience"><div class="absolute top-0 right-0"><button type="button" @click="removeForm($event, 'experience')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>{% for field in experience_formset.empty_form.visible_fields %}{{ field|as_crispy_field }}{% endfor %}{% for field in experience_formset.empty_form.hidden_fields %}{{ field }}{% endfor %}</div></template>
+<template id="empty-form-template-education"><div class="space-y-4 border-b pb-6 mb-6 relative form-row-education"><div class="absolute top-0 right-0"><button type="button" @click="removeForm($event, 'education')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>{% for field in education_formset.empty_form.visible_fields %}{{ field|as_crispy_field }}{% endfor %}{% for field in education_formset.empty_form.hidden_fields %}{{ field }}{% endfor %}</div></template>
+<template id="empty-form-template-project"><div class="space-y-4 border-b pb-6 mb-6 relative form-row-project"><div class="absolute top-0 right-0"><button type="button" @click="removeForm($event, 'project')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>{% for field in project_formset.empty_form.visible_fields %}{{ field|as_crispy_field }}{% endfor %}{% for field in project_formset.empty_form.hidden_fields %}{{ field }}{% endfor %}</div></template>
+<template id="empty-form-template-certification"><div class="space-y-4 border-b pb-6 mb-6 relative form-row-certification"><div class="absolute top-0 right-0"><button type="button" @click="removeForm($event, 'certification')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>{% for field in certification_formset.empty_form.visible_fields %}{{ field|as_crispy_field }}{% endfor %}{% for field in certification_formset.empty_form.hidden_fields %}{{ field }}{% endfor %}</div></template>
+<template id="empty-form-template-achievement"><div class="space-y-4 border-b pb-6 mb-6 relative form-row-achievement"><div class="absolute top-0 right-0"><button type="button" @click="removeForm($event, 'achievement')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>{% for field in achievement_formset.empty_form.visible_fields %}{{ field|as_crispy_field }}{% endfor %}{% for field in achievement_formset.empty_form.hidden_fields %}{{ field }}{% endfor %}</div></template>
+<template id="empty-form-template-language"><div class="space-y-4 border-b pb-6 mb-6 relative form-row-language"><div class="absolute top-0 right-0"><button type="button" @click="removeForm($event, 'language')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>{% for field in language_formset.empty_form.visible_fields %}{{ field|as_crispy_field }}{% endfor %}{% for field in language_formset.empty_form.hidden_fields %}{{ field }}{% endfor %}</div></template>
+<template id="empty-form-template-hobby"><div class="space-y-4 border-b pb-6 mb-6 relative form-row-hobby"><div class="absolute top-0 right-0"><button type="button" @click="removeForm($event, 'hobby')" class="text-gray-400 hover:text-red-600 font-bold text-xl px-2">&times;</button></div>{% for field in hobby_formset.empty_form.visible_fields %}{{ field|as_crispy_field }}{% endfor %}{% for field in hobby_formset.empty_form.hidden_fields %}{{ field }}{% endfor %}</div></template>
 
 <template id="empty-form-template-skill">
     <div class="bg-gray-50 p-4 rounded-lg border relative form-row-skill">
         <div class="absolute top-1 right-1"><button type="button" @click="removeForm($event, 'skill')" class="text-gray-400 hover:text-red-600 font-bold text-lg px-2">&times;</button></div>
-        {% crispy skill_formset.empty_form %}
+        {% for field in skill_formset.empty_form.visible_fields %}{{ field|as_crispy_field }}{% endfor %}
+        {% for field in skill_formset.empty_form.hidden_fields %}{{ field }}{% endfor %}
     </div>
 </template>
 
