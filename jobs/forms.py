@@ -22,13 +22,14 @@ def _validate_text_field(value, field_label="This field", min_length=3):
 class JobPostingForm(forms.ModelForm):
     class Meta:
         model = JobPosting
-        fields = ['title', 'description', 'requirements', 'location', 'salary_range', 'application_deadline']
+        fields = ['title', 'description', 'requirements', 'location', 'salary_range', 'vacancies', 'application_deadline']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'}),
             'description': forms.Textarea(attrs={'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm', 'rows': 5}),
             'requirements': forms.Textarea(attrs={'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm', 'rows': 5}),
             'location': forms.TextInput(attrs={'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'}),
             'salary_range': forms.TextInput(attrs={'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm', 'placeholder': 'e.g., $80,000 - $100,000 per year'}),
+            'vacancies': forms.NumberInput(attrs={'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm', 'min': 1}),
             'application_deadline': forms.DateTimeInput(
                 attrs={
                     'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm', 

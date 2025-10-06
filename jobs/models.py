@@ -13,6 +13,7 @@ class JobPosting(models.Model):
     requirements = models.TextField()
     location = models.CharField(max_length=255)
     salary_range = models.CharField(max_length=100, null=True, blank=True)
+    vacancies = models.PositiveIntegerField(default=1, help_text="Number of available positions for this role.")
     application_deadline = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True) # This field tracks the last update

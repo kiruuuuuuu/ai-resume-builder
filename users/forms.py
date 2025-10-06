@@ -14,14 +14,16 @@ class CustomUserCreationForm(UserCreationForm):
 
 class ProfileUpdateForm(forms.ModelForm):
     email = forms.EmailField(required=True)
-    profile_photo = forms.ImageField(required=True)
-    full_name = forms.CharField(required=True)
-    professional_summary = forms.CharField(required=True, widget=forms.Textarea)
-    phone_number = forms.CharField(required=True)
-    address = forms.CharField(required=True)
-    date_of_birth = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
 
-
+    class Meta:
+        model = JobSeekerProfile
+        fields = ['profile_photo', 'full_name', 'professional_summary', 'phone_number', 'address', 'date_of_birth', 'portfolio_url', 'linkedin_url']
+        # --- THE FIX IS HERE ---
+        # Use ClearableFileInput to allow users to remove the existing photo.
+        widgets = {
+            'profile_photo': forms.ClearableFileInput(),
+        }
+    
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
@@ -29,14 +31,20 @@ class ProfileUpdateForm(forms.ModelForm):
         if self.user:
             self.fields['email'].initial = self.user.email
         
-        # If a profile picture already exists, make the field not required.
+        # --- THE FIX IS HERE ---
+        # Make the photo not required if one already exists.
+        # The ClearableFileInput will handle the deletion logic.
         if self.instance and self.instance.profile_photo:
             self.fields['profile_photo'].required = False
-        
-    class Meta:
-        model = JobSeekerProfile
-        fields = ['profile_photo', 'full_name', 'professional_summary', 'phone_number', 'address', 'date_of_birth', 'portfolio_url', 'linkedin_url']
-    
+
+        # Make other fields mandatory
+        self.fields['full_name'].required = True
+        self.fields['professional_summary'].required = True
+        self.fields['phone_number'].required = True
+        self.fields['address'].required = True
+        self.fields['date_of_birth'].required = True
+
+
     def save(self, commit=True):
         profile = super().save(commit=False)
         if self.user:
@@ -53,25 +61,28 @@ class ProfileUpdateForm(forms.ModelForm):
 
     def clean_professional_summary(self):
         summary = self.cleaned_data.get('professional_summary')
-        if not summary:
-            raise forms.ValidationError('This field is required.')
-        if not re.search(r'[a-zA-Z]', summary): raise forms.ValidationError('Professional summary must contain descriptive text.')
-        if len(summary.strip()) < 20: raise forms.ValidationError('Professional summary should be at least 20 characters long.')
-        if len(summary.strip()) > 300: raise forms.ValidationError('Professional summary cannot exceed 300 characters.')
+        if summary:
+            if not re.search(r'[a-zA-Z]', summary): raise forms.ValidationError('Professional summary must contain descriptive text.')
+            if len(summary.strip()) < 20: raise forms.ValidationError('Professional summary should be at least 20 characters long.')
+            if len(summary.strip()) > 300: raise forms.ValidationError('Professional summary cannot exceed 300 characters.')
         return summary
         
     def clean_phone_number(self):
         phone = self.cleaned_data.get('phone_number')
-        if not phone: 
-            raise forms.ValidationError('This field is required.')
+        if not phone: return phone
         if not re.match(r'^[0-9\s\-\+\(\)]+$', phone): raise forms.ValidationError('Phone number contains invalid characters.')
         if len(re.sub(r'\D', '', phone)) < 7: raise forms.ValidationError('Please enter a valid phone number.')
         return phone
+    
+    def clean_address(self):
+        address = self.cleaned_data.get('address')
+        if address and len(address.strip()) < 10:
+            raise forms.ValidationError('Please enter a complete address.')
+        return address
 
     def clean_date_of_birth(self):
         dob = self.cleaned_data.get('date_of_birth')
-        if not dob: 
-            raise forms.ValidationError('This field is required.')
+        if not dob: return dob
         today = date.today(); age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
         if not (18 <= age <= 50): raise forms.ValidationError('Age must be between 18 and 50 years old.')
         return dob
@@ -79,14 +90,15 @@ class ProfileUpdateForm(forms.ModelForm):
     def clean_profile_photo(self):
         photo = self.cleaned_data.get('profile_photo')
 
-        # If there's no photo being uploaded AND the field is now optional (because one already exists),
-        # then we don't need to validate it.
-        if not photo and not self.fields['profile_photo'].required:
-            return self.instance.profile_photo # Return the existing photo
+        # This check handles the case where the user wants to clear the photo.
+        # If 'photo' is False, it means the 'clear' checkbox was ticked.
+        if photo is False:
+            return photo # Allow deletion
 
-        if not photo:
-            raise forms.ValidationError('This field is required.')
-        if photo.size > 2 * 1024 * 1024: raise forms.ValidationError("Image file too large ( > 2 MB ).")
-        if os.path.splitext(photo.name)[1].lower() not in ['.jpg', '.jpeg', '.png']: raise forms.ValidationError("Unsupported file extension. Please use JPG, JPEG, or PNG.")
+        # If a new photo is uploaded, validate it.
+        if photo:
+            if photo.size > 2 * 1024 * 1024: raise forms.ValidationError("Image file too large ( > 2 MB ).")
+            if os.path.splitext(photo.name)[1].lower() not in ['.jpg', '.jpeg', '.png']: raise forms.ValidationError("Unsupported file extension. Please use JPG, JPEG, or PNG.")
+        
         return photo
 

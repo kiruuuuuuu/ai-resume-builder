@@ -7,6 +7,7 @@ from django.forms import formset_factory
 from django.template.loader import get_template
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
+from django.db import transaction  # --- THE FIX IS HERE: Import transaction ---
 import datetime
 import json
 
@@ -61,7 +62,8 @@ def resume_builder_view(request):
         )
 
         if created:
-            update_resume_score_task.delay(resume.id)
+            # --- THE FIX IS HERE: Use transaction.on_commit ---
+            transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
 
         experiences = Experience.objects.filter(resume=resume).order_by('-start_date')
         educations = Education.objects.filter(resume=resume).order_by('-start_date')
@@ -86,6 +88,7 @@ def resume_builder_view(request):
     hobby_form = HobbyForm()
 
     if request.method == 'POST':
+        resume.score = None  # Invalidate score on any change
         resume.save()
 
         form_map = {
@@ -105,7 +108,8 @@ def resume_builder_view(request):
                 if form.is_valid():
                     item = form.save(commit=False); item.resume = resume; item.save()
                     messages.success(request, f"{name} added successfully.")
-                    update_resume_score_task.delay(resume.id)
+                    # --- THE FIX IS HERE: Use transaction.on_commit ---
+                    transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
                     return redirect('resumes:resume-builder')
                 else:
                     if trigger == 'add_experience': experience_form = form
@@ -133,7 +137,8 @@ def resume_builder_view(request):
         'experience_form': experience_form, 'education_form': education_form, 'skill_form': skill_form,
         'project_form': project_form, 'certification_form': certification_form, 'achievement_form': achievement_form,
         'language_form': language_form, 'hobby_form': hobby_form,
-        'score': score, 'feedback': feedback
+        'score': score, 
+        'feedback': json.dumps(feedback)
     }
     return render(request, 'resumes/resume_builder.html', context)
 
@@ -188,7 +193,6 @@ def validate_resume_data_view(request):
 
     profile = get_object_or_404(JobSeekerProfile, user=request.user)
 
-    # Define Formsets
     formset_classes = {
         'experience': formset_factory(ExperienceForm, extra=0, can_delete=True),
         'education': formset_factory(EducationForm, extra=0, can_delete=True),
@@ -205,19 +209,16 @@ def validate_resume_data_view(request):
         
         formsets = {key: fs_class(request.POST, prefix=key) for key, fs_class in formset_classes.items()}
 
-        # Validate all forms and formsets
         is_profile_valid = profile_form.is_valid()
         are_formsets_valid = all(fs.is_valid() for fs in formsets.values())
 
         if is_profile_valid and are_formsets_valid:
             profile = profile_form.save()
-            resume, _ = Resume.objects.update_or_create(profile=profile, defaults={'title': f"{profile.full_name or 'My'}'s Resume"})
+            resume, _ = Resume.objects.update_or_create(profile=profile, defaults={'title': f"{profile.full_name or 'My'}'s Resume", 'score': None})
             
-            # Clear all related items before saving new ones
             for related_set in ['experience_set', 'education_set', 'skill_set', 'project_set', 'certification_set', 'achievement_set', 'language_set', 'hobby_set']:
                 getattr(resume, related_set).all().delete()
             
-            # Save new items from formsets
             for formset in formsets.values():
                 for form in formset:
                     if form.is_valid() and form.has_changed() and not form.cleaned_data.get('DELETE', False):
@@ -227,12 +228,12 @@ def validate_resume_data_view(request):
 
             del request.session['parsed_resume_data']
             messages.success(request, "Your resume has been built successfully!")
-            update_resume_score_task.delay(resume.id)
+            # --- THE FIX IS HERE: Use transaction.on_commit ---
+            transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
             return redirect('resumes:resume-builder')
         else:
             messages.error(request, "Please correct the errors highlighted in red below.")
             
-            # Determine which accordion to open first
             first_error_section = 'personal'
             if profile_form.errors:
                 first_error_section = 'personal'
@@ -242,12 +243,10 @@ def validate_resume_data_view(request):
                         first_error_section = key
                         break
             
-            # Build the context with all the bound forms (which now contain errors)
             context = { 'profile_form': profile_form, 'first_error_section': first_error_section }
             context.update({f'{key}_formset': fs for key, fs in formsets.items()})
             return render(request, 'resumes/validate_resume.html', context)
 
-    # This block is for GET requests
     else:
         initial_profile_data = parsed_data.get('personal_details', {})
         if parsed_data.get('professional_summary'):
@@ -255,7 +254,6 @@ def validate_resume_data_view(request):
         
         profile_form = ProfileUpdateForm(instance=profile, initial=initial_profile_data, prefix="profile", user=request.user)
         
-        # Prepare initial data for formsets
         initial_data = {
             'experience': parsed_data.get('experience', []),
             'education': parsed_data.get('education', []),
@@ -290,8 +288,11 @@ def edit_item(request, model_name, pk):
     if request.method == 'POST':
         form = Form(request.POST, instance=item)
         if form.is_valid():
-            form.save()
-            update_resume_score_task.delay(item.resume.id)
+            item = form.save()
+            item.resume.score = None # Invalidate score
+            item.resume.save()
+            # --- THE FIX IS HERE: Use transaction.on_commit ---
+            transaction.on_commit(lambda: update_resume_score_task.delay(item.resume.id))
             messages.success(request, f'{model_name.replace("_", " ").title()} updated successfully.')
             return redirect('resumes:resume-builder')
     else:
@@ -307,9 +308,12 @@ def delete_item(request, model_name, pk):
     item = get_object_or_404(Model, pk=pk, resume__profile__user=request.user)
     
     if request.method == 'POST':
-        resume_id = item.resume.id
+        resume = item.resume
+        resume.score = None # Invalidate score
+        resume.save()
         item.delete()
-        update_resume_score_task.delay(resume_id)
+        # --- THE FIX IS HERE: Use transaction.on_commit ---
+        transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
         
         if "HTTP_X_REQUESTED_WITH" in request.META and request.META["HTTP_X_REQUESTED_WITH"] == "XMLHttpRequest":
             return JsonResponse({'status': 'success', 'message': f'{model_name.title()} deleted successfully.'})
@@ -379,4 +383,23 @@ def download_resume_pdf(request, resume_id, template_name):
     response = HttpResponse(pdf_bytes, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{resume.profile.full_name}_resume.pdf"'
     return response
+
+@login_required
+def check_score_status_view(request, resume_id):
+    resume = get_object_or_404(Resume, id=resume_id, profile__user=request.user)
+    if resume.score is not None:
+        feedback = resume.feedback
+        if isinstance(feedback, str):
+            try:
+                feedback = json.loads(feedback)
+            except json.JSONDecodeError:
+                feedback = ["Could not load feedback."]
+        
+        return JsonResponse({
+            'status': 'SUCCESS',
+            'score': resume.score,
+            'feedback': feedback,
+        })
+    else:
+        return JsonResponse({'status': 'PENDING'})
 

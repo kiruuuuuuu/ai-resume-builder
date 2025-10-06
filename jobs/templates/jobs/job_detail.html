@@ -7,7 +7,11 @@
     <div class="bg-white p-8 rounded-xl shadow-md border" x-data="{ open: false }">
         <h1 class="text-4xl font-bold text-gray-900">{{ job.title }}</h1>
         <p class="text-xl text-gray-700 font-medium mt-1">{{ job.employer.company_name }}</p>
-        <p class="text-md text-gray-500">{{ job.location }}</p>
+        <div class="flex items-center text-md text-gray-500 mt-1">
+            <span>{{ job.location }}</span>
+            <span class="mx-2">&bull;</span>
+            <span>{{ job.vacancies }} vacanc{{ job.vacancies|pluralize:"y,ies" }}</span>
+        </div>
 
         {% if job.application_deadline %}
         <p class="text-sm font-semibold text-red-600 mt-2">
@@ -86,3 +90,4 @@
     </div>
 </div>
 {% endblock %}
+
