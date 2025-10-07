@@ -10,6 +10,7 @@ from django.core.files.storage import FileSystemStorage
 from django.db import transaction
 import datetime
 import json
+import re # --- THE FIX IS HERE: Import the 're' module ---
 
 # Celery Tasks
 from .tasks import parse_resume_task, update_resume_score_task
@@ -349,22 +350,32 @@ def download_resume_pdf(request, resume_id, template_name):
             skills_by_category[category] = []
         skills_by_category[category].append(skill.name)
 
-    # --- THE FIX IS HERE: Pre-process descriptions into bullet points ---
+    # --- THE FIX IS HERE: Pre-process descriptions to handle bullet points ---
+    def process_description(description):
+        if not description:
+            return []
+        # Remove leading bullets (-, *, •) and strip whitespace
+        return [re.sub(r'^\s*[-*•]\s*', '', point).strip() for point in description.splitlines() if point.strip()]
+
     experiences = Experience.objects.filter(resume=resume).order_by('-start_date')
     processed_experiences = []
     for exp in experiences:
-        if exp.description:
-            exp.description_points = [point.strip() for point in exp.description.splitlines() if point.strip()]
-        else:
-            exp.description_points = []
+        exp.description_points = process_description(exp.description)
         processed_experiences.append(exp)
+        
+    projects = Project.objects.filter(resume=resume)
+    processed_projects = []
+    for proj in projects:
+        proj.description_points = process_description(proj.description)
+        processed_projects.append(proj)
+
 
     context = {
         'resume': resume,
-        'experiences': processed_experiences, # Use the processed list
+        'experiences': processed_experiences,
         'educations': Education.objects.filter(resume=resume).order_by('-start_date'),
         'skills_by_category': skills_by_category,
-        'projects': Project.objects.filter(resume=resume),
+        'projects': processed_projects, # Use processed projects
         'certifications': Certification.objects.filter(resume=resume),
         'achievements': Achievement.objects.filter(resume=resume),
         'languages': Language.objects.filter(resume=resume),
@@ -407,4 +418,3 @@ def check_score_status_view(request, resume_id):
         })
     else:
         return JsonResponse({'status': 'PENDING'})
-
