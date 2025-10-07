@@ -11,15 +11,23 @@
         body {
             font-family: 'Helvetica', 'Arial', sans-serif;
             color: #333333;
-            font-size: 10.5pt;
-            line-height: 1.5;
+            font-size: 10pt;
+            line-height: 1.4;
         }
-        .name {
-            font-size: 26pt;
-            font-weight: bold;
-            text-align: center;
+        /* --- General Resets & Typography --- */
+        p, h1, h2, h3, ul, li {
             margin: 0;
             padding: 0;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        /* --- Header --- */
+        .name {
+            font-size: 24pt;
+            font-weight: bold;
+            text-align: center;
             color: #2c3e50;
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -28,36 +36,40 @@
             text-align: center;
             font-size: 9.5pt;
             color: #555555;
-            margin-bottom: 20px;
+            margin-top: 5px;
+            margin-bottom: 15px;
             border-bottom: 1px solid #cccccc;
             padding-bottom: 10px;
         }
+        .contact-info .separator { margin: 0 5px; }
+
+        /* --- Sections & Items --- */
         .section-title {
-            font-size: 14pt;
+            font-size: 13pt;
             font-weight: bold;
             color: #2c3e50;
             border-bottom: 2px solid #3498db;
-            padding-bottom: 5px;
-            margin-top: 20px;
-            margin-bottom: 15px;
+            padding-bottom: 4px;
+            margin-top: 18px;
+            margin-bottom: 12px;
             text-transform: uppercase;
-            page-break-after: avoid; /* Prevents the title from being at the bottom of a page alone */
+            page-break-after: avoid;
         }
         .section {
             margin-bottom: 15px;
-            page-break-inside: avoid; /* Tries to keep the whole section together */
+            page-break-inside: avoid;
         }
         .item {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             page-break-inside: avoid;
         }
         .item-header {
             overflow: auto; /* Clear floats */
-            margin-bottom: 3px;
+            margin-bottom: 2px;
         }
         .title {
             font-weight: bold;
-            font-size: 11.5pt;
+            font-size: 11pt;
         }
         .subtitle {
             font-style: italic;
@@ -66,63 +78,69 @@
         .date {
             float: right;
             font-style: italic;
-            font-size: 10pt;
+            font-size: 9.5pt;
             color: #555555;
         }
-        .description {
+
+        /* --- Description Lists (The main fix) --- */
+        .description-list {
             margin-top: 5px;
-            white-space: pre-wrap; /* Preserves line breaks from the textarea */
+            padding-left: 1.5em; /* Indent for bullets */
             text-align: justify;
+            list-style-position: outside;
         }
+        .description-list li {
+            margin-bottom: 4px;
+        }
+
+        /* --- Other Lists & Details --- */
         .tech-details {
             font-size: 9.5pt;
             color: #444;
             margin-top: 5px;
         }
+        .simple-list {
+             padding-left: 1.5em;
+             margin-top: 5px;
+        }
+        .simple-list li {
+            margin-bottom: 4px;
+        }
         .skill-category {
             font-weight: bold;
-            font-size: 11pt;
-            margin-top: 10px;
-        }
-        ul {
-            padding-left: 20px;
-            margin-top: 5px;
+            font-size: 10.5pt;
         }
         .declaration {
             margin-top: 30px;
             padding-top: 15px;
             border-top: 1px solid #cccccc;
-            font-size: 9.5pt;
+            font-size: 9pt;
             color: #555555;
             page-break-inside: avoid;
-        }
-        a {
-            color: #3498db;
-            text-decoration: none;
         }
     </style>
 </head>
 <body>
 
-    <div class="name">{{ resume.profile.full_name|default:resume.profile.user.username }}</div>
+    <p class="name">{{ resume.profile.full_name|default:resume.profile.user.username }}</p>
     <div class="contact-info">
-        {% if resume.profile.phone_number %}<a href="tel:{{ resume.profile.phone_number }}">{{ resume.profile.phone_number }}</a> | {% endif %}
-        <a href="mailto:{{ resume.profile.user.email }}">{{ resume.profile.user.email }}</a> | 
-        {{ resume.profile.address|default:'' }}
-        {% if resume.profile.portfolio_url %}| <a href="{{ resume.profile.portfolio_url }}">Portfolio</a>{% endif %}
-        {% if resume.profile.linkedin_url %}| <a href="{{ resume.profile.linkedin_url }}">LinkedIn</a>{% endif %}
+        {% if resume.profile.phone_number %}<a href="tel:{{ resume.profile.phone_number }}">{{ resume.profile.phone_number }}</a><span class="separator">|</span>{% endif %}
+        <a href="mailto:{{ resume.profile.user.email }}">{{ resume.profile.user.email }}</a>
+        {% if resume.profile.address %}<span class="separator">|</span>{{ resume.profile.address }}{% endif %}
+        {% if resume.profile.portfolio_url %}<span class="separator">|</span><a href="{{ resume.profile.portfolio_url }}">Portfolio</a>{% endif %}
+        {% if resume.profile.linkedin_url %}<span class="separator">|</span><a href="{{ resume.profile.linkedin_url }}">LinkedIn</a>{% endif %}
     </div>
 
     {% if resume.profile.professional_summary %}
     <div class="section">
-        <div class="section-title">Summary</div>
-        <div class="description">{{ resume.profile.professional_summary|linebreaksbr }}</div>
+        <h2 class="section-title">Summary</h2>
+        <p style="text-align: justify;">{{ resume.profile.professional_summary|linebreaksbr }}</p>
     </div>
     {% endif %}
 
     {% if experiences %}
     <div class="section">
-        <div class="section-title">Work Experience</div>
+        <h2 class="section-title">Work Experience</h2>
         {% for exp in experiences %}
             <div class="item">
                 <div class="item-header">
@@ -130,7 +148,13 @@
                     <p class="title">{{ exp.job_title }}</p>
                 </div>
                 <p class="subtitle">{{ exp.company }}</p>
-                <div class="description">{{ exp.description|linebreaksbr }}</div>
+                {% if exp.description_points %}
+                <ul class="description-list">
+                    {% for point in exp.description_points %}
+                        <li>{{ point }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
             </div>
         {% endfor %}
     </div>
@@ -138,7 +162,7 @@
     
     {% if educations %}
     <div class="section">
-        <div class="section-title">Education</div>
+        <h2 class="section-title">Education</h2>
         {% for edu in educations %}
             <div class="item">
                 <div class="item-header">
@@ -154,12 +178,12 @@
 
     {% if projects %}
     <div class="section">
-        <div class="section-title">Projects</div>
+        <h2 class="section-title">Projects</h2>
         {% for p in projects %}
             <div class="item">
                 <p class="title">{{ p.title }}</p>
                 {% if p.aim %}<p class="subtitle">{{ p.aim }}</p>{% endif %}
-                <div class="description">{{ p.description|linebreaksbr }}</div>
+                {% if p.description %}<p style="margin-top: 4px; text-align: justify;">{{ p.description|linebreaksbr }}</p>{% endif %}
                 <div class="tech-details">
                     {% if p.frontend %}<strong>Frontend:</strong> {{ p.frontend }}<br>{% endif %}
                     {% if p.backend %}<strong>Backend:</strong> {{ p.backend }}<br>{% endif %}
@@ -173,17 +197,17 @@
 
     {% if skills_by_category %}
     <div class="section">
-        <div class="section-title">Skills</div>
+        <h2 class="section-title">Skills</h2>
         {% for category, skills in skills_by_category.items %}
-            <p><strong class="skill-category">{{ category }}:</strong> {{ skills|join:", " }}</p>
+            <p style="margin-bottom: 5px;"><strong class="skill-category">{{ category }}:</strong> {{ skills|join:", " }}</p>
         {% endfor %}
     </div>
     {% endif %}
 
     {% if certifications %}
     <div class="section">
-        <div class="section-title">Certifications</div>
-        <ul>
+        <h2 class="section-title">Certifications</h2>
+        <ul class="simple-list">
         {% for cert in certifications %}
             <li><strong>{{ cert.name }}</strong> - <em>{{ cert.issuing_organization }}</em> {% if cert.date_issued %}({{ cert.date_issued|date:"M Y" }}){% endif %}</li>
         {% endfor %}
@@ -193,8 +217,8 @@
 
     {% if achievements %}
     <div class="section">
-        <div class="section-title">Achievements</div>
-        <ul>
+        <h2 class="section-title">Achievements</h2>
+        <ul class="simple-list">
         {% for a in achievements %}
             <li>{% if a.name %}<strong>{{ a.name }}:</strong> {% endif %}{{ a.description }}</li>
         {% endfor %}
@@ -204,14 +228,14 @@
 
     {% if languages %}
     <div class="section">
-        <div class="section-title">Languages</div>
+        <h2 class="section-title">Languages</h2>
         <p>{% for lang in languages %}{{ lang.name }} ({{ lang.get_proficiency_display }}){% if not forloop.last %}, {% endif %}{% endfor %}</p>
     </div>
     {% endif %}
 
     {% if hobbies %}
     <div class="section">
-        <div class="section-title">Hobbies</div>
+        <h2 class="section-title">Hobbies</h2>
         <p>{{ hobbies|join:", " }}</p>
     </div>
     {% endif %}

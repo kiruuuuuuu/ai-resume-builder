@@ -7,7 +7,7 @@ from django.forms import formset_factory
 from django.template.loader import get_template
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
-from django.db import transaction  # --- THE FIX IS HERE: Import transaction ---
+from django.db import transaction
 import datetime
 import json
 
@@ -62,7 +62,6 @@ def resume_builder_view(request):
         )
 
         if created:
-            # --- THE FIX IS HERE: Use transaction.on_commit ---
             transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
 
         experiences = Experience.objects.filter(resume=resume).order_by('-start_date')
@@ -88,7 +87,7 @@ def resume_builder_view(request):
     hobby_form = HobbyForm()
 
     if request.method == 'POST':
-        resume.score = None  # Invalidate score on any change
+        resume.score = None 
         resume.save()
 
         form_map = {
@@ -108,7 +107,6 @@ def resume_builder_view(request):
                 if form.is_valid():
                     item = form.save(commit=False); item.resume = resume; item.save()
                     messages.success(request, f"{name} added successfully.")
-                    # --- THE FIX IS HERE: Use transaction.on_commit ---
                     transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
                     return redirect('resumes:resume-builder')
                 else:
@@ -228,7 +226,6 @@ def validate_resume_data_view(request):
 
             del request.session['parsed_resume_data']
             messages.success(request, "Your resume has been built successfully!")
-            # --- THE FIX IS HERE: Use transaction.on_commit ---
             transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
             return redirect('resumes:resume-builder')
         else:
@@ -289,9 +286,8 @@ def edit_item(request, model_name, pk):
         form = Form(request.POST, instance=item)
         if form.is_valid():
             item = form.save()
-            item.resume.score = None # Invalidate score
+            item.resume.score = None 
             item.resume.save()
-            # --- THE FIX IS HERE: Use transaction.on_commit ---
             transaction.on_commit(lambda: update_resume_score_task.delay(item.resume.id))
             messages.success(request, f'{model_name.replace("_", " ").title()} updated successfully.')
             return redirect('resumes:resume-builder')
@@ -309,10 +305,9 @@ def delete_item(request, model_name, pk):
     
     if request.method == 'POST':
         resume = item.resume
-        resume.score = None # Invalidate score
+        resume.score = None 
         resume.save()
         item.delete()
-        # --- THE FIX IS HERE: Use transaction.on_commit ---
         transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
         
         if "HTTP_X_REQUESTED_WITH" in request.META and request.META["HTTP_X_REQUESTED_WITH"] == "XMLHttpRequest":
@@ -354,9 +349,19 @@ def download_resume_pdf(request, resume_id, template_name):
             skills_by_category[category] = []
         skills_by_category[category].append(skill.name)
 
+    # --- THE FIX IS HERE: Pre-process descriptions into bullet points ---
+    experiences = Experience.objects.filter(resume=resume).order_by('-start_date')
+    processed_experiences = []
+    for exp in experiences:
+        if exp.description:
+            exp.description_points = [point.strip() for point in exp.description.splitlines() if point.strip()]
+        else:
+            exp.description_points = []
+        processed_experiences.append(exp)
+
     context = {
         'resume': resume,
-        'experiences': Experience.objects.filter(resume=resume).order_by('-start_date'),
+        'experiences': processed_experiences, # Use the processed list
         'educations': Education.objects.filter(resume=resume).order_by('-start_date'),
         'skills_by_category': skills_by_category,
         'projects': Project.objects.filter(resume=resume),
