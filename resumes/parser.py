@@ -154,10 +154,14 @@ def enhance_text_with_gemini(text_to_enhance: str, context: str) -> str:
         return text_to_enhance
         
     context_instructions = ""
+    # --- THE FIX IS HERE: Added character limits and a new context for projects ---
     if context == 'experience_description':
-        context_instructions = "Focus on using strong action verbs at the start of each point. Quantify achievements with numbers and metrics where possible (e.g., 'Increased efficiency by 20%' or 'Managed a team of 5')."
+        context_instructions = "Focus on using strong action verbs and quantifying achievements. The entire response must be under 300 characters."
     elif context == 'professional_summary':
-        context_instructions = "Keep it concise (2-3 sentences). Highlight top skills, years of experience, and career goals. It should be a powerful, high-level introduction."
+        context_instructions = "Keep it a concise and powerful introduction (2-3 sentences). The entire response must be under 300 characters."
+    elif context == 'project_description':
+        context_instructions = "Clearly explain the project's purpose and your role. The entire response must be under 200 characters."
+
 
     prompt = f"""
     You are an expert career coach and resume writer. Your task is to rewrite and enhance the following text for a resume's '{context}' section to be more professional, impactful, and tailored to its purpose.
@@ -303,4 +307,3 @@ def get_full_resume_text(resume):
     
     return full_text
 # --- END: Moved Helper Function ---
-

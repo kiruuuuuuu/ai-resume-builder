@@ -21,8 +21,8 @@
                     <a href="{% url 'resumes:resume-dashboard' %}" class="text-sm font-medium text-gray-600 hover:text-indigo-500">
                         Cancel
                     </a>
-                    <!-- === CONDITIONAL ENHANCE BUTTON === -->
-                    {% if 'Experience' in title or 'Personal Details' in title %}
+                    <!-- === THE FIX IS HERE: Added 'Project' to the condition === -->
+                    {% if 'Experience' in title or 'Personal Details' in title or 'Project' in title %}
                         <button type="button" id="enhance-edit-btn" class="text-sm font-medium text-purple-600 hover:text-purple-800">✨ Enhance with AI</button>
                     {% endif %}
                     <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
@@ -34,7 +34,7 @@
     </div>
 </div>
 
-<!-- === JAVASCRIPT FOR AI ENHANCE BUTTON === -->
+<!-- === THE FIX IS HERE: JAVASCRIPT updated to handle all three contexts === -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const enhanceButton = document.getElementById('enhance-edit-btn');
@@ -50,7 +50,11 @@
                 } else if ("{{ title }}".includes("Personal Details")) {
                     textInput = form.querySelector('textarea[name="professional_summary"]');
                     context = 'professional_summary';
+                } else if ("{{ title }}".includes("Project")) {
+                    textInput = form.querySelector('textarea[name="description"]');
+                    context = 'project_description';
                 }
+
 
                 if (!textInput || !textInput.value) {
                     alert('Please enter some text to enhance.');

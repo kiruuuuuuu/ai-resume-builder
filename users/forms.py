@@ -18,10 +18,9 @@ class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = JobSeekerProfile
         fields = ['profile_photo', 'full_name', 'professional_summary', 'phone_number', 'address', 'date_of_birth', 'portfolio_url', 'linkedin_url']
-        # --- THE FIX IS HERE ---
-        # Use ClearableFileInput to allow users to remove the existing photo.
         widgets = {
             'profile_photo': forms.ClearableFileInput(),
+            'date_of_birth': forms.DateInput(attrs={'type': 'date', 'max': date.today().isoformat()}),
         }
     
     def __init__(self, *args, **kwargs):
@@ -31,9 +30,6 @@ class ProfileUpdateForm(forms.ModelForm):
         if self.user:
             self.fields['email'].initial = self.user.email
         
-        # --- THE FIX IS HERE ---
-        # Make the photo not required if one already exists.
-        # The ClearableFileInput will handle the deletion logic.
         if self.instance and self.instance.profile_photo:
             self.fields['profile_photo'].required = False
 
@@ -90,12 +86,9 @@ class ProfileUpdateForm(forms.ModelForm):
     def clean_profile_photo(self):
         photo = self.cleaned_data.get('profile_photo')
 
-        # This check handles the case where the user wants to clear the photo.
-        # If 'photo' is False, it means the 'clear' checkbox was ticked.
         if photo is False:
-            return photo # Allow deletion
+            return photo 
 
-        # If a new photo is uploaded, validate it.
         if photo:
             if photo.size > 2 * 1024 * 1024: raise forms.ValidationError("Image file too large ( > 2 MB ).")
             if os.path.splitext(photo.name)[1].lower() not in ['.jpg', '.jpeg', '.png']: raise forms.ValidationError("Unsupported file extension. Please use JPG, JPEG, or PNG.")
