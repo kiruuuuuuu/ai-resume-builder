@@ -42,15 +42,30 @@ from .parser import (
     enhance_text_with_gemini
 )
 
+# --- THE FIX IS HERE ---
+from .templatetags.resume_extras import is_resume_empty
+
+
 # --- Main Views ---
 @login_required
 def resume_dashboard_view(request):
     try:
         profile = request.user.jobseekerprofile
         resume = Resume.objects.filter(profile=profile).latest('created_at')
-        return redirect('resumes:resume-builder')
+        
+        # Only redirect to the builder if the resume actually has content.
+        # Otherwise, the user should always see the dashboard choices.
+        if not is_resume_empty(resume):
+            return redirect('resumes:resume-builder')
+
     except (JobSeekerProfile.DoesNotExist, Resume.DoesNotExist):
-        return render(request, 'resumes/resume_dashboard.html')
+        # If no profile or no resume exists at all, that's fine.
+        # The user will be shown the dashboard to make a choice.
+        pass
+
+    # The default action is to always render the dashboard, which contains
+    # the "Upload" and "Build from Scratch" options.
+    return render(request, 'resumes/resume_dashboard.html')
 
 
 @login_required
@@ -418,3 +433,4 @@ def check_score_status_view(request, resume_id):
         })
     else:
         return JsonResponse({'status': 'PENDING'})
+

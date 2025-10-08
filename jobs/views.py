@@ -24,6 +24,8 @@ from .models import JobPosting, Application, Notification, Interview, InterviewS
 from users.models import EmployerProfile, JobSeekerProfile
 from resumes.models import Resume, Experience, Education, Skill, Project, Certification, Achievement, Language, Hobby
 from resumes.parser import get_full_resume_text
+# --- THE FIX IS HERE ---
+from resumes.templatetags.resume_extras import get_resume_completeness_errors
 
 
 # Forms
@@ -134,9 +136,24 @@ def apply_for_job_view(request, job_id):
         messages.error(request, "Only Job Seekers can apply for jobs.")
         return redirect('home')
         
-    if not Resume.objects.filter(profile=request.user.jobseekerprofile).exists():
-        messages.error(request, "You must create or upload a resume before you can apply for a job.")
+    # --- THE FIX IS HERE ---
+    # This logic now checks for a minimum viable resume and provides a detailed error message.
+    try:
+        applicant_resume = Resume.objects.filter(profile=request.user.jobseekerprofile).latest('created_at')
+        missing_items = get_resume_completeness_errors(applicant_resume)
+        if missing_items:
+            # Construct a user-friendly error message and raise an exception to be caught below.
+            error_message = "Your resume is incomplete. Please add " + ", and ".join(missing_items) + " before applying."
+            raise ValueError(error_message)
+
+    except (Resume.DoesNotExist, JobSeekerProfile.DoesNotExist):
+        messages.error(request, "You must create a resume before applying.")
         return redirect('resumes:resume-dashboard')
+    except ValueError as e:
+        # Catch the custom error message and display it to the user.
+        messages.error(request, str(e))
+        return redirect('resumes:resume-builder')
+
 
     applicant_profile = request.user.jobseekerprofile
 
