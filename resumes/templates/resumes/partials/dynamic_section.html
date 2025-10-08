@@ -1,0 +1,34 @@
+{% load crispy_forms_tags %}
+<div class="bg-white p-6 rounded-xl shadow-md border">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ section_title }}</h2>
+    
+    <!-- Display Existing Items -->
+    <div id="items-container-{{ section_name }}" class="space-y-6">
+        {% for item in items %}
+            <div id="item-{{ section_name }}-{{ item.pk }}">
+                {% include 'resumes/partials/'|add:section_name|add:'_item.html' %}
+            </div>
+        {% endfor %}
+        {% if not items %}
+            <p id="empty-message-{{ section_name }}" class="text-gray-500">No {{ section_title|lower }} added yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Add New Item Form -->
+    <div class="border-t mt-6 pt-6">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Add New {{ section_title }}</h3>
+        <form @submit.prevent="handleFormSubmit" action="{% url 'resumes:resume-builder' %}" method="post" class="space-y-4" data-section="{{ section_name }}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add">
+            <input type="hidden" name="model_name" value="{{ section_name }}">
+            {{ form|crispy }}
+            <div class="flex justify-end items-center gap-4">
+                {% if section_name in 'experience,project' or section_name == 'achievement' %}
+                    <button type="button" @click="enhanceText" data-context="{{ section_name }}_description" data-target="description" class="text-sm font-medium text-purple-600 hover:text-purple-800">✨ Enhance Description</button>
+                {% endif %}
+                <button type="submit" class="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700">Add {{ section_title }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+

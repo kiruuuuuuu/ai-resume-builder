@@ -49,8 +49,9 @@ class ExperienceForm(forms.ModelForm):
     def clean_company(self): return _validate_text_field(self.cleaned_data.get('company'), 'Company')
     def clean_description(self):
         desc = self.cleaned_data.get('description')
-        if len(desc) > 300:
-            raise forms.ValidationError('Description cannot exceed 300 characters.')
+        # --- THE FIX IS HERE ---
+        if len(desc) > 500:
+            raise forms.ValidationError('Description cannot exceed 500 characters.')
         return _validate_text_field(desc, 'Description', min_length=10)
     def clean(self): return _validate_end_date(super().clean())
 
@@ -92,8 +93,9 @@ class ProjectForm(forms.ModelForm):
     
     def clean_description(self):
         desc = self.cleaned_data.get('description')
-        if desc and len(desc) > 200:
-            raise forms.ValidationError('Description cannot exceed 200 characters.')
+        # --- THE FIX IS HERE ---
+        if desc and len(desc) > 400:
+            raise forms.ValidationError('Description cannot exceed 400 characters.')
         return desc
 
 class CertificationForm(forms.ModelForm):
@@ -118,4 +120,3 @@ class LanguageForm(forms.ModelForm):
 class HobbyForm(forms.ModelForm):
     class Meta: model = Hobby; fields = ['name']
     def clean_name(self): return _validate_text_field(self.cleaned_data.get('name'), 'Hobby')
-

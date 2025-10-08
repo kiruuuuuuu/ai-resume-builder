@@ -12,38 +12,22 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         [x-cloak] { display: none !important; }
-        .toast {
-            position: fixed;
-            top: 1.5rem;
-            right: 1.5rem;
-            transform: translateX(120%);
-            transition: transform 0.5s ease-in-out;
-            z-index: 1000;
-        }
-        .toast.show {
-            transform: translateX(0);
-        }
         .prose {
             --tw-prose-body: #374151;
             --tw-prose-headings: #1f2937;
             --tw-prose-links: #4f46e5;
         }
-
-        /* *** THE FIX IS HERE: Styling for crispy-forms default elements *** */
-        /* Style for the red asterisk on required fields */
         .asteriskField {
-            color: #ef4444; /* red-500 */
+            color: #ef4444;
             font-weight: bold;
             margin-left: 2px;
         }
-        /* Style for the input field when there is an error */
         .is-invalid input, .is-invalid textarea, .is-invalid select {
-            border-color: #ef4444 !important; /* Tailwind's red-500 */
+            border-color: #ef4444 !important;
         }
-        /* Style for the error message text below the field */
         .is-invalid .text-red-600 {
-            font-size: 0.875rem; /* text-sm */
-            margin-top: 0.25rem; /* mt-1 */
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
         }
     </style>
 </head>
@@ -90,11 +74,11 @@
             {% block content %}{% endblock %}
         </main>
         
-        <div id="toast-container" class="fixed top-5 right-5 z-50 space-y-3">
+        <div id="toast-container" class="fixed top-5 right-5 z-50 space-y-3 w-full max-w-sm">
             {% if messages %}
                 {% for message in messages %}
-                    <div class="toast max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden" data-message>
-                        <div class="p-4">
+                    <div class="toast-message max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden">
+                        <div class="p-4 border-l-4 {% if message.tags == 'success' %}border-green-400{% else %}border-red-400{% endif %}">
                             <div class="flex items-start">
                                 <div class="flex-shrink-0">
                                     {% if message.tags == 'success' %}
@@ -123,14 +107,17 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
-            const toasts = document.querySelectorAll('.toast[data-message]');
+            const toasts = document.querySelectorAll('.toast-message');
             toasts.forEach((toast, index) => {
+                toast.style.transition = 'transform 0.5s ease-in-out';
+                toast.style.transform = 'translateX(120%)';
+                
                 setTimeout(() => {
-                    toast.classList.add('show');
+                    toast.style.transform = 'translateX(0)';
                 }, 100 * (index + 1));
 
                 setTimeout(() => {
-                    toast.classList.remove('show');
+                    toast.style.transform = 'translateX(120%)';
                     setTimeout(() => toast.remove(), 500);
                 }, 5000 + (100 * index));
             });

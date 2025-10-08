@@ -1,0 +1,13 @@
+{% load crispy_forms_tags %}
+<form @submit.prevent="handleUpdateSubmit" action="{% url 'resumes:resume-builder' %}" method="post" class="space-y-4 bg-slate-50 p-4 rounded-lg border" data-section="project">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="update">
+    <input type="hidden" name="model_name" value="project">
+    <input type="hidden" name="pk" value="{{ pk }}">
+    {{ form|crispy }}
+    <div class="flex justify-end items-center gap-4">
+        <button type="button" @click="enhanceText" data-context="project_description" data-target="description" class="text-sm font-medium text-purple-600 hover:text-purple-800">✨ Enhance Description</button>
+        <button type="button" @click="cancelEdit({{ pk }}, 'project')" class="text-sm font-medium text-gray-600 hover:text-gray-800">Cancel</button>
+        <button type="submit" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-green-700">Save Changes</button>
+    </div>
+</form>

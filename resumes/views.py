@@ -3,14 +3,11 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
-from django.forms import formset_factory
-from django.template.loader import get_template
+from django.template.loader import render_to_string, get_template
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.db import transaction
-import datetime
 import json
-import re # --- THE FIX IS HERE: Import the 're' module ---
 
 # Celery Tasks
 from .tasks import parse_resume_task, update_resume_score_task
@@ -38,13 +35,7 @@ from .forms import (
 from users.forms import ProfileUpdateForm
 
 # AI Parser
-from .parser import (
-    enhance_text_with_gemini
-)
-
-# --- THE FIX IS HERE ---
-from .templatetags.resume_extras import is_resume_empty
-
+from .parser import enhance_text_with_gemini
 
 # --- Main Views ---
 @login_required
@@ -53,18 +44,13 @@ def resume_dashboard_view(request):
         profile = request.user.jobseekerprofile
         resume = Resume.objects.filter(profile=profile).latest('created_at')
         
-        # Only redirect to the builder if the resume actually has content.
-        # Otherwise, the user should always see the dashboard choices.
-        if not is_resume_empty(resume):
-            return redirect('resumes:resume-builder')
+        from .templatetags.resume_extras import get_resume_completeness_errors
+        if not get_resume_completeness_errors(resume):
+             return redirect('resumes:resume-builder')
 
     except (JobSeekerProfile.DoesNotExist, Resume.DoesNotExist):
-        # If no profile or no resume exists at all, that's fine.
-        # The user will be shown the dashboard to make a choice.
         pass
 
-    # The default action is to always render the dashboard, which contains
-    # the "Upload" and "Build from Scratch" options.
     return render(request, 'resumes/resume_dashboard.html')
 
 
@@ -79,84 +65,123 @@ def resume_builder_view(request):
 
         if created:
             transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
+        
+        if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return handle_ajax_request(request, resume)
 
-        experiences = Experience.objects.filter(resume=resume).order_by('-start_date')
-        educations = Education.objects.filter(resume=resume).order_by('-start_date')
-        skills = Skill.objects.filter(resume=resume)
-        projects = Project.objects.filter(resume=resume)
-        certifications = Certification.objects.filter(resume=resume)
-        achievements = Achievement.objects.filter(resume=resume)
-        languages = Language.objects.filter(resume=resume)
-        hobbies = Hobby.objects.filter(resume=resume)
+        # Prepare context for the initial page load
+        resume_sections = [
+            {'name': 'experience', 'title': 'Experience', 'form': ExperienceForm(), 'items': Experience.objects.filter(resume=resume).order_by('-start_date')},
+            {'name': 'education', 'title': 'Education', 'form': EducationForm(), 'items': Education.objects.filter(resume=resume).order_by('-start_date')},
+            {'name': 'skill', 'title': 'Skills', 'form': SkillForm(), 'items': Skill.objects.filter(resume=resume)},
+            {'name': 'project', 'title': 'Projects', 'form': ProjectForm(), 'items': Project.objects.filter(resume=resume)},
+            {'name': 'certification', 'title': 'Certifications', 'form': CertificationForm(), 'items': Certification.objects.filter(resume=resume)},
+            {'name': 'achievement', 'title': 'Achievements', 'form': AchievementForm(), 'items': Achievement.objects.filter(resume=resume)},
+            {'name': 'language', 'title': 'Languages', 'form': LanguageForm(), 'items': Language.objects.filter(resume=resume)},
+            {'name': 'hobby', 'title': 'Hobbies', 'form': HobbyForm(), 'items': Hobby.objects.filter(resume=resume)},
+        ]
+        
+        score = resume.score
+        feedback = resume.feedback
+        if feedback and isinstance(feedback, str):
+            try: feedback = json.loads(feedback)
+            except json.JSONDecodeError: feedback = []
+
+        context = {
+            'resume': resume,
+            'score': score, 
+            'feedback': json.dumps(feedback),
+            'resume_sections': resume_sections,
+        }
+        return render(request, 'resumes/resume_builder.html', context)
+
     except JobSeekerProfile.DoesNotExist:
         JobSeekerProfile.objects.create(user=request.user)
         messages.info(request, "We've created a profile for you to get started.")
         return redirect('resumes:resume-dashboard')
 
-    experience_form = ExperienceForm()
-    education_form = EducationForm()
-    skill_form = SkillForm()
-    project_form = ProjectForm()
-    certification_form = CertificationForm()
-    achievement_form = AchievementForm()
-    language_form = LanguageForm()
-    hobby_form = HobbyForm()
 
-    if request.method == 'POST':
-        resume.score = None 
-        resume.save()
+def handle_ajax_request(request, resume):
+    action = request.POST.get('action')
+    model_name = request.POST.get('model_name')
+    pk = request.POST.get('pk')
 
-        form_map = {
-            'add_experience': (ExperienceForm, "Experience"),
-            'add_education': (EducationForm, "Education"),
-            'add_skill': (SkillForm, "Skill"),
-            'add_project': (ProjectForm, "Project"),
-            'add_certification': (CertificationForm, "Certification"),
-            'add_achievement': (AchievementForm, "Achievement"),
-            'add_language': (LanguageForm, "Language"),
-            'add_hobby': (HobbyForm, "Hobby"),
-        }
-
-        for trigger, (Form, name) in form_map.items():
-            if trigger in request.POST:
-                form = Form(request.POST)
-                if form.is_valid():
-                    item = form.save(commit=False); item.resume = resume; item.save()
-                    messages.success(request, f"{name} added successfully.")
-                    transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
-                    return redirect('resumes:resume-builder')
-                else:
-                    if trigger == 'add_experience': experience_form = form
-                    elif trigger == 'add_education': education_form = form
-                    elif trigger == 'add_skill': skill_form = form
-                    elif trigger == 'add_project': project_form = form
-                    elif trigger == 'add_certification': certification_form = form
-                    elif trigger == 'add_achievement': achievement_form = form
-                    elif trigger == 'add_language': language_form = form
-                    elif trigger == 'add_hobby': hobby_form = form
-
-    score = resume.score
-    feedback = resume.feedback
-
-    if feedback and isinstance(feedback, str):
-        try:
-            feedback = json.loads(feedback)
-        except json.JSONDecodeError:
-            feedback = []
-
-    context = {
-        'resume': resume, 'experiences': experiences, 'educations': educations, 'skills': skills,
-        'projects': projects, 'certifications': certifications, 'achievements': achievements,
-        'languages': languages, 'hobbies': hobbies,
-        'experience_form': experience_form, 'education_form': education_form, 'skill_form': skill_form,
-        'project_form': project_form, 'certification_form': certification_form, 'achievement_form': achievement_form,
-        'language_form': language_form, 'hobby_form': hobby_form,
-        'score': score, 
-        'feedback': json.dumps(feedback)
+    model_map = {
+        'experience': (Experience, ExperienceForm), 'education': (Education, EducationForm),
+        'skill': (Skill, SkillForm), 'project': (Project, ProjectForm),
+        'certification': (Certification, CertificationForm), 'achievement': (Achievement, AchievementForm),
+        'language': (Language, LanguageForm), 'hobby': (Hobby, HobbyForm),
+        'personal_details': (JobSeekerProfile, ProfileUpdateForm),
     }
-    return render(request, 'resumes/resume_builder.html', context)
+
+    if model_name not in model_map:
+        return JsonResponse({'status': 'error', 'message': 'Invalid model specified.'}, status=400)
+
+    Model, Form = model_map[model_name]
+    is_profile = (model_name == 'personal_details')
+
+    if action == 'add':
+        if is_profile: return JsonResponse({'status': 'error', 'message': 'Cannot add a profile.'}, status=400)
+        form = Form(request.POST)
+        if form.is_valid():
+            item = form.save(commit=False); item.resume = resume; item.save()
+            resume.score = None; resume.save()
+            transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
+            item_html = render_to_string(f'resumes/partials/{model_name}_item.html', {'item': item})
+            return JsonResponse({'status': 'success', 'item_html': item_html, 'section': model_name})
+        else:
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+    
+    elif action == 'get_edit_form':
+        item = get_object_or_404(Model, pk=pk)
+        if not is_profile and item.resume != resume: return JsonResponse({'status': 'error'}, status=403)
+        if is_profile and item.user != request.user: return JsonResponse({'status': 'error'}, status=403)
+
+        form_kwargs = {'instance': item}
+        if is_profile: form_kwargs['user'] = request.user
+        
+        form = Form(**form_kwargs)
+        template_name = f'resumes/partials/{"personal_details" if is_profile else model_name}_form.html'
+        form_html = render_to_string(template_name, {'form': form, 'pk': pk}, request=request)
+        return JsonResponse({'status': 'success', 'form_html': form_html})
+
+    elif action == 'update':
+        item = get_object_or_404(Model, pk=pk)
+        if not is_profile and item.resume != resume: return JsonResponse({'status': 'error'}, status=403)
+        if is_profile and item.user != request.user: return JsonResponse({'status': 'error'}, status=403)
+        
+        form_kwargs = {'instance': item, 'data': request.POST, 'files': request.FILES}
+        if is_profile: form_kwargs['user'] = request.user
+
+        form = Form(**form_kwargs)
+        if form.is_valid():
+            item = form.save()
+            resume.score = None; resume.save()
+            transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
+            
+            if is_profile:
+                resume.refresh_from_db()
+
+            context = {'item': item} if not is_profile else {'resume': resume}
+            template_name = f'resumes/partials/{"personal_details_section" if is_profile else model_name + "_item"}.html'
+
+            item_html = render_to_string(template_name, context, request=request)
+            return JsonResponse({'status': 'success', 'item_html': item_html, 'pk': pk, 'new_title': resume.title})
+        else:
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+
+    elif action == 'delete':
+        if is_profile: return JsonResponse({'status': 'error', 'message': 'Cannot delete a profile.'}, status=400)
+        item = get_object_or_404(Model, pk=pk, resume=resume)
+        item.delete()
+        resume.score = None; resume.save()
+        transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
+        return JsonResponse({'status': 'success', 'section': model_name})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid action.'}, status=400)
 
 
+# --- File Upload and Parsing ---
 @login_required
 def upload_resume_view(request):
     if request.method == 'POST':
@@ -200,6 +225,7 @@ def check_parsing_status_view(request):
 
 @login_required
 def validate_resume_data_view(request):
+    from django.forms import formset_factory
     parsed_data = request.session.get('parsed_resume_data')
     if not parsed_data:
         messages.warning(request, "Your session has expired. Please upload your resume again.")
@@ -287,54 +313,6 @@ def validate_resume_data_view(request):
 
 # --- Other Views ---
 @login_required
-def edit_item(request, model_name, pk):
-    model_map = {
-        'experience': (Experience, ExperienceForm), 'education': (Education, EducationForm),
-        'skill': (Skill, SkillForm), 'project': (Project, ProjectForm),
-        'certification': (Certification, CertificationForm), 'achievement': (Achievement, AchievementForm),
-        'language': (Language, LanguageForm), 'hobby': (Hobby, HobbyForm),
-    }
-    Model, Form = model_map.get(model_name)
-    item = get_object_or_404(Model, pk=pk, resume__profile__user=request.user)
-    title = f'Edit {model_name.replace("_", " ").title()}'
-    
-    if request.method == 'POST':
-        form = Form(request.POST, instance=item)
-        if form.is_valid():
-            item = form.save()
-            item.resume.score = None 
-            item.resume.save()
-            transaction.on_commit(lambda: update_resume_score_task.delay(item.resume.id))
-            messages.success(request, f'{model_name.replace("_", " ").title()} updated successfully.')
-            return redirect('resumes:resume-builder')
-    else:
-        form = Form(instance=item)
-    
-    return render(request, 'resumes/edit_item.html', {'form': form, 'title': title})
-
-@login_required
-def delete_item(request, model_name, pk):
-    model_map = {'experience': Experience, 'education': Education, 'skill': Skill, 'project': Project, 
-                 'certification': Certification, 'achievement': Achievement, 'language': Language, 'hobby': Hobby}
-    Model = model_map.get(model_name)
-    item = get_object_or_404(Model, pk=pk, resume__profile__user=request.user)
-    
-    if request.method == 'POST':
-        resume = item.resume
-        resume.score = None 
-        resume.save()
-        item.delete()
-        transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
-        
-        if "HTTP_X_REQUESTED_WITH" in request.META and request.META["HTTP_X_REQUESTED_WITH"] == "XMLHttpRequest":
-            return JsonResponse({'status': 'success', 'message': f'{model_name.title()} deleted successfully.'})
-        
-        messages.success(request, f'{model_name.replace("_", " ").title()} deleted successfully.')
-        return redirect('resumes:resume-builder')
-
-    return redirect('resumes:resume-builder')
-    
-@login_required
 def enhance_description_api(request):
     if request.method == 'POST':
         try:
@@ -365,32 +343,23 @@ def download_resume_pdf(request, resume_id, template_name):
             skills_by_category[category] = []
         skills_by_category[category].append(skill.name)
 
-    # --- THE FIX IS HERE: Pre-process descriptions to handle bullet points ---
-    def process_description(description):
-        if not description:
-            return []
-        # Remove leading bullets (-, *, •) and strip whitespace
-        return [re.sub(r'^\s*[-*•]\s*', '', point).strip() for point in description.splitlines() if point.strip()]
-
     experiences = Experience.objects.filter(resume=resume).order_by('-start_date')
     processed_experiences = []
     for exp in experiences:
-        exp.description_points = process_description(exp.description)
+        if exp.description:
+            # Clean up leading bullet characters before splitting
+            clean_desc = '\n'.join(line.lstrip('*- ') for line in exp.description.splitlines())
+            exp.description_points = [point.strip() for point in clean_desc.splitlines() if point.strip()]
+        else:
+            exp.description_points = []
         processed_experiences.append(exp)
-        
-    projects = Project.objects.filter(resume=resume)
-    processed_projects = []
-    for proj in projects:
-        proj.description_points = process_description(proj.description)
-        processed_projects.append(proj)
-
 
     context = {
         'resume': resume,
-        'experiences': processed_experiences,
+        'experiences': processed_experiences, # Use the processed list
         'educations': Education.objects.filter(resume=resume).order_by('-start_date'),
         'skills_by_category': skills_by_category,
-        'projects': processed_projects, # Use processed projects
+        'projects': Project.objects.filter(resume=resume),
         'certifications': Certification.objects.filter(resume=resume),
         'achievements': Achievement.objects.filter(resume=resume),
         'languages': Language.objects.filter(resume=resume),

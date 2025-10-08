@@ -1,0 +1,12 @@
+<div class="border-t pt-2 pb-2">
+    <div class="flex justify-between items-start">
+        <div>
+            {% if item.name %}<h3 class="font-bold text-lg">{{ item.name }}</h3>{% endif %}
+            <p class="text-gray-700">{{ item.description }}</p>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0 ml-2">
+            <button @click="editItem($event)" data-pk="{{ item.pk }}" data-section="achievement" class="text-blue-500 hover:text-blue-700 text-sm font-medium">Edit</button>
+            <button @click="deleteItem($event)" data-pk="{{ item.pk }}" data-section="achievement" class="text-red-500 hover:text-red-700 text-sm font-medium">Delete</button>
+        </div>
+    </div>
+</div>

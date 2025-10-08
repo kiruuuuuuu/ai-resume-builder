@@ -60,7 +60,8 @@ class ProfileUpdateForm(forms.ModelForm):
         if summary:
             if not re.search(r'[a-zA-Z]', summary): raise forms.ValidationError('Professional summary must contain descriptive text.')
             if len(summary.strip()) < 20: raise forms.ValidationError('Professional summary should be at least 20 characters long.')
-            if len(summary.strip()) > 300: raise forms.ValidationError('Professional summary cannot exceed 300 characters.')
+            # --- THE FIX IS HERE ---
+            if len(summary.strip()) > 600: raise forms.ValidationError('Professional summary cannot exceed 600 characters.')
         return summary
         
     def clean_phone_number(self):

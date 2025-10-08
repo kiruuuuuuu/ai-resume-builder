@@ -154,13 +154,13 @@ def enhance_text_with_gemini(text_to_enhance: str, context: str) -> str:
         return text_to_enhance
         
     context_instructions = ""
-    # --- THE FIX IS HERE: Added character limits and a new context for projects ---
+    # --- THE FIX IS HERE: Updated character limits ---
     if context == 'experience_description':
-        context_instructions = "Focus on using strong action verbs and quantifying achievements. The entire response must be under 300 characters."
+        context_instructions = "Focus on using strong action verbs and quantifying achievements. The entire response must be under 500 characters."
     elif context == 'professional_summary':
-        context_instructions = "Keep it a concise and powerful introduction (2-3 sentences). The entire response must be under 300 characters."
+        context_instructions = "Keep it a concise and powerful introduction (2-3 sentences). The entire response must be under 600 characters."
     elif context == 'project_description':
-        context_instructions = "Clearly explain the project's purpose and your role. The entire response must be under 200 characters."
+        context_instructions = "Clearly explain the project's purpose and your role. The entire response must be under 400 characters."
 
 
     prompt = f"""
@@ -307,3 +307,4 @@ def get_full_resume_text(resume):
     
     return full_text
 # --- END: Moved Helper Function ---
+
