@@ -13,37 +13,38 @@
         html, body {
             font-family: 'Inter', Arial, sans-serif;
             color: #3a3a3a;
-            font-size: 9pt; /* --- THE FIX IS HERE: Increased base font size --- */
-            line-height: 1.35;
+            font-size: 8.5pt;
+            line-height: 1.3;
             margin: 0;
             padding: 0;
-            height: 100%;
-            -webkit-print-color-adjust: exact; /* Ensures background color prints */
-            overflow: hidden; /* Contains the negative margin hack */
+            width: 210mm; /* A4 width */
+            height: 297mm; /* A4 height */
+            -webkit-print-color-adjust: exact;
         }
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-        .resume-layout {
+        .page {
+            display: flex;
+            flex-direction: row;
             width: 100%;
             height: 100%;
-            border-collapse: collapse;
         }
         .sidebar {
-            width: 34%;
+            width: 35%;
             background-color: #2c3e50 !important;
             color: #f0f0f0;
-            vertical-align: top;
-            padding: 12mm 10mm; 
-            padding-bottom: 3000px;
-            margin-bottom: -3000px;
+            padding: 25px 20px;
+            display: flex;
+            flex-direction: column; /* Key for vertical flex layout */
         }
         .content {
-            width: 66%;
-            vertical-align: top;
-            padding: 12mm 15mm; 
-            padding-bottom: 3000px;
-            margin-bottom: -3000px;
+            width: 65%;
+            padding: 25px;
+            display: flex;
+            flex-direction: column; /* Key for vertical flex layout */
         }
         a {
             text-decoration: none;
@@ -52,40 +53,43 @@
         .sidebar a {
             color: #ecf0f1;
         }
+        
+        /* --- Flexbox Spacer --- */
+        .flex-spacer {
+            flex-grow: 1; /* This is the crucial element that pushes content down */
+        }
 
         /* --- Sidebar Styling --- */
         .profile-photo-container {
             text-align: center;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
         .profile-photo {
-            width: 80px;
-            height: 80px;
+            width: 85px;
+            height: 85px;
             border-radius: 50%;
             object-fit: cover;
             border: 3px solid #34495e;
         }
         .sidebar h2 {
-            font-size: 11pt;
+            font-size: 10pt;
             text-transform: uppercase;
             letter-spacing: 1.5px;
             color: #ffffff;
             border-bottom: 1px solid #7f8c8d;
             padding-bottom: 3px;
-            margin: 12px 0 6px 0;
-            page-break-after: avoid;
+            margin: 15px 0 6px 0;
             font-weight: 700;
         }
         .contact-item, .sidebar-item {
             display: flex;
             align-items: flex-start;
-            margin-bottom: 6px;
-            font-size: 9pt;
-            page-break-inside: avoid;
+            margin-bottom: 5px;
+            font-size: 8.5pt;
         }
         .contact-item svg {
-            width: 10px;
-            height: 10px;
+            width: 11px;
+            height: 11px;
             margin-right: 8px;
             flex-shrink: 0;
             margin-top: 2px;
@@ -93,71 +97,66 @@
         .contact-item-text { word-break: break-all; }
         .skill-category {
             margin-bottom: 6px;
-            page-break-inside: avoid;
         }
         .skill-category strong {
             display: block;
             color: #ffffff;
             margin-bottom: 2px;
-            font-size: 9.5pt;
+            font-size: 9pt;
             font-weight: 500;
         }
         .skill-category span {
-            font-size: 9pt;
+            font-size: 8.5pt;
             color: #bdc3c7;
         }
 
-        /* --- Main Content Styling (Right Side) --- */
+        /* --- Main Content Styling --- */
         .name {
-            font-size: 24pt; /* --- Font size increased --- */
-            font-weight: 700;
+            font-size: 24pt;
+            font-weight: bold;
             color: #2c3e50;
             line-height: 1.1;
             margin-bottom: 2px;
         }
         .job-title-header {
-            font-size: 12pt; /* --- Font size increased --- */
+            font-size: 12pt;
             color: #3498db;
             font-weight: 500;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
         .content h2 {
-            font-size: 12pt; /* --- Font size increased --- */
+            font-size: 11.5pt;
             color: #2c3e50;
             text-transform: uppercase;
             letter-spacing: 1px;
             border-bottom: 1.5px solid #3498db;
             padding-bottom: 3px;
-            margin: 14px 0 8px 0;
-            page-break-after: avoid;
+            margin: 15px 0 8px 0;
             font-weight: 700;
         }
         .item {
             margin-bottom: 10px;
-            page-break-inside: avoid;
         }
         .item-header {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            margin-bottom: 1px;
         }
         .title {
-            font-size: 11pt; /* --- Font size increased --- */
+            font-size: 10.5pt;
             font-weight: 700;
             color: #000;
         }
         .subtitle, .project-aim {
-            font-size: 9.5pt; /* --- Font size increased --- */
+            font-size: 9pt;
             color: #555;
             font-style: italic;
-            font-weight: 400;
         }
         .project-aim {
             font-style: normal;
         }
         .date {
-            font-size: 9pt; /* --- Font size increased --- */
+            font-size: 8.5pt;
             color: #333;
             font-weight: 500;
             flex-shrink: 0;
@@ -165,11 +164,13 @@
         }
         .description-list {
             margin: 3px 0 0 0;
-            padding-left: 16px;
+            padding-left: 15px;
             list-style-type: disc;
+            list-style-position: outside;
         }
         .description-list li {
             margin-bottom: 3px;
+            padding-left: 3px;
             text-align: justify;
         }
         .tech-details {
@@ -180,167 +181,82 @@
     </style>
 </head>
 <body>
-    <table class="resume-layout">
-        <tr>
-            <td class="sidebar">
-                <div>
-                    {% if resume.profile.profile_photo %}
-                    <div class="profile-photo-container">
-                        <img class="profile-photo" src="{{ resume.profile.profile_photo.url }}" alt="Profile Photo">
-                    </div>
-                    {% endif %}
-
-                    <h2>Contact</h2>
-                    {% if resume.profile.phone_number %}
-                    <div class="contact-item">
-                        <svg viewBox="0 0 24 24"><path fill="#95a5a6" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-                        <div class="contact-item-text"><a href="tel:{{ resume.profile.phone_number }}">{{ resume.profile.phone_number }}</a></div>
-                    </div>
-                    {% endif %}
-                    {% if resume.profile.user.email %}
-                    <div class="contact-item">
-                        <svg viewBox="0 0 24 24"><path fill="#95a5a6" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
-                        <div class="contact-item-text"><a href="mailto:{{ resume.profile.user.email }}">{{ resume.profile.user.email }}</a></div>
-                    </div>
-                    {% endif %}
-                    {% if resume.profile.address %}
-                    <div class="contact-item">
-                        <svg viewBox="0 0 24 24"><path fill="#95a5a6" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                        <div class="contact-item-text">{{ resume.profile.address }}</div>
-                    </div>
-                    {% endif %}
-                    {% if resume.profile.linkedin_url %}
-                    <div class="contact-item">
-                        <svg viewBox="0 0 24 24"><path fill="#95a5a6" d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
-                        <div class="contact-item-text"><a href="{{ resume.profile.linkedin_url }}">LinkedIn</a></div>
-                    </div>
-                    {% endif %}
-                    {% if resume.profile.portfolio_url %}
-                    <div class="contact-item">
-                        <svg viewBox="0 0 24 24"><path fill="#95a5a6" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
-                        <div class="contact-item-text"><a href="{{ resume.profile.portfolio_url }}">Portfolio</a></div>
-                    </div>
-                    {% endif %}
-
-                    {% if skills_by_category %}
-                    <h2>Skills</h2>
-                    {% for category, skills in skills_by_category.items %}
-                        <div class="skill-category">
-                            <strong>{{ category }}</strong>
-                            <span>{{ skills|join:", " }}</span>
-                        </div>
-                    {% endfor %}
-                    {% endif %}
-
-                    {% if educations %}
-                    <h2>Education</h2>
-                    {% for edu in educations %}
-                        <div class="sidebar-item">
-                            <div>
-                                <strong>{{ edu.degree }}</strong><br>
-                                <span style="font-size: 9pt;">{{ edu.institution }}</span><br>
-                                <span style="font-size: 8.5pt; color: #bdc3c7;">{{ edu.start_date|date:"Y" }} - {{ edu.end_date|date:"Y"|default:"Present" }}</span>
-                            </div>
-                        </div>
-                    {% endfor %}
-                    {% endif %}
-
-                    {% if languages %}
-                    <h2>Languages</h2>
-                    {% for lang in languages %}
-                        <div class="sidebar-item">{{ lang.name }} ({{ lang.get_proficiency_display }})</div>
-                    {% endfor %}
-                    {% endif %}
+    <div class="page">
+        <div class="sidebar">
+            <!-- Top section of sidebar -->
+            <div>
+                {% if resume.profile.profile_photo %}
+                <div class="profile-photo-container">
+                    <img class="profile-photo" src="{{ resume.profile.profile_photo.url }}" alt="Profile Photo">
                 </div>
-            </td>
-            <td class="content">
-                <div>
-                    <h1 class="name">{{ resume.profile.full_name|default:resume.profile.user.username }}</h1>
-                    {% if experiences.0.job_title %}<p class="job-title-header">{{ experiences.0.job_title }}</p>{% endif %}
+                {% endif %}
 
-                    {% if resume.profile.professional_summary %}
-                    <section class="item">
-                        <h2>Summary</h2>
-                        <div class="description">{{ resume.profile.professional_summary|linebreaksbr }}</div>
-                    </section>
-                    {% endif %}
+                <h2>Contact</h2>
+                {% if resume.profile.phone_number %}<div class="contact-item"><svg viewBox="0 0 24 24"><path fill="#95a5a6" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg><div class="contact-item-text"><a href="tel:{{ resume.profile.phone_number }}">{{ resume.profile.phone_number }}</a></div></div>{% endif %}
+                {% if resume.profile.user.email %}<div class="contact-item"><svg viewBox="0 0 24 24"><path fill="#95a5a6" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg><div class="contact-item-text"><a href="mailto:{{ resume.profile.user.email }}">{{ resume.profile.user.email }}</a></div></div>{% endif %}
+                {% if resume.profile.address %}<div class="contact-item"><svg viewBox="0 0 24 24"><path fill="#95a5a6" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg><div class="contact-item-text">{{ resume.profile.address }}</div></div>{% endif %}
+                {% if resume.profile.linkedin_url %}<div class="contact-item"><svg viewBox="0 0 24 24"><path fill="#95a5a6" d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg><div class="contact-item-text"><a href="{{ resume.profile.linkedin_url }}">LinkedIn</a></div></div>{% endif %}
+                {% if resume.profile.portfolio_url %}<div class="contact-item"><svg viewBox="0 0 24 24"><path fill="#95a5a6" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg><div class="contact-item-text"><a href="{{ resume.profile.portfolio_url }}">Portfolio</a></div></div>{% endif %}
 
-                    {% if experiences %}
-                    <section>
-                        <h2>Experience</h2>
-                        {% for exp in experiences %}
-                            <div class="item">
-                                <div class="item-header">
-                                    <span class="title">{{ exp.job_title }}</span>
-                                    <span class="date">{{ exp.start_date|date:"M Y" }} - {% if exp.end_date %}{{ exp.end_date|date:"M Y" }}{% else %}Present{% endif %}</span>
-                                </div>
-                                <p class="subtitle">{{ exp.company }}</p>
-                                {% if exp.description_points %}
-                                <ul class="description-list">
-                                    {% for point in exp.description_points %}
-                                        <li>{{ point }}</li>
-                                    {% endfor %}
-                                </ul>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                    </section>
-                    {% endif %}
+                {% if skills_by_category %}
+                <h2>Skills</h2>
+                {% for category, skills in skills_by_category.items %}<div class="skill-category"><strong>{{ category }}</strong><span>{{ skills|join:", " }}</span></div>{% endfor %}
+                {% endif %}
 
-                    {% if projects %}
-                    <section>
-                        <h2>Projects</h2>
-                        {% for p in projects %}
-                            <div class="item">
-                                 <div class="item-header">
-                                    <span class="title">{{ p.title }}</span>
-                                </div>
-                                {% if p.aim %}<p class="project-aim">{{ p.aim }}</p>{% endif %}
-                                {% if p.description_points %}
-                                <ul class="description-list">
-                                    {% for point in p.description_points %}
-                                        <li>{{ point }}</li>
-                                    {% endfor %}
-                                </ul>
-                                {% endif %}
-                                <div class="tech-details">
-                                    {% if p.frontend or p.backend or p.database %}
-                                        <strong>Technologies:</strong>
-                                        {% if p.frontend %}{{ p.frontend }}{% if p.backend or p.database %}, {% endif %}{% endif %}
-                                        {% if p.backend %}{{ p.backend }}{% if p.database %}, {% endif %}{% endif %}
-                                        {% if p.database %}{{ p.database }}{% endif %}
-                                        <br>
-                                    {% endif %}
-                                    {% if p.link %}<strong>Link:</strong> <a href="{{ p.link }}">{{ p.link }}</a>{% endif %}
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </section>
-                    {% endif %}
+                {% if educations %}
+                <h2>Education</h2>
+                {% for edu in educations %}<div class="sidebar-item"><div><strong>{{ edu.degree }}</strong><br><span style="font-size: 8.5pt;">{{ edu.institution }}</span><br><span style="font-size: 8pt; color: #bdc3c7;">{{ edu.start_date|date:"Y" }} - {{ edu.end_date|date:"Y"|default:"Present" }}</span></div></div>{% endfor %}
+                {% endif %}
+            </div>
+            
+            <div class="flex-spacer"></div> <!-- This pushes the content below it to the bottom of the sidebar -->
 
-                    {% if achievements or certifications %}
-                    <section>
-                        <h2>Achievements & Certifications</h2>
-                        {% if achievements %}
-                            <ul class="description-list">
-                            {% for a in achievements %}
-                                <li>{% if a.name %}<strong>{{ a.name }}:</strong> {% endif %}{{ a.description }}</li>
-                            {% endfor %}
-                            </ul>
-                        {% endif %}
-                         {% if certifications %}
-                            <ul class="description-list" style="margin-top: 6px;">
-                            {% for cert in certifications %}
-                                <li><strong>{{ cert.name }}</strong> from <em>{{ cert.issuing_organization }}</em></li>
-                            {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </section>
-                    {% endif %}
-                </div>
-            </td>
-        </tr>
-    </table>
+            <!-- Bottom section of sidebar -->
+            <div>
+                {% if languages %}
+                <h2>Languages</h2>
+                {% for lang in languages %}<div class="sidebar-item" style="font-size: 8.5pt;">{{ lang.name }} ({{ lang.get_proficiency_display }})</div>{% endfor %}
+                {% endif %}
+                
+                {% if hobbies %}
+                <h2>Hobbies</h2>
+                <div class="sidebar-item" style="font-size: 8pt; color: #bdc3c7;">{{ hobbies|join:", " }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="content">
+             <!-- Top section of content -->
+            <div>
+                <h1 class="name">{{ resume.profile.full_name|default:resume.profile.user.username }}</h1>
+                {% if experiences.0.job_title %}<p class="job-title-header">{{ experiences.0.job_title }}</p>{% endif %}
+
+                {% if resume.profile.professional_summary %}
+                <section class="item"><h2>Summary</h2><div class="description" style="text-align: justify;">{{ resume.profile.professional_summary|linebreaksbr }}</div></section>
+                {% endif %}
+
+                {% if experiences %}
+                <section><h2>Experience</h2>{% for exp in experiences %}<div class="item"><div class="item-header"><span class="title">{{ exp.job_title }}</span><span class="date">{{ exp.start_date|date:"M Y" }} - {% if exp.end_date %}{{ exp.end_date|date:"M Y" }}{% else %}Present{% endif %}</span></div><p class="subtitle">{{ exp.company }}</p>{% if exp.description_points %}<ul class="description-list">{% for point in exp.description_points %}<li>{{ point }}</li>{% endfor %}</ul>{% endif %}</div>{% endfor %}</section>
+                {% endif %}
+
+                {% if projects %}
+                <section><h2>Projects</h2>{% for p in projects %}<div class="item"><div class="item-header"><span class="title">{{ p.title }}</span></div>{% if p.aim %}<p class="project-aim">{{ p.aim }}</p>{% endif %}{% if p.description_points %}<ul class="description-list">{% for point in p.description_points %}<li>{{ point }}</li>{% endfor %}</ul>{% endif %}<div class="tech-details">{% if p.frontend or p.backend or p.database %}<strong>Technologies:</strong> {% if p.frontend %}{{ p.frontend }}{% if p.backend or p.database %}, {% endif %}{% endif %}{% if p.backend %}{{ p.backend }}{% if p.database %}, {% endif %}{% endif %}{% if p.database %}{{ p.database }}{% endif %}<br>{% endif %}{% if p.link %}<strong>Link:</strong> <a href="{{ p.link }}">{{ p.link }}</a>{% endif %}</div></div>{% endfor %}</section>
+                {% endif %}
+            </div>
+
+            <div class="flex-spacer"></div> <!-- This pushes the content below it to the bottom of the main content area -->
+            
+            <!-- Bottom section of content -->
+            <div>
+                {% if achievements or certifications %}
+                <section><h2>Achievements & Certifications</h2>
+                    {% if achievements %}<ul class="description-list">{% for a in achievements %}<li>{% if a.name %}<strong>{{ a.name }}:</strong> {% endif %}{{ a.description }}</li>{% endfor %}</ul>{% endif %}
+                    {% if certifications %}<ul class="description-list" style="margin-top: 5px;">{% for cert in certifications %}<li><strong>{{ cert.name }}</strong> from <em>{{ cert.issuing_organization }}</em></li>{% endfor %}</ul>{% endif %}
+                </section>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 

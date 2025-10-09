@@ -333,8 +333,28 @@ def enhance_description_api(request):
 
 @login_required
 def download_resume_pdf(request, resume_id, template_name):
+    """
+    Generates and serves a PDF resume.
+    This view now pre-processes descriptions into bullet points.
+    """
     resume = get_object_or_404(Resume, id=resume_id, profile__user=request.user)
     
+    # Pre-process descriptions to create bullet points
+    def process_description(items):
+        processed_items = []
+        for item in items:
+            if item.description:
+                clean_desc = '\n'.join(line.lstrip('*-• ') for line in item.description.splitlines())
+                item.description_points = [point.strip() for point in clean_desc.splitlines() if point.strip()]
+            else:
+                item.description_points = []
+            processed_items.append(item)
+        return processed_items
+
+    experiences = Experience.objects.filter(resume=resume).order_by('-start_date')
+    projects = Project.objects.filter(resume=resume)
+
+    # Group skills by category for better presentation
     skills_by_category = {}
     skills_qs = Skill.objects.filter(resume=resume).order_by('category')
     for skill in skills_qs:
@@ -343,23 +363,12 @@ def download_resume_pdf(request, resume_id, template_name):
             skills_by_category[category] = []
         skills_by_category[category].append(skill.name)
 
-    experiences = Experience.objects.filter(resume=resume).order_by('-start_date')
-    processed_experiences = []
-    for exp in experiences:
-        if exp.description:
-            # Clean up leading bullet characters before splitting
-            clean_desc = '\n'.join(line.lstrip('*- ') for line in exp.description.splitlines())
-            exp.description_points = [point.strip() for point in clean_desc.splitlines() if point.strip()]
-        else:
-            exp.description_points = []
-        processed_experiences.append(exp)
-
     context = {
         'resume': resume,
-        'experiences': processed_experiences, # Use the processed list
+        'experiences': process_description(experiences),
+        'projects': process_description(projects),
         'educations': Education.objects.filter(resume=resume).order_by('-start_date'),
         'skills_by_category': skills_by_category,
-        'projects': Project.objects.filter(resume=resume),
         'certifications': Certification.objects.filter(resume=resume),
         'achievements': Achievement.objects.filter(resume=resume),
         'languages': Language.objects.filter(resume=resume),
@@ -372,13 +381,17 @@ def download_resume_pdf(request, resume_id, template_name):
     html = template.render(context)
 
     if not WEASY_AVAILABLE:
-        return HttpResponse('PDF generation failed: WeasyPrint is not installed or configured correctly.')
+        messages.error(request, 'PDF generation service is currently unavailable. Please try again later.')
+        return redirect('resumes:resume-builder')
 
     try:
         html_obj = HTML(string=html, base_url=request.build_absolute_uri('/'))
-        pdf_bytes = html_obj.write_pdf()
+        # Set a standard A4 page margin for all templates
+        pdf_bytes = html_obj.write_pdf(stylesheets=[CSS(string='@page { size: A4; margin: 1.5cm }')])
     except Exception as e:
-        return HttpResponse('PDF generation (WeasyPrint) failed: ' + str(e) + '<pre>' + html + '</pre>')
+        # Provide a more user-friendly error
+        messages.error(request, f'An error occurred during PDF generation: {e}')
+        return redirect('resumes:resume-builder')
 
     response = HttpResponse(pdf_bytes, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{resume.profile.full_name}_resume.pdf"'
@@ -402,4 +415,3 @@ def check_score_status_view(request, resume_id):
         })
     else:
         return JsonResponse({'status': 'PENDING'})
-

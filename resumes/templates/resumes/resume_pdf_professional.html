@@ -13,14 +13,13 @@
             font-family: 'Helvetica', 'Arial', sans-serif; 
             color: #333; 
             font-size: 9.5pt;
-            line-height: 1.4;
+            line-height: 1.35; /* Tightened line height */
         }
-
-        /* --- Header: Part of the normal document flow --- */
         .header {
             text-align: center;
-            padding-bottom: 12px;
+            padding-bottom: 10px; /* Reduced padding */
             border-bottom: 1.5px solid #003366;
+            margin-bottom: 10px; /* Reduced margin */
         }
         .name { 
             font-size: 24pt;
@@ -42,23 +41,22 @@
         .contact-info .separator {
             margin: 0 6px;
         }
-
-        /* --- Section Titles with Icons --- */
         .section {
             page-break-inside: avoid;
+            margin-bottom: 6px; /* Reduced margin */
         }
         .section-header {
             display: flex;
             align-items: center;
-            margin-top: 18px;
-            margin-bottom: 10px;
+            margin-top: 12px; /* Reduced margin */
+            margin-bottom: 6px; /* Reduced margin */
             border-bottom: 1px solid #003366;
             padding-bottom: 4px;
             page-break-after: avoid;
         }
         .section-header svg {
-            width: 14px;
-            height: 14px;
+            width: 13px;
+            height: 13px;
             margin-right: 8px;
             color: #003366;
         }
@@ -71,30 +69,28 @@
             margin: 0;
             padding: 0;
         }
-
-        /* --- Item Styling with Enhanced Timeline --- */
         .timeline-item {
-            margin-left: 10px;
-            padding-left: 25px;
-            border-left: 2px solid #e0e0e0;
-            padding-bottom: 15px;
+            margin-left: 5px;
+            padding-left: 20px;
+            border-left: 1.5px solid #d0d0d0;
+            padding-bottom: 10px; /* Reduced padding */
             position: relative;
             page-break-inside: avoid;
         }
         .timeline-item:last-child {
-            padding-bottom: 5px;
-            border-left: 2px solid transparent;
+            padding-bottom: 2px;
+            border-left: 1.5px solid transparent; /* Hide border for last item */
         }
         .timeline-item::before {
             content: '';
             position: absolute;
-            left: -6px;
+            left: -5.25px;
             top: 5px;
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             background-color: #fff;
-            border: 2px solid #003366;
+            border: 1.5px solid #003366;
         }
         .item-header {
             display: flex;
@@ -117,46 +113,32 @@
             color: #333; 
             font-weight: bold;
         }
-        .description { margin-top: 4px; }
-        ul { padding-left: 16px; margin-top: 4px; }
-        li { margin-bottom: 3px; text-align: justify; }
-
-        /* --- Other Sections --- */
+        .description { margin-top: 3px; } /* Reduced margin */
+        ul { padding-left: 16px; margin-top: 3px; } /* Reduced margin */
+        li { margin-bottom: 2px; text-align: justify; } /* Reduced margin */
         .skills-container, .additional-info, .summary-text {
-            padding: 0 8px;
+            padding: 0 4px;
         }
         .additional-info p, .summary-text { margin-bottom: 6px; text-align: justify; }
-        
+        .additional-info ul { list-style-type: disc; }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="name">{{ resume.profile.full_name|default:resume.profile.user.username }}</div>
         <div class="contact-info">
-            {% if resume.profile.phone_number %}
-                <a href="tel:{{ resume.profile.phone_number }}">{{ resume.profile.phone_number }}</a>
-                <span class="separator">|</span>
-            {% endif %}
+            {% if resume.profile.phone_number %}<a href="tel:{{ resume.profile.phone_number }}">{{ resume.profile.phone_number }}</a><span class="separator">|</span>{% endif %}
             <a href="mailto:{{ resume.profile.user.email }}">{{ resume.profile.user.email }}</a>
-            {% if resume.profile.linkedin_url %}
-                <span class="separator">|</span>
-                <a href="{{ resume.profile.linkedin_url }}">LinkedIn</a>
-            {% endif %}
-            {% if resume.profile.portfolio_url %}
-                <span class="separator">|</span>
-                <a href="{{ resume.profile.portfolio_url }}">Portfolio</a>
-            {% endif %}
-            {% if resume.profile.address %}
-                <span class="separator">|</span>
-                {{ resume.profile.address }}
-            {% endif %}
+            {% if resume.profile.linkedin_url %}<span class="separator">|</span><a href="{{ resume.profile.linkedin_url }}">LinkedIn</a>{% endif %}
+            {% if resume.profile.portfolio_url %}<span class="separator">|</span><a href="{{ resume.profile.portfolio_url }}">Portfolio</a>{% endif %}
+            {% if resume.profile.address %}<span class="separator">|</span>{{ resume.profile.address }}{% endif %}
         </div>
     </div>
 
     {% if resume.profile.professional_summary %}
     <div class="section">
         <div class="section-header">
-            <svg viewBox="0 0 20 20"><path fill="currentColor" d="M10 2a2 2 0 00-2 2v1a2 2 0 004 0V4a2 2 0 00-2-2zM5.44 10.22a4.5 4.5 0 004.56 4.56A4.5 4.5 0 0014.56 10.22L16 8.78V16a2 2 0 01-2 2H6a2 2 0 01-2-2V8.78l1.44 1.44zM10 9a3 3 0 100-6 3 3 0 000 6z"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.095a1.23 1.23 0 00.41-1.412A9.957 9.957 0 0010 12c-2.31 0-4.438.784-6.131 2.095z"/></svg>
             <h2>Professional Summary</h2>
         </div>
         <p class="summary-text">{{ resume.profile.professional_summary|linebreaksbr }}</p>
@@ -166,7 +148,7 @@
     {% if experiences %}
     <div class="section">
         <div class="section-header">
-            <svg viewBox="0 0 20 20"><path fill="currentColor" d="M5.5 4.25a.75.75 0 01.75.75v10a.75.75 0 01-1.5 0V5a.75.75 0 01.75-.75zM14.5 4.25a.75.75 0 01.75.75v10a.75.75 0 01-1.5 0V5a.75.75 0 01.75-.75zM9 4a1 1 0 00-1 1v10a1 1 0 002 0V5a1 1 0 00-1-1z"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 3.75A2.75 2.75 0 018.75 1h2.5A2.75 2.75 0 0114 3.75v.443c.57.174 1.105.432 1.58.748a.75.75 0 11-.82 1.226A8.22 8.22 0 0014 6.12v.132a6.72 6.72 0 00-3-1.002V3.75a.25.25 0 00-.25-.25h-1.5a.25.25 0 00-.25.25v1.513A6.72 6.72 0 006 6.252v-.132a8.22 8.22 0 00-.76-1.055a.75.75 0 01-.82-1.226c.474-.316 1.01-.574 1.58-.748V3.75zM8.5 6.252a5.22 5.22 0 003 1.002V9.25a.75.75 0 001.5 0V7.254a5.22 5.22 0 003-1.002V15a2 2 0 01-2 2H6a2 2 0 01-2-2V6.252z" clip-rule="evenodd"/></svg>
             <h2>Professional Experience</h2>
         </div>
         {% for exp in experiences %}
@@ -176,13 +158,7 @@
                     <span class="date">{{ exp.start_date|date:"M Y" }} - {% if exp.end_date %}{{ exp.end_date|date:"M Y" }}{% else %}Present{% endif %}</span>
                 </div>
                 <p class="subtitle">{{ exp.company }}</p>
-                <div class="description">
-                    <ul>
-                    {% for line in exp.description_points %}
-                        <li>{{ line }}</li>
-                    {% endfor %}
-                    </ul>
-                </div>
+                {% if exp.description_points %}<div class="description"><ul>{% for line in exp.description_points %}<li>{{ line }}</li>{% endfor %}</ul></div>{% endif %}
             </div>
         {% endfor %}
     </div>
@@ -191,7 +167,7 @@
     {% if educations %}
     <div class="section">
         <div class="section-header">
-            <svg viewBox="0 0 20 20"><path fill="currentColor" d="M10.362 1.096a.75.75 0 00-1.224 0C7.22 3.12 5.33 4.23 4.03 5.91.43 8.36 1.18 12.56 3.4 14.78A13.6 13.6 0 0010 18.5a13.6 13.6 0 006.6-3.72c2.22-2.22 2.97-6.42.4-8.87-1.3-1.68-3.19-2.79-5.138-4.814zM9.25 12.31a.75.75 0 011.5 0v2.19a.75.75 0 01-1.5 0v-2.19zM10 5.75a.75.75 0 00-.75.75v2.5a.75.75 0 001.5 0v-2.5A.75.75 0 0010 5.75z"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10.362 1.096a.75.75 0 00-1.224 0C7.22 3.12 5.33 4.23 4.03 5.91.43 8.36 1.18 12.56 3.4 14.78A13.6 13.6 0 0010 18.5a13.6 13.6 0 006.6-3.72c2.22-2.22 2.97-6.42.4-8.87-1.3-1.68-3.19-2.79-5.138-4.814zM9.25 12.31a.75.75 0 011.5 0v2.19a.75.75 0 01-1.5 0v-2.19zM10 5.75a.75.75 0 00-.75.75v2.5a.75.75 0 001.5 0v-2.5A.75.75 0 0010 5.75z"/></svg>
             <h2>Education</h2>
         </div>
         {% for edu in educations %}
@@ -210,32 +186,23 @@
     {% if projects %}
     <div class="section">
         <div class="section-header">
-            <svg viewBox="0 0 20 20"><path fill="currentColor" d="M12.25 3.125a.75.75 0 00-1.5 0v.375h-1.5V3.125a.75.75 0 00-1.5 0V5.25h4.5V3.125zM8.5 6.75v-.375a.75.75 0 00-1.5 0v.375h-3.25V5.625a.75.75 0 00-1.5 0v1.125H1.5A1.5 1.5 0 000 8.25v8A1.5 1.5 0 001.5 17.75h12A1.5 1.5 0 0015 16.25v-8A1.5 1.5 0 0013.5 6.75h-5z"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2.5 3A1.5 1.5 0 001 4.5v11A1.5 1.5 0 002.5 17h15A1.5 1.5 0 0019 15.5v-11A1.5 1.5 0 0017.5 3h-15zM2 4.5a.5.5 0 01.5-.5h15a.5.5 0 01.5.5v2.5H2V4.5zM2 15.5V8h16v7.5a.5.5 0 01-.5.5h-15a.5.5 0 01-.5-.5z" clip-rule="evenodd" /></svg>
             <h2>Projects</h2>
         </div>
-        <div class="additional-info">
-             <ul>
-            {% for p in projects %}
-                <li>
-                    <strong>{{ p.title }}:</strong> {{ p.description }}
-                    {% if p.frontend or p.backend or p.database %}
-                        <br><em>Technologies: 
-                        {% if p.frontend %}{{ p.frontend }}{% if p.backend or p.database %}, {% endif %}{% endif %}
-                        {% if p.backend %}{{ p.backend }}{% if p.database %}, {% endif %}{% endif %}
-                        {% if p.database %}{{ p.database }}{% endif %}
-                        </em>
-                    {% endif %}
-                </li>
-            {% endfor %}
-            </ul>
-        </div>
+        {% for p in projects %}
+            <div class="timeline-item">
+                <p class="title">{{ p.title }}</p>
+                {% if p.aim %}<p class="subtitle">{{ p.aim }}</p>{% endif %}
+                {% if p.description_points %}<div class="description"><ul>{% for point in p.description_points %}<li>{{ point }}</li>{% endfor %}</ul></div>{% endif %}
+            </div>
+        {% endfor %}
     </div>
     {% endif %}
 
     {% if skills_by_category %}
     <div class="section">
         <div class="section-header">
-            <svg viewBox="0 0 20 20"><path fill="currentColor" d="M10 3.75a.75.75 0 01.75.75v10.5a.75.75 0 01-1.5 0V4.5a.75.75 0 01.75-.75zM5.5 6.75a.75.75 0 000 1.5h1.563l-3.031 6.82a.75.75 0 001.336.592L8.383 9.44A2.25 2.25 0 0110 8.25h.002a2.25 2.25 0 011.618 1.19l3.014 6.22a.75.75 0 101.336-.593L12.936 8.25H14.5a.75.75 0 000-1.5H5.5z"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.25 3.002a.75.75 0 01.75.75v12.5a.75.75 0 01-1.5 0v-12.5a.75.75 0 01.75-.75zM5.002 6.75a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75zM5.75 10a.75.75 0 000 1.5h3.5a.75.75 0 000-1.5h-3.5zM5.002 14.25a.75.75 0 01.75-.75h4.5a.75.75 0 010 1.5h-4.5a.75.75 0 01-.75-.75z" clip-rule="evenodd"/></svg>
             <h2>Core Skills</h2>
         </div>
         <div class="skills-container">
@@ -249,7 +216,7 @@
     {% if certifications %}
     <div class="section">
          <div class="section-header">
-            <svg viewBox="0 0 20 20"><path fill="currentColor" d="M8.25 10.875a2.625 2.625 0 115.25 0 2.625 2.625 0 01-5.25 0z"/><path fill-rule="evenodd" d="M12 1.25a1 1 0 00-1-1H9a1 1 0 00-1 1v.342a4.985 4.985 0 00-2.31.266l-.73-.217a1 1 0 00-1.122.373L2.373 3.878a1 1 0 00.374 1.122l.217.73A4.985 4.985 0 001.592 8H1.25a1 1 0 00-1 1v2a1 1 0 001 1h.342a4.985 4.985 0 00.266 2.31l-.217.73a1 1 0 00.373 1.122l1.465 1.465a1 1 0 001.122.373l.73-.217c.69.53 1.472.93 2.31.266V18.75a1 1 0 001 1h2a1 1 0 001-1v-.342a4.985 4.985 0 002.31-.266l.73.217a1 1 0 001.122-.373l1.465-1.465a1 1 0 00-.373-1.122l-.217-.73a4.985 4.985 0 00.266-2.31H18.75a1 1 0 001-1V9a1 1 0 00-1-1h-.342a4.985 4.985 0 00-.266-2.31l.217-.73a1 1 0 00-.373-1.122l-1.465-1.465a1 1 0 00-1.122-.373l-.73.217A4.985 4.985 0 0012.408 2H12V1.25zM10 14a4 4 0 100-8 4 4 0 000 8z" clip-rule="evenodd"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12 1.25a1 1 0 00-1-1H9a1 1 0 00-1 1v.342a4.985 4.985 0 00-2.31.266l-.73-.217a1 1 0 00-1.122.373L2.373 3.878a1 1 0 00.374 1.122l.217.73A4.985 4.985 0 001.592 8H1.25a1 1 0 00-1 1v2a1 1 0 001 1h.342a4.985 4.985 0 00.266 2.31l-.217.73a1 1 0 00.373 1.122l1.465 1.465a1 1 0 001.122.373l.73-.217c.69.53 1.472.93 2.31.266V18.75a1 1 0 001 1h2a1 1 0 001-1v-.342a4.985 4.985 0 002.31-.266l.73.217a1 1 0 001.122-.373l1.465-1.465a1 1 0 00-.373-1.122l-.217-.73a4.985 4.985 0 00.266-2.31H18.75a1 1 0 001-1V9a1 1 0 00-1-1h-.342a4.985 4.985 0 00-.266-2.31l.217-.73a1 1 0 00-.373-1.122l-1.465-1.465a1 1 0 00-1.122-.373l-.73.217A4.985 4.985 0 0012.408 2H12V1.25zM10 14a4 4 0 100-8 4 4 0 000 8z" clip-rule="evenodd"/></svg>
             <h2>Certifications</h2>
         </div>
         <div class="additional-info">
@@ -265,7 +232,7 @@
     {% if achievements %}
     <div class="section">
         <div class="section-header">
-            <svg viewBox="0 0 20 20"><path fill="currentColor" fill-rule="evenodd" d="M15.5 4.925a3.5 3.5 0 10-7 0 3.5 3.5 0 007 0zM5.5 4.925a3.5 3.5 0 10-7 0 3.5 3.5 0 007 0zM8 11.17a5.5 5.5 0 011.83-10.742 5.5 5.5 0 011.83 10.742V17.5a.5.5 0 01-1 .5h-1.66a.5.5 0 01-1-.5v-6.33z" clip-rule="evenodd"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M15.5 4.925a3.5 3.5 0 10-7 0 3.5 3.5 0 007 0zM5.5 4.925a3.5 3.5 0 10-7 0 3.5 3.5 0 007 0zM8 11.17a5.5 5.5 0 011.83-10.742 5.5 5.5 0 011.83 10.742V17.5a.5.5 0 01-1 .5h-1.66a.5.5 0 01-1-.5v-6.33z" clip-rule="evenodd"/></svg>
             <h2>Achievements</h2>
         </div>
         <div class="additional-info">
@@ -281,15 +248,11 @@
     {% if languages %}
     <div class="section">
         <div class="section-header">
-            <svg viewBox="0 0 20 20"><path fill="currentColor" fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.75 7.116a.75.75 0 011.06 0l1.47 1.47a.75.75 0 11-1.06 1.06L4.75 8.176a.75.75 0 010-1.06zM9 9a.75.75 0 000 1.5h2a.75.75 0 000-1.5H9zM7.06 7.116a.75.75 0 00-1.06 0L4.75 8.176a.75.75 0 101.06 1.06l1.25-1.25a.75.75 0 000-1.06zM13.25 7.116a.75.75 0 011.06 0l1.47 1.47a.75.75 0 01-1.06 1.06l-1.47-1.47a.75.75 0 010-1.06z" clip-rule="evenodd"/></svg>
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.875 1.75a.75.75 0 00-1.5 0v1.75a.75.75 0 001.5 0V1.75zM7.125 4.5A.75.75 0 018.25 4.5h3.5a.75.75 0 010 1.5h-3.5A.75.75 0 017.125 4.5zM5.625 1.75a.75.75 0 00-1.5 0v1.75a.75.75 0 001.5 0V1.75zM3 7.125A.75.75 0 013.75 6h12.5a.75.75 0 010 1.5H3.75A.75.75 0 013 7.125zM3.75 9A.75.75 0 003 9.75v5.5c0 .414.336.75.75.75h12.5a.75.75 0 00.75-.75v-5.5a.75.75 0 00-1.5 0v4.75H4.5V9.75A.75.75 0 003.75 9z" clip-rule="evenodd"/></svg>
             <h2>Languages</h2>
         </div>
         <div class="additional-info">
-            <p>
-            {% for lang in languages %}
-                {{ lang.name }} ({{ lang.get_proficiency_display }}){% if not forloop.last %}, {% endif %}
-            {% endfor %}
-            </p>
+            <p>{% for lang in languages %}{{ lang.name }} ({{ lang.get_proficiency_display }}){% if not forloop.last %}, {% endif %}{% endfor %}</p>
         </div>
     </div>
     {% endif %}
