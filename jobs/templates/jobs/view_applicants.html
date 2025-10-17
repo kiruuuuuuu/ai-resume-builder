@@ -4,74 +4,93 @@
 
 {% block content %}
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="mb-8">
+    <div class="mb-8 animate-fade-in-up">
         <h1 class="text-3xl font-bold text-gray-800">Ranked Applicants for "{{ job.title }}"</h1>
-        <p class="text-gray-600 mt-2">Candidates are sorted by their AI-calculated match score.</p>
+        <p class="text-gray-600 mt-2">Candidates are sorted by their AI-calculated match score. Click on a row to see more actions.</p>
     </div>
     
-    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 animate-fade-in-up delay-100">
         <ul class="divide-y divide-gray-200">
             {% for item in ranked_applicants %}
-                <li class="p-4 sm:p-6 hover:bg-slate-50 transition-colors duration-200">
-                    <div class="grid grid-cols-12 gap-4 items-center">
-                        <div class="col-span-12 sm:col-span-5 flex items-center">
-                            {% if item.application.applicant.profile_photo %}
-                                <img class="h-14 w-14 rounded-full object-cover" src="{{ item.application.applicant.profile_photo.url }}" alt="Applicant photo">
-                            {% else %}
-                                 <span class="h-14 w-14 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-xl">
-                                    {% if item.application.applicant.full_name %}
-                                        {{ item.application.applicant.full_name|first|upper }}
-                                    {% else %}
-                                        {{ item.application.applicant.user.username|first|upper }}
-                                    {% endif %}
-                                </span>
-                            {% endif %}
+                <li class="p-4 sm:p-6 hover:bg-indigo-50 transition-colors duration-200" x-data="{ expanded: false }">
+                    <div class="grid grid-cols-12 gap-4 items-center cursor-pointer" @click="expanded = !expanded">
+                        <!-- Applicant Info -->
+                        <div class="col-span-12 sm:col-span-6 flex items-center">
+                            <div class="relative">
+                                {% if item.application.applicant.profile_photo %}
+                                    <img class="h-14 w-14 rounded-full object-cover ring-2 ring-white" src="{{ item.application.applicant.profile_photo.url }}" alt="Applicant photo">
+                                {% else %}
+                                     <span class="h-14 w-14 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-xl ring-2 ring-white">
+                                        {% if item.application.applicant.full_name %}
+                                            {{ item.application.applicant.full_name|first|upper }}
+                                        {% else %}
+                                            {{ item.application.applicant.user.username|first|upper }}
+                                        {% endif %}
+                                     </span>
+                                {% endif %}
+                                <span class="absolute -bottom-1 -right-1 block h-4 w-4 rounded-full 
+                                    {% if item.score >= 75 %} bg-green-500
+                                    {% elif item.score >= 50 %} bg-yellow-400
+                                    {% else %} bg-gray-400 {% endif %} border-2 border-white"></span>
+                            </div>
                             <div class="ml-4">
                                 <p class="text-lg font-semibold text-gray-900">{{ item.application.applicant.full_name|default:item.application.applicant.user.username }}</p>
                                 <p class="text-sm text-gray-500">{{ item.application.applicant.user.email|default:"No email provided" }}</p>
                             </div>
                         </div>
                         
+                        <!-- Match Score -->
                         <div class="col-span-4 sm:col-span-2 text-center">
-                             <p class="text-3xl font-bold text-indigo-600">{{ item.score }}%</p>
+                             <p class="text-3xl font-bold 
+                                {% if item.score >= 75 %} text-green-600
+                                {% elif item.score >= 50 %} text-indigo-600
+                                {% else %} text-gray-500 {% endif %}">
+                                {{ item.score }}%
+                            </p>
                              <p class="text-xs text-gray-500 font-medium">Match Score</p>
                         </div>
                         
-                        <div class="col-span-8 sm:col-span-5 flex justify-end items-center gap-2 flex-wrap">
-                            <a href="{% url 'jobs:view-applicant-resume' application_id=item.application.id %}" target="_blank" class="text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 rounded-md px-3 py-1.5">View Resume</a>
-                            
-                            {% if item.application.status == 'Submitted' %}
-                                <a href="{% url 'jobs:update-application-status' application_id=item.application.id %}?action=review" class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md px-3 py-1.5">Review</a>
-                                <a href="{% url 'jobs:update-application-status' application_id=item.application.id %}?action=reject" class="text-sm font-medium text-gray-400 hover:text-gray-600 rounded-md px-3 py-1.5">Reject</a>
-                            {% elif item.application.status == 'Under Review' %}
-                                <a href="{% url 'jobs:update-application-status' application_id=item.application.id %}?action=shortlist" class="text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md px-3 py-1.5">Shortlist</a>
-                                <a href="{% url 'jobs:update-application-status' application_id=item.application.id %}?action=reject" class="text-sm font-medium text-gray-400 hover:text-gray-600 rounded-md px-3 py-1.5">Reject</a>
-                            {% elif item.application.status == 'Shortlisted' or item.application.status == 'Approved' or item.application.status == 'Approved for Interview' %}
-                                 <a href="{% url 'jobs:schedule-interview' application_id=item.application.id %}" class="text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md px-3 py-1.5">Schedule Interview</a>
-                            {% elif item.application.status == 'Interview' %}
-                                {% if item.interview_status == 'Proposed' %}
-                                    <span class="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">Awaiting Response</span>
-                                {% elif item.interview_status == 'Scheduled' %}
-                                    <div class="text-right">
-                                        <span class="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">Interview Scheduled</span>
-                                        <div class="text-xs text-gray-500 mt-2">
-                                           {{ item.interview.interview_details|urlize|linebreaksbr }}
-                                        </div>
-                                        <p class="text-xs text-gray-500">Time: {{ item.interview.confirmed_slot|date:"F d, Y, P" }}</p>
-                                    </div>
-                                    <a href="{% url 'jobs:update-application-status' application_id=item.application.id %}?action=offer" class="text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md px-3 py-1.5 self-start">Make Offer</a>
-                                {% endif %}
-                            {% elif item.application.status == 'Offered' %}
-                                <span class="px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">Offer Extended</span>
-                            {% elif item.application.status == 'Rejected' %}
-                                <span class="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">Rejected</span>
-                            {% endif %}
+                        <!-- Status -->
+                        <div class="col-span-8 sm:col-span-4 flex justify-end items-center">
+                             <span class="px-3 py-1 rounded-full text-sm font-medium 
+                                {% if item.application.status == 'Shortlisted' or item.application.status == 'Approved' %} bg-green-100 text-green-800
+                                {% elif item.application.status == 'Interview' %} bg-purple-100 text-purple-800
+                                {% elif item.application.status == 'Offered' %} bg-blue-100 text-blue-800
+                                {% elif item.application.status == 'Rejected' %} bg-red-100 text-red-800
+                                {% else %} bg-gray-100 text-gray-800 {% endif %}">
+                                {{ item.application.status }}
+                            </span>
                         </div>
+                    </div>
+                    <!-- Collapsible Action Panel -->
+                    <div x-show="expanded" x-cloak x-transition class="mt-6 pt-4 border-t border-gray-200 flex justify-end items-center gap-2 flex-wrap">
+                        <a href="{% url 'jobs:view-applicant-resume' application_id=item.application.id %}" target="_blank" class="text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 rounded-md px-3 py-1.5 transition-transform hover:scale-105">View Resume</a>
+                        
+                        {# --- THE FIX IS HERE --- #}
+                        {% if item.application.status == 'Submitted' %}
+                            <a href="{% url 'jobs:update-application-status' application_id=item.application.id %}?action=review" class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md px-3 py-1.5 transition-transform hover:scale-105">Mark as Reviewing</a>
+                            <a href="{% url 'jobs:update-application-status' application_id=item.application.id %}?action=reject" class="text-sm font-medium text-gray-500 hover:text-red-600 rounded-md px-3 py-1.5 transition-colors">Reject</a>
+                        {% elif item.application.status == 'Under Review' %}
+                            <a href="{% url 'jobs:update-application-status' application_id=item.application.id %}?action=shortlist" class="text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md px-3 py-1.5 transition-transform hover:scale-105">Shortlist</a>
+                            <a href="{% url 'jobs:update-application-status' application_id=item.application.id %}?action=reject" class="text-sm font-medium text-gray-500 hover:text-red-600 rounded-md px-3 py-1.5 transition-colors">Reject</a>
+                        {% elif item.application.status == 'Shortlisted' or item.application.status == 'Approved' or item.application.status == 'Approved for Interview' %}
+                             <a href="{% url 'jobs:schedule-interview' application_id=item.application.id %}" class="text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md px-3 py-1.5 transition-transform hover:scale-105">Schedule Interview</a>
+                        {% elif item.application.status == 'Interview' %}
+                            {% if item.interview.status == 'Proposed' %}
+                                <span class="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">Awaiting Candidate Response</span>
+                            {% elif item.interview.status == 'Scheduled' %}
+                                <a href="{% url 'jobs:update-application-status' application_id=item.application.id %}?action=offer" class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md px-3 py-1.5 transition-transform hover:scale-105">Make Offer</a>
+                            {% endif %}
+                        {% endif %}
                     </div>
                 </li>
             {% empty %}
                 <li class="p-10 text-center text-gray-500">
-                    There are no applicants for this job yet.
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                      <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No applicants yet</h3>
+                    <p class="mt-1 text-sm text-gray-500">When someone applies, they'll show up here.</p>
                 </li>
             {% endfor %}
         </ul>

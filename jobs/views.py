@@ -12,8 +12,10 @@ from django.template.loader import get_template
 # Celery Task
 from .tasks import calculate_and_save_match_score_task
 
+WEASY_AVAILABLE = False
 try:
     from weasyprint import HTML, CSS
+    WEASY_AVAILABLE = True
 except (ImportError, OSError):
     HTML = None
     CSS = None

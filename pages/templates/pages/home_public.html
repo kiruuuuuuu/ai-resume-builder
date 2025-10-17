@@ -1,65 +1,149 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<!-- Hero Section -->
 <div class="bg-white">
-    <div class="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
+  <main>
+    <!-- Hero Section -->
+    <div class="relative bg-gradient-to-br from-indigo-50 via-white to-white overflow-hidden">
+        <div class="max-w-7xl mx-auto">
+            <div class="relative z-10 pb-8 sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
+                <main class="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
+                    <div class="sm:text-center lg:text-left">
+                        <h1 class="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl animate-fade-in-up">
+                            <span class="block">Build Your Future With an</span>
+                            <span class="block text-indigo-600 xl:inline">AI-Powered Resume</span>
+                        </h1>
+                        <p class="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0 animate-fade-in-up delay-100">
+                            Create a professional, standout resume in minutes. Our AI provides instant feedback, suggests improvements, and helps you connect with the perfect job opportunities.
+                        </p>
+                        <div class="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start animate-fade-in-up delay-200">
+                            <div class="rounded-md shadow">
+                                <a href="{% url 'users:register' %}" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10 transition-transform transform hover:scale-105">
+                                Get Started Now
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+        <div class="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
+            <div class="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full p-8 lg:p-12">
+                <div class="w-full h-full bg-white rounded-2xl shadow-2xl ring-1 ring-gray-900/10 flex flex-col p-4 animate-fade-in delay-200">
+                    <div class="flex-shrink-0 flex items-center space-x-1.5">
+                        <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                    </div>
+                    <div class="mt-4 flex-grow bg-gray-50 rounded-lg p-4">
+                        <div class="animate-pulse flex space-x-4">
+                            <div class="rounded-full bg-slate-200 h-10 w-10"></div>
+                            <div class="flex-1 space-y-3 py-1">
+                                <div class="h-2 bg-slate-200 rounded"></div>
+                                <div class="space-y-2">
+                                    <div class="grid grid-cols-3 gap-4">
+                                        <div class="h-2 bg-slate-200 rounded col-span-2"></div>
+                                        <div class="h-2 bg-slate-200 rounded col-span-1"></div>
+                                    </div>
+                                    <div class="h-2 bg-slate-200 rounded"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 animate-pulse flex space-x-4">
+                            <div class="rounded-full bg-slate-200 h-10 w-10"></div>
+                            <div class="flex-1 space-y-3 py-1">
+                                <div class="h-2 bg-slate-200 rounded"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Type Selection Section -->
+    <div class="py-16 bg-white sm:py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:text-center">
+                <h2 class="text-base text-indigo-600 font-semibold tracking-wide uppercase">Choose Your Path</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                    Are you a Job Seeker or an Employer?
+                </p>
+                <p class="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
+                    We have tailored tools to help you succeed, whether you're looking for a job or searching for the perfect candidate.
+                </p>
+            </div>
+
+            <div class="mt-12 grid gap-10 md:grid-cols-2">
+                <div class="bg-gray-50 rounded-2xl shadow-lg p-8 text-center border border-gray-200 hover:shadow-xl transition-shadow duration-300 animate-fade-in-up delay-100">
+                    <div class="flex justify-center items-center h-16 w-16 rounded-full bg-indigo-100 mx-auto mb-6">
+                        <svg class="h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">For Job Seekers</h2>
+                    <p class="mt-4 text-gray-600">
+                        Craft a standout resume, get instant AI analysis and scoring, and download professional templates to land your dream job.
+                    </p>
+                    <div class="mt-8 flex flex-col space-y-4">
+                        <a href="{% url 'users:register' %}" class="inline-block bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-transform transform hover:scale-105">New User? Get Started</a>
+                        <a href="{% url 'users:login' %}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Existing User? Login</a>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 rounded-2xl shadow-lg p-8 text-center border border-gray-200 hover:shadow-xl transition-shadow duration-300 animate-fade-in-up delay-200">
+                     <div class="flex justify-center items-center h-16 w-16 rounded-full bg-green-100 mx-auto mb-6">
+                        <svg class="h-8 w-8 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">For Employers</h2>
+                    <p class="mt-4 text-gray-600">
+                        Post job openings and find the perfect candidates faster with our intelligent matching engine that ranks applicants for you.
+                    </p>
+                    <div class="mt-8 flex flex-col space-y-4">
+                         <a href="{% url 'users:register' %}" class="inline-block bg-green-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105">New Employer? Post a Job</a>
+                         <a href="{% url 'users:login' %}" class="text-sm font-medium text-green-600 hover:text-green-500">Existing Employer? Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- How it works section -->
+    <div class="py-16 bg-gray-50 sm:py-24">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center">
-            <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
-                <span class="block">Build Your Future with an</span>
-                <span class="block text-indigo-600">AI-Powered Resume</span>
-            </h1>
-            <p class="mt-6 max-w-2xl mx-auto text-xl text-gray-500">
-                Create a professional resume in minutes with our intelligent builder, get AI-driven feedback, and connect with the perfect job opportunities.
+            <h2 class="text-base font-semibold tracking-wider text-indigo-600 uppercase">How It Works</h2>
+            <p class="mt-2 text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">
+              A smarter way to build your career
             </p>
-            <div class="mt-8 flex justify-center gap-x-4">
-                 <a href="{% url 'users:register' %}" class="inline-block bg-indigo-600 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:bg-indigo-700 transition duration-300">
-                    Get Started Now
-                </a>
+            <p class="mt-5 max-w-prose mx-auto text-xl text-gray-500">
+              In three simple steps, transform your job search from tedious to terrific.
+            </p>
+        </div>
+        <div class="mt-12 grid gap-8 md:grid-cols-3">
+            <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-200 animate-fade-in-up delay-100">
+                <div class="flex-shrink-0"><span class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white"><svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16.5V9.75m0 0l-3.75 3.75M12 9.75l3.75 3.75M3.75 18A9 9 0 0121 9" /></svg></span></div>
+                <h3 class="mt-6 text-lg font-medium text-gray-900">1. Upload or Build</h3>
+                <p class="mt-2 text-base text-gray-500">Instantly parse an existing resume or build a new one from scratch with our guided, step-by-step editor.</p>
+            </div>
+            <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-200 animate-fade-in-up delay-200">
+                <div class="flex-shrink-0"><span class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white"><svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></span></div>
+                <h3 class="mt-6 text-lg font-medium text-gray-900">2. Get AI Feedback</h3>
+                <p class="mt-2 text-base text-gray-500">Receive a real-time score and actionable, AI-driven suggestions to enhance your resume's impact and clarity.</p>
+            </div>
+            <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-200 animate-fade-in-up delay-300">
+                <div class="flex-shrink-0"><span class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white"><svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></span></div>
+                <h3 class="mt-6 text-lg font-medium text-gray-900">3. Apply with Confidence</h3>
+                <p class="mt-2 text-base text-gray-500">Discover jobs perfectly matched to your profile and apply with a resume tailored for success.</p>
             </div>
         </div>
+      </div>
     </div>
-</div>
 
-<!-- Call to Action Sections -->
-<div class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- Job Seeker Card -->
-        <div class="bg-white rounded-2xl shadow-lg p-8 text-center border border-gray-200 hover:shadow-xl transition-shadow duration-300">
-            <div class="flex justify-center items-center h-16 w-16 rounded-full bg-indigo-100 mx-auto mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 11c0 3.517-1.009 6.79-2.731 9.566l-2.73-2.73a1.5 1.5 0 01-2.122 0l-2.12 2.122a1.5 1.5 0 01-2.122 0l-2.73-2.73A18.75 18.75 0 012.25 12c0-3.517 1.009-6.79 2.73-9.566l2.73 2.73a1.5 1.5 0 012.122 0l2.12-2.122a1.5 1.5 0 012.122 0l2.73 2.73A18.75 18.75 0 0112 11z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 11a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" />
-                </svg>
-            </div>
-            <h2 class="text-2xl font-bold text-gray-800">For Job Seekers</h2>
-            <p class="mt-4 text-gray-600">
-                Craft a standout resume, get instant AI analysis and scoring, and download professional templates to land your dream job.
-            </p>
-            <div class="mt-8">
-                <a href="{% url 'resumes:resume-dashboard' %}" class="inline-block text-indigo-600 font-semibold hover:text-indigo-800">
-                    Build Your Resume &rarr;
-                </a>
-            </div>
-        </div>
-
-        <!-- Employer Card -->
-        <div class="bg-white rounded-2xl shadow-lg p-8 text-center border border-gray-200 hover:shadow-xl transition-shadow duration-300">
-             <div class="flex justify-center items-center h-16 w-16 rounded-full bg-green-100 mx-auto mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5zM12 15.75a3 3 0 01-3-3m3 3a3 3 0 00-3-3m-3.75 3H12m-2.25 3.75a3 3 0 01-3-3m3 3a3 3 0 00-3-3m-3.75 3H12m6.75-3.75a3 3 0 00-3-3m3 3a3 3 0 01-3-3m3.75 3H18m-2.25 3.75a3 3 0 00-3-3m3 3a3 3 0 01-3-3m3.75 3H18m-6.75-3.75a3 3 0 00-3-3m3 3a3 3 0 01-3-3m-3.75 3H6.75" />
-                </svg>
-            </div>
-            <h2 class="text-2xl font-bold text-gray-800">For Employers</h2>
-            <p class="mt-4 text-gray-600">
-                Post job openings and find the perfect candidates faster with our intelligent matching engine that ranks applicants for you.
-            </p>
-            <div class="mt-8">
-                <a href="{% url 'jobs:post-job' %}" class="inline-block text-green-600 font-semibold hover:text-green-800">
-                    Post a Job &rarr;
-                </a>
-            </div>
-        </div>
-    </div>
+  </main>
 </div>
 {% endblock %}
+
