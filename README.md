@@ -1,6 +1,17 @@
-# AI Resume Builder
+# 🤖 AI Resume Builder v2.0
 
-An intelligent resume creation platform powered by AI that helps job seekers build professional resumes with real-time feedback, scoring, and job matching. Built with Django, Celery, Redis, and Google Gemini AI.
+<div align="center">
+
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
+[![Django](https://img.shields.io/badge/Django-5.2.5-green.svg)](https://www.djangoproject.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/kiruuuuuuu/ai-resume-builder-v2?style=social)](https://github.com/kiruuuuuuu/ai-resume-builder-v2)
+
+**An intelligent resume creation platform powered by AI** that helps job seekers build professional resumes with real-time feedback, scoring, and job matching. Built with Django, Celery, Redis, and Google Gemini AI.
+
+[Features](#-features) • [Installation](#-installation) • [Documentation](#-documentation) • [Contributing](#-contributing)
+
+</div>
 
 ## 🚀 Features
 
@@ -27,8 +38,8 @@ An intelligent resume creation platform powered by AI that helps job seekers bui
 
 1. **Clone the repository**:
    ```bash
-   git clone <repository-url>
-   cd AI_Resume_Builder
+   git clone https://github.com/kiruuuuuuu/ai-resume-builder-v2.git
+   cd ai-resume-builder-v2
    ```
 
 2. **Set up environment**:
@@ -268,9 +279,30 @@ For more troubleshooting tips, see [DOCUMENTATION.md](docs/DOCUMENTATION.md#trou
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📸 Screenshots
+
+_Coming soon - Add screenshots of your application here!_
+
+## 🛠️ Tech Stack
+
+- **Backend**: Django 5.2.5, Python 3.11+
+- **AI/ML**: Google Gemini AI, scikit-learn
+- **Task Queue**: Celery with Redis
+- **Database**: PostgreSQL (production) / SQLite (development)
+- **PDF Generation**: WeasyPrint
+- **Frontend**: Tailwind CSS, Django Templates
+- **Authentication**: django-allauth (Google, GitHub OAuth)
+- **Storage**: AWS S3 (optional) / Local storage
+
 ## 📝 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 👨‍💻 Author
 
