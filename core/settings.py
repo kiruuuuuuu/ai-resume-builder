@@ -32,9 +32,11 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 GOOGLE_AI_API_KEY = os.getenv("GOOGLE_AI_API_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 't')
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS can be set as comma-separated list in environment variable
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else []
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
 
 # --- Gemini API Settings ---
 # A central switch to enable or disable all Gemini features.
@@ -78,6 +80,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',  # Required for django-allauth
+    
+    # django-allauth apps (must be before local apps)
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.github',
 
     # Local apps
     'pages',
@@ -95,10 +105,12 @@ CRISPY_TEMPLATE_PACK = "tailwind"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add WhiteNoise for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # Required for django-allauth
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -129,12 +141,27 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Use PostgreSQL in production, SQLite in development
+USE_POSTGRESQL = os.getenv('USE_POSTGRESQL', 'False').lower() in ('true', '1', 't')
+
+if USE_POSTGRESQL:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'ai_resume_builder'),
+            'USER': os.getenv('DB_USER', 'postgres'),
+            'PASSWORD': os.getenv('DB_PASSWORD', ''),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -172,6 +199,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# WhiteNoise configuration for serving static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -179,10 +210,59 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.CustomUser'
 
+# django-allauth Configuration
+AUTHENTICATION_BACKENDS = [
+    # Django default authentication backend
+    'django.contrib.auth.backends.ModelBackend',
+    # django-allauth authentication backend
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# Site ID for django-allauth (required)
+SITE_ID = 1
+
+# Allauth settings (using new format to avoid deprecation warnings)
+ACCOUNT_LOGIN_METHODS = {'username', 'email'}  # Can login with username or email
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']  # Required fields for signup
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # Set to 'mandatory' if you want email verification
+ACCOUNT_SESSION_REMEMBER = True
+ACCOUNT_SIGNUP_REDIRECT_URL = 'home'
+
+# Social account settings
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_REQUIRED = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'  # Set to 'mandatory' if you want email verification
+SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_STORE_TOKENS = False
+
+# Google OAuth Settings (set these in your .env file)
+# GOOGLE_OAUTH2_CLIENT_ID = os.getenv('GOOGLE_OAUTH2_CLIENT_ID', '')
+# GOOGLE_OAUTH2_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH2_CLIENT_SECRET', '')
+
+# GitHub OAuth Settings (set these in your .env file)
+# GITHUB_CLIENT_ID = os.getenv('GITHUB_CLIENT_ID', '')
+# GITHUB_CLIENT_SECRET = os.getenv('GITHUB_CLIENT_SECRET', '')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-LOGIN_URL = 'login'
+LOGIN_URL = 'account_login'  # django-allauth login URL
+LOGIN_REDIRECT_URL = 'home'
+
+# AWS S3 Configuration for Media Files (Production)
+USE_S3 = os.getenv('USE_S3', 'False').lower() in ('true', '1', 't')
+
+if USE_S3:
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'us-east-1')
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+    AWS_DEFAULT_ACL = 'public-read'
+    AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+    
+    # Media files
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 
 # Celery Configuration
@@ -192,3 +272,28 @@ CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
+
+# Auto-configure pool based on platform
+# Note: Command-line -P flag overrides this setting
+# Windows: Default to 'solo' pool (reliable, no eventlet issues)
+# Linux/Mac: Default to 'eventlet' pool (better concurrency for I/O-bound tasks)
+import platform
+import sys
+
+# Check if pool type is explicitly set via command line
+pool_explicitly_set = False
+if len(sys.argv) > 1:
+    cmd_line = ' '.join(sys.argv)
+    if '-P ' in cmd_line or '--pool=' in cmd_line or '--pool ' in cmd_line:
+        pool_explicitly_set = True
+
+if not pool_explicitly_set:
+    # Only set default if not explicitly specified
+    if platform.system() == 'Windows':
+        CELERY_WORKER_POOL = 'solo'
+        print("ℹ Celery default for Windows: Use '-P solo' pool (recommended)")
+        print("  To test eventlet: celery -A core worker -l info -P eventlet")
+    else:
+        # Production on Linux/Mac - use eventlet for better performance
+        CELERY_WORKER_POOL = 'eventlet'
+        print("ℹ Celery default for Linux/Mac: Use '-P eventlet' pool")

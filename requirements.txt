@@ -11,3 +11,11 @@ redis
 eventlet
 django-crispy-forms
 crispy-tailwind
+whitenoise
+psycopg2-binary
+django-storages
+boto3
+icalendar
+django-allauth
+cryptography
+beautifulsoup4

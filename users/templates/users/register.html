@@ -1,33 +1,368 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+{% load socialaccount %}
 
 {% block title %}Register{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-        <div>
-            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 relative overflow-hidden" x-data="registerForm()">
+    <!-- Background decoration -->
+    <div class="absolute inset-0 bg-black opacity-10"></div>
+    <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.05\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+    
+    <div class="relative max-w-md w-full space-y-8 animate-fade-in-up">
+        <div class="text-center">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl mb-6">
+                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-4 drop-shadow-lg animate-fade-in-up delay-100">
                 Create a new account
-            </h2>
-             <p class="mt-2 text-center text-sm text-gray-600">
-                Already have an account? <a href="{% url 'users:login' %}" class="font-medium text-indigo-600 hover:text-indigo-500">Sign in</a>
+            </h1>
+            <p class="text-lg text-indigo-100 animate-fade-in-up delay-200">
+                Already have an account? <a href="{% url 'users:login' %}" class="font-semibold text-white hover:text-yellow-200 transition-colors underline">Sign in</a>
             </p>
         </div>
-        <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
-            <form method="POST">
+        
+        <div class="bg-white/95 backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-white/20 animate-scale-in delay-300">
+            <form method="POST" @submit="handleSubmit">
                 {% csrf_token %}
                 
-                {{ form|crispy }}
+                {% if form.non_field_errors %}
+                    <div class="rounded-md bg-red-50 p-4 border border-red-200 mb-6" role="alert" aria-live="polite">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800">Registration Error</h3>
+                                <div class="mt-2 text-sm text-red-700">
+                                    {{ form.non_field_errors }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="space-y-5">
+                    {% for field in form %}
+                        <div>
+                            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="text-red-500" aria-label="required">*</span>{% endif %}
+                            </label>
+                            
+                            {% if field.name == 'password' or field.name == 'password2' %}
+                                <div class="relative">
+                                    <input type="password" 
+                                           id="{{ field.id_for_label }}" 
+                                           name="{{ field.name }}"
+                                           x-model="{% if field.name == 'password' %}password{% else %}password2{% endif %}"
+                                           @input="{% if field.name == 'password' %}checkPasswordStrength(){% else %}checkPasswordMatch(){% endif %}"
+                                           :type="showPassword{% if field.name == 'password2' %}2{% endif %} ? 'text' : 'password'"
+                                           class="appearance-none block w-full px-3 py-2 border rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all {% if field.errors %}border-red-500{% elif field.value and not field.errors %}border-green-500{% else %}border-gray-300{% endif %}"
+                                           value="{{ field.value|default:'' }}"
+                                           aria-invalid="{% if field.errors %}true{% else %}false{% endif %}"
+                                           aria-describedby="{% if field.errors %}{{ field.id_for_label }}-error{% endif %}">
+                                    <button type="button" 
+                                            @click="showPassword{% if field.name == 'password2' %}2{% endif %} = !showPassword{% if field.name == 'password2' %}2{% endif %}"
+                                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
+                                            :aria-label="showPassword{% if field.name == 'password2' %}2{% endif %} ? 'Hide password' : 'Show password'">
+                                        <svg x-show="!showPassword{% if field.name == 'password2' %}2{% endif %}" class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        <svg x-show="showPassword{% if field.name == 'password2' %}2{% endif %}" x-cloak class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.29 3.29m0 0L12 12m-5.71-5.71L3 3" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                
+                                {% if field.name == 'password' %}
+                                    <!-- Password Strength Indicator -->
+                                    <div x-show="password.length > 0" x-cloak class="mt-2">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div class="h-full transition-all duration-300 rounded-full"
+                                                     :class="{
+                                                         'bg-red-500': passwordStrength === 0 || passwordStrength === 1,
+                                                         'bg-yellow-500': passwordStrength === 2,
+                                                         'bg-green-500': passwordStrength === 3 || passwordStrength === 4
+                                                     }"
+                                                     :style="'width: ' + (passwordStrength * 25) + '%'"></div>
+                                            </div>
+                                            <span class="text-xs font-medium"
+                                                  :class="{
+                                                      'text-red-600': passwordStrength <= 1,
+                                                      'text-yellow-600': passwordStrength === 2,
+                                                      'text-green-600': passwordStrength >= 3
+                                                  }"
+                                                  x-text="['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'][passwordStrength]"></span>
+                                        </div>
+                                        <ul class="text-xs text-gray-600 space-y-1 mt-2">
+                                            <li class="flex items-center gap-1">
+                                                <svg class="w-4 h-4" :class="password.length >= 8 ? 'text-green-500' : 'text-gray-400'" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                </svg>
+                                                At least 8 characters
+                                            </li>
+                                            <li class="flex items-center gap-1">
+                                                <svg class="w-4 h-4" :class="/[A-Z]/.test(password) ? 'text-green-500' : 'text-gray-400'" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                </svg>
+                                                One uppercase letter
+                                            </li>
+                                            <li class="flex items-center gap-1">
+                                                <svg class="w-4 h-4" :class="/[0-9]/.test(password) ? 'text-green-500' : 'text-gray-400'" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                </svg>
+                                                One number
+                                            </li>
+                                        </ul>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if field.name == 'password2' %}
+                                    <!-- Password Match Indicator -->
+                                    <div x-show="password2.length > 0" x-cloak class="mt-2">
+                                        <p class="text-xs flex items-center gap-1"
+                                           :class="passwordMatch ? 'text-green-600' : 'text-red-600'">
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                            <span x-text="passwordMatch ? 'Passwords match' : 'Passwords do not match'"></span>
+                                        </p>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                {% if field.name == 'user_type' %}
+                                    <!-- Enhanced User Type Selection -->
+                                    <div class="grid grid-cols-2 gap-4 mt-2">
+                                        <label class="relative flex cursor-pointer rounded-lg border p-4 focus:outline-none transition-all"
+                                               :class="userType === 'job_seeker' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500' : 'border-gray-300 bg-white hover:border-gray-400'">
+                                            <input type="radio" name="user_type" value="job_seeker" x-model="userType" class="sr-only">
+                                            <div class="flex flex-1">
+                                                <div class="flex flex-col">
+                                                    <span class="block text-sm font-medium text-gray-900">Job Seeker</span>
+                                                    <span class="mt-1 flex items-center text-sm text-gray-500">Find your dream job</span>
+                                                </div>
+                                            </div>
+                                            <svg x-show="userType === 'job_seeker'" class="h-5 w-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                            </svg>
+                                        </label>
+                                        <label class="relative flex cursor-pointer rounded-lg border p-4 focus:outline-none transition-all"
+                                               :class="userType === 'employer' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500' : 'border-gray-300 bg-white hover:border-gray-400'">
+                                            <input type="radio" name="user_type" value="employer" x-model="userType" class="sr-only">
+                                            <div class="flex flex-1">
+                                                <div class="flex flex-col">
+                                                    <span class="block text-sm font-medium text-gray-900">Employer</span>
+                                                    <span class="mt-1 flex items-center text-sm text-gray-500">Post job openings</span>
+                                                </div>
+                                            </div>
+                                            <svg x-show="userType === 'employer'" class="h-5 w-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                            </svg>
+                                        </label>
+                                    </div>
+                                {% else %}
+                                    {% if field.field.widget.input_type == 'email' %}
+                                        <input type="email" 
+                                               id="{{ field.id_for_label }}" 
+                                               name="{{ field.name }}"
+                                               class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all {% if field.errors %}border-red-500{% elif field.value and not field.errors %}border-green-500{% else %}border-gray-300{% endif %}"
+                                               value="{{ field.value|default:'' }}"
+                                               placeholder="{{ field.field.widget.attrs.placeholder|default:field.label }}"
+                                               aria-invalid="{% if field.errors %}true{% else %}false{% endif %}"
+                                               aria-describedby="{% if field.errors %}{{ field.id_for_label }}-error{% elif field.help_text %}{{ field.id_for_label }}-help{% endif %}">
+                                        {% if field.help_text %}
+                                            <p id="{{ field.id_for_label }}-help" class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+                                        {% endif %}
+                                    {% else %}
+                                        <input type="text" 
+                                               id="{{ field.id_for_label }}" 
+                                               name="{{ field.name }}"
+                                               class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all {% if field.errors %}border-red-500{% elif field.value and not field.errors %}border-green-500{% else %}border-gray-300{% endif %}"
+                                               value="{{ field.value|default:'' }}"
+                                               placeholder="{{ field.field.widget.attrs.placeholder|default:field.label }}"
+                                               aria-invalid="{% if field.errors %}true{% else %}false{% endif %}"
+                                               aria-describedby="{% if field.errors %}{{ field.id_for_label }}-error{% elif field.help_text %}{{ field.id_for_label }}-help{% endif %}">
+                                        {% if field.help_text %}
+                                            <p id="{{ field.id_for_label }}-help" class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                            
+                            {% if field.errors %}
+                                <p id="{{ field.id_for_label }}-error" class="mt-2 text-sm text-red-600 flex items-center gap-1" role="alert">
+                                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    {{ field.errors.0 }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Terms & Conditions -->
+                <div class="mt-6">
+                    <label class="flex items-start">
+                        <input type="checkbox" 
+                               x-model="agreeTerms"
+                               class="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        <span class="ml-2 text-sm text-gray-600">
+                            I agree to the <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded">Terms and Conditions</a> and <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded">Privacy Policy</a>
+                        </span>
+                    </label>
+                </div>
 
                 <div class="pt-4">
-                    <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Register
+                    <button type="submit" 
+                            :disabled="isSubmitting || !agreeTerms || !isFormValid"
+                            class="w-full flex justify-center items-center py-3 px-4 text-base font-semibold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-lg hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                            :class="{'opacity-50 cursor-not-allowed': isSubmitting || !agreeTerms || !isFormValid}">
+                        <svg x-show="isSubmitting" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" x-cloak>
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span x-text="isSubmitting ? 'Creating account...' : 'Register'"></span>
                     </button>
                 </div>
+
+                <!-- Social Login Section -->
+                {% get_providers as socialaccount_providers %}
+                {% if socialaccount_providers %}
+                <div class="mt-6">
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-white text-gray-500">Or continue with</span>
+                        </div>
+                    </div>
+                    <div class="mt-6 grid grid-cols-2 gap-3">
+                        {% for provider in socialaccount_providers %}
+                            {% if provider.id == "google" %}
+                            <a href="{% provider_login_url provider.id %}" 
+                               class="w-full inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform hover:scale-[1.02]">
+                                <svg class="w-5 h-5" viewBox="0 0 24 24">
+                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                                </svg>
+                                <span class="ml-2">Google</span>
+                            </a>
+                            {% elif provider.id == "github" %}
+                            <a href="{% provider_login_url provider.id %}" 
+                               class="w-full inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform hover:scale-[1.02]">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
+                                </svg>
+                                <span class="ml-2">GitHub</span>
+                            </a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
             </form>
         </div>
     </div>
 </div>
-{% endblock %}
 
+<script>
+function registerForm() {
+    return {
+        showPassword: false,
+        showPassword2: false,
+        password: '',
+        password2: '',
+        userType: '',
+        passwordStrength: 0,
+        passwordMatch: false,
+        agreeTerms: false,
+        isSubmitting: false,
+        fieldErrors: {},
+        isFormValid: false,
+        
+        init() {
+            // Initialize user type from form
+            const userTypeInput = document.querySelector('input[name="user_type"]:checked');
+            if (userTypeInput) this.userType = userTypeInput.value;
+            
+            // Watch for user type changes
+            this.$watch('userType', () => {
+                this.validateForm();
+            });
+            
+            this.validateForm();
+        },
+        
+        checkPasswordStrength() {
+            let strength = 0;
+            if (this.password.length >= 8) strength++;
+            if (this.password.length >= 12) strength++;
+            if (/[A-Z]/.test(this.password)) strength++;
+            if (/[0-9]/.test(this.password)) strength++;
+            if (/[^A-Za-z0-9]/.test(this.password)) strength++;
+            this.passwordStrength = Math.min(strength, 4);
+            this.validateForm();
+        },
+        
+        checkPasswordMatch() {
+            this.passwordMatch = this.password === this.password2 && this.password.length > 0;
+            if (this.password2 && !this.passwordMatch) {
+                this.fieldErrors['password2'] = 'Passwords do not match.';
+            } else {
+                this.fieldErrors['password2'] = '';
+            }
+            this.validateForm();
+        },
+        
+        validateForm() {
+            // Check all required validations
+            const hasUsername = document.querySelector('input[name="username"]')?.value?.trim().length >= 3;
+            const hasEmail = document.querySelector('input[name="email"]')?.value?.trim().length > 0;
+            const hasValidPassword = this.password.length >= 8 && this.passwordStrength >= 2;
+            const passwordsMatch = this.passwordMatch || !this.password2;
+            const hasUserType = this.userType !== '';
+            
+            this.isFormValid = hasUsername && hasEmail && hasValidPassword && passwordsMatch && hasUserType && this.agreeTerms;
+        },
+        
+        handleSubmit(e) {
+            // Final validation
+            this.checkPasswordStrength();
+            this.checkPasswordMatch();
+            this.validateForm();
+            
+            if (!this.agreeTerms) {
+                e.preventDefault();
+                if (window.toast) {
+                    window.toast.warning('Please agree to the Terms and Conditions.');
+                }
+                return false;
+            }
+            
+            if (!this.isFormValid) {
+                e.preventDefault();
+                if (window.toast) {
+                    window.toast.error('Please fix all errors before submitting.');
+                }
+                return false;
+            }
+            
+            this.isSubmitting = true;
+            return true;
+        }
+    }
+}
+</script>
+{% endblock %}

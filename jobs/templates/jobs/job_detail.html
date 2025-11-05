@@ -3,14 +3,76 @@
 {% block title %}{{ job.title }}{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4">
-    <div class="bg-white p-8 rounded-xl shadow-md border" x-data="{ open: false }">
-        <h1 class="text-4xl font-bold text-gray-900">{{ job.title }}</h1>
-        <p class="text-xl text-gray-700 font-medium mt-1">{{ job.employer.company_name }}</p>
-        <div class="flex items-center text-md text-gray-500 mt-1">
-            <span>{{ job.location }}</span>
-            <span class="mx-2">&bull;</span>
-            <span>{{ job.vacancies }} vacanc{{ job.vacancies|pluralize:"y,ies" }}</span>
+<div class="max-w-4xl mx-auto px-4 py-8" x-data="jobDetail()">
+    <div class="card p-8 animate-scale-in">
+        <div class="flex justify-between items-start mb-4">
+            <div class="flex-1">
+                <h1 class="text-4xl font-bold text-gray-900">{{ job.title }}</h1>
+                <p class="text-xl text-gray-700 font-medium mt-1">
+                    <a href="{% url 'jobs:company-profile' employer_id=job.employer.user.id %}" 
+                       class="hover:text-indigo-600 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded">
+                        {{ job.employer.company_name }}
+                    </a>
+                </p>
+            </div>
+            <div class="flex gap-2 ml-4">
+                <button @click="toggleBookmark()" 
+                        :class="isBookmarked ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-500'"
+                        class="p-2 rounded-md hover:bg-gray-100 transition-all"
+                        :aria-label="isBookmarked ? 'Remove bookmark' : 'Bookmark this job'">
+                    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                </button>
+                <button @click="showShareMenu = !showShareMenu" 
+                        class="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all relative"
+                        aria-label="Share this job">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                    <!-- Share Menu -->
+                    <div x-show="showShareMenu" 
+                         @click.away="showShareMenu = false"
+                         x-cloak
+                         x-transition
+                         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
+                        <div class="py-1">
+                            <button @click="shareOnTwitter()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                Share on Twitter
+                            </button>
+                            <button @click="shareOnLinkedIn()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                Share on LinkedIn
+                            </button>
+                            <button @click="copyLink()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                Copy Link
+                            </button>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-4 text-md text-gray-500 mt-2">
+            <span class="flex items-center gap-1">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                {{ job.location }}
+            </span>
+            <span class="flex items-center gap-1">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                {{ job.vacancies }} vacanc{{ job.vacancies|pluralize:"y,ies" }}
+            </span>
+            {% if job.salary_min or job.salary_max %}
+            <span class="flex items-center gap-1 font-semibold text-green-600">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                ${{ job.salary_min|default:"—" }} - ${{ job.salary_max|default:"—" }}
+            </span>
+            {% endif %}
         </div>
 
         {% if job.application_deadline %}
@@ -36,8 +98,13 @@
                         </button>
                     {% else %}
                         <!-- This button now opens the modal -->
-                        <button @click="open = true" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
+                        <button @click="open = true" 
+                                type="button" 
+                                class="w-full btn-primary py-3 px-6 text-base font-bold transition-all duration-300">
                             Apply Now
+                            <svg class="inline-block ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
                         </button>
                     {% endif %}
                 {% elif not user.is_authenticated %}
@@ -53,7 +120,19 @@
         </div>
 
         <!-- Apply Now Modal -->
-        <div x-show="open" x-cloak x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed z-10 inset-0 overflow-y-auto">
+        <div x-show="open" 
+             x-cloak 
+             @keydown.escape.window="open = false"
+             x-transition:enter="ease-out duration-300" 
+             x-transition:enter-start="opacity-0" 
+             x-transition:enter-end="opacity-100" 
+             x-transition:leave="ease-in duration-200" 
+             x-transition:leave-start="opacity-100" 
+             x-transition:leave-end="opacity-0" 
+             class="fixed z-10 inset-0 overflow-y-auto"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="modal-title">
             <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                 <div class="fixed inset-0 transition-opacity" aria-hidden="true">
                     <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
@@ -89,5 +168,42 @@
         </div>
     </div>
 </div>
+
+<script>
+function jobDetail() {
+    return {
+        open: false,
+        showShareMenu: false,
+        isBookmarked: JSON.parse(localStorage.getItem('bookmarkedJobs') || '[]').includes({{ job.id }}),
+        toggleBookmark() {
+            let bookmarked = JSON.parse(localStorage.getItem('bookmarkedJobs') || '[]');
+            if (this.isBookmarked) {
+                bookmarked = bookmarked.filter(id => id !== {{ job.id }});
+                this.isBookmarked = false;
+            } else {
+                bookmarked.push({{ job.id }});
+                this.isBookmarked = true;
+            }
+            localStorage.setItem('bookmarkedJobs', JSON.stringify(bookmarked));
+        },
+        shareOnTwitter() {
+            const url = `https://twitter.com/intent/tweet?text=Check out this job: {{ job.title }}&url=${encodeURIComponent(window.location.href)}`;
+            window.open(url, '_blank');
+            this.showShareMenu = false;
+        },
+        shareOnLinkedIn() {
+            const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`;
+            window.open(url, '_blank');
+            this.showShareMenu = false;
+        },
+        copyLink() {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert('Link copied to clipboard!');
+            });
+            this.showShareMenu = false;
+        }
+    }
+}
+</script>
 {% endblock %}
 

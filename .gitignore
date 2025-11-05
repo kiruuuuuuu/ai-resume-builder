@@ -18,5 +18,11 @@ db.sqlite3
 # Media files
 /media/
 
+# Static files (collected by collectstatic)
+/staticfiles/
+
 # Other
 .DS_Store
+*.log
+.vscode/
+.idea/

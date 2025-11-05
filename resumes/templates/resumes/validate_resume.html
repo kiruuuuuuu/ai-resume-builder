@@ -4,26 +4,61 @@
 {% block title %}Confirm Your Details{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto py-12 px-4" x-data="formsetManager()">
-    <div class="text-center">
-        <h1 class="text-4xl font-bold text-gray-800 mb-4">Confirm Your Details</h1>
-        <p class="text-lg text-gray-600 mb-10">Our AI has extracted the following information. Please review, correct, and add any missing details before saving.</p>
+<!-- Enhanced Hero Section -->
+<div class="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 overflow-hidden">
+    <div class="absolute inset-0 bg-black opacity-10"></div>
+    <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.05\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+    <div class="relative max-w-7xl mx-auto px-4 py-16 text-center">
+        <div class="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl mb-6">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+        <h1 class="text-5xl md:text-6xl font-bold text-white mb-4 animate-fade-in-up drop-shadow-lg">
+            Confirm Your Details
+        </h1>
+        <p class="text-xl text-indigo-100 mb-8 animate-fade-in-up delay-100">
+            Our AI has extracted the following information. Please review, correct, and add any missing details before saving.
+        </p>
     </div>
+</div>
+
+<div class="max-w-4xl mx-auto py-12 px-4 -mt-8" x-data="formsetManager()">
+
+    <!-- Enhanced Sticky Navigation Bar -->
+    <nav class="sticky top-16 z-30 bg-white/95 backdrop-blur-lg shadow-xl rounded-xl mb-8 px-4 py-4 border border-gray-200/60" style="scroll-margin-top: 1rem;">
+        <div class="flex flex-wrap justify-center gap-2 md:gap-4 text-sm">
+            <a href="#formset-personal" @click.prevent="scrollToSection('personal')" class="px-4 py-2 rounded-lg text-gray-700 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 hover:text-indigo-700 transition-all duration-200 font-medium {% if profile_form.errors %}font-semibold text-red-600 bg-red-50 border border-red-200{% endif %}">Personal</a>
+            <a href="#formset-experience" @click.prevent="scrollToSection('experience')" class="px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 transition-colors {% if experience_formset.errors or experience_formset.non_form_errors %}font-semibold text-red-600{% endif %}">Experience</a>
+            <a href="#formset-education" @click.prevent="scrollToSection('education')" class="px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 transition-colors {% if education_formset.errors or education_formset.non_form_errors %}font-semibold text-red-600{% endif %}">Education</a>
+            <a href="#formset-skill" @click.prevent="scrollToSection('skill')" class="px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 transition-colors {% if skill_formset.errors or skill_formset.non_form_errors %}font-semibold text-red-600{% endif %}">Skills</a>
+            <a href="#formset-project" @click.prevent="scrollToSection('project')" class="px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 transition-colors {% if project_formset.errors or project_formset.non_form_errors %}font-semibold text-red-600{% endif %}">Projects</a>
+            <a href="#formset-certification" @click.prevent="scrollToSection('certification')" class="px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 transition-colors {% if certification_formset.errors or certification_formset.non_form_errors %}font-semibold text-red-600{% endif %}">Certifications</a>
+            <a href="#formset-achievement" @click.prevent="scrollToSection('achievement')" class="px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 transition-colors {% if achievement_formset.errors or achievement_formset.non_form_errors %}font-semibold text-red-600{% endif %}">Achievements</a>
+            <a href="#formset-language" @click.prevent="scrollToSection('language')" class="px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 transition-colors {% if language_formset.errors or language_formset.non_form_errors %}font-semibold text-red-600{% endif %}">Languages</a>
+            <a href="#formset-hobby" @click.prevent="scrollToSection('hobby')" class="px-3 py-2 rounded-md text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 transition-colors {% if hobby_formset.errors or hobby_formset.non_form_errors %}font-semibold text-red-600{% endif %}">Hobbies</a>
+        </div>
+    </nav>
 
     <form id="validate-resume-form" method="POST" enctype="multipart/form-data" class="space-y-4">
         {% csrf_token %}
 
         <!-- Personal Information -->
-        <div class="bg-white rounded-xl shadow-lg transition-all duration-300 border">
-            <button type="button" @click="toggleSection('personal')" class="w-full text-left p-6">
+        <div class="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl transition-all duration-300 border-2 border-gray-200/60 hover:shadow-2xl hover:border-indigo-300 mb-6">
+            <button type="button" @click="toggleSection('personal')" class="w-full text-left p-6 hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 transition-all duration-200 rounded-t-xl">
                 <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-x-2">
-                        Personal Details {% if profile_form.errors %}<span class="h-3 w-3 rounded-full bg-red-500"></span>{% endif %}
+                    <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-x-3">
+                        <div class="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </div>
+                        Personal Details {% if profile_form.errors %}<span class="h-3 w-3 rounded-full bg-red-500 animate-pulse shadow-lg"></span>{% endif %}
                     </h2>
-                    <svg class="w-6 h-6 transform transition-transform" :class="{'rotate-180': openSection === 'personal'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    <svg class="w-6 h-6 transform transition-transform text-gray-400" :class="{'rotate-180': openSection === 'personal'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                 </div>
             </button>
-            <div x-show="openSection === 'personal'" x-cloak x-transition class="p-6 border-t">
+            <div x-show="openSection === 'personal'" x-cloak x-transition class="p-6 border-t border-gray-200" id="formset-personal">
                 {% for field in profile_form.visible_fields %}
                     {{ field|as_crispy_field }}
                     {% if field.name == 'professional_summary' %}
@@ -233,7 +268,12 @@
         </div>
         
         <div class="pt-5">
-            <button type="submit" form="validate-resume-form" class="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition duration-300 text-lg shadow-lg">Confirm & Build My Resume</button>
+            <button type="submit" form="validate-resume-form" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white font-bold py-4 px-6 rounded-xl hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 transition-all duration-300 text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Confirm & Build My Resume
+            </button>
         </div>
     </form>
 </div>
@@ -261,6 +301,24 @@
             openSection: '{{ first_error_section|default:"personal" }}',
             toggleSection(section) {
                 this.openSection = (this.openSection === section) ? null : section;
+            },
+            scrollToSection(section) {
+                // Expand the section if it's closed
+                if (this.openSection !== section) {
+                    this.openSection = section;
+                    // Wait for Alpine to render
+                    this.$nextTick(() => {
+                        const element = document.getElementById(`formset-${section}`);
+                        if (element) {
+                            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    });
+                } else {
+                    const element = document.getElementById(`formset-${section}`);
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
             },
             addForm(prefix) {
                 const totalFormsInput = document.getElementById(`id_${prefix}-TOTAL_FORMS`);

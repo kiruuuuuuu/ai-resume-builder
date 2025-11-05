@@ -1,23 +1,71 @@
-<div class="bg-white p-6 rounded-xl shadow-md border">
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-semibold text-gray-800">Personal Details</h2>
-        <button @click="editItem($event)" data-section="personal_details" data-pk="{{ resume.profile.pk }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Edit</button>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-        {% if resume.profile.profile_photo %}
-        <div class="md:col-span-2 flex justify-center mb-4">
-            <img src="{{ resume.profile.profile_photo.url }}" alt="Profile Photo" class="w-32 h-32 rounded-full object-cover ring-4 ring-slate-200">
+<div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900">Personal Details</h2>
+            <p class="text-sm text-gray-500 mt-1">Manage your contact information and profile</p>
         </div>
-        {% endif %}
-        <div><strong>Full Name:</strong><p class="text-gray-700">{{ resume.profile.full_name|default:"Not set" }}</p></div>
-        <div><strong>Email:</strong><p class="text-gray-700">{{ resume.profile.user.email }}</p></div>
-        <div><strong>Phone:</strong><p class="text-gray-700">{{ resume.profile.phone_number|default:"Not set" }}</p></div>
-        <div><strong>Address:</strong><p class="text-gray-700">{{ resume.profile.address|default:"Not set" }}</p></div>
-        <div><strong>Date of Birth:</strong><p class="text-gray-700">{{ resume.profile.date_of_birth|date:"d M Y"|default:"Not set" }}</p></div>
-        <div><strong>Portfolio:</strong> {% if resume.profile.portfolio_url %}<a href="{{ resume.profile.portfolio_url }}" target="_blank" class="text-indigo-600 hover:underline">{{ resume.profile.portfolio_url }}</a>{% else %}<p class="text-gray-700">Not set</p>{% endif %}</div>
-        <div><strong>LinkedIn:</strong> {% if resume.profile.linkedin_url %}<a href="{{ resume.profile.linkedin_url }}" target="_blank" class="text-indigo-600 hover:underline">{{ resume.profile.linkedin_url }}</a>{% else %}<p class="text-gray-700">Not set</p>{% endif %}</div>
+        <button @click="editItem($event)" data-section="personal_details" data-pk="{{ resume.profile.pk }}" class="btn-secondary flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit
+        </button>
+    </div>
+    
+    {% if resume.profile.profile_photo %}
+    <div class="flex justify-center mb-6">
+        <div class="relative">
+            <img src="{{ resume.profile.profile_photo.url }}" alt="Profile Photo" class="w-28 h-28 rounded-full object-cover ring-4 ring-gray-100 shadow-md">
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-1">
+            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Full Name</dt>
+            <dd class="text-base font-medium text-gray-900 mt-1">{{ resume.profile.full_name|default:"Not set" }}</dd>
+        </div>
+        <div class="space-y-1">
+            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Email Address</dt>
+            <dd class="text-base text-gray-700 mt-1">{{ resume.profile.user.email }}</dd>
+        </div>
+        <div class="space-y-1">
+            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Phone Number</dt>
+            <dd class="text-base text-gray-700 mt-1">{{ resume.profile.phone_number|default:"Not set" }}</dd>
+        </div>
+        <div class="space-y-1">
+            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Date of Birth</dt>
+            <dd class="text-base text-gray-700 mt-1">{{ resume.profile.date_of_birth|date:"F d, Y"|default:"Not set" }}</dd>
+        </div>
+        <div class="space-y-1 md:col-span-2">
+            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Address</dt>
+            <dd class="text-base text-gray-700 mt-1">{{ resume.profile.address|default:"Not set" }}</dd>
+        </div>
+        <div class="space-y-1">
+            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Portfolio</dt>
+            <dd class="text-base mt-1">
+                {% if resume.profile.portfolio_url %}
+                    <a href="{{ resume.profile.portfolio_url }}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:text-indigo-700 hover:underline transition-colors">Visit Portfolio</a>
+                {% else %}
+                    <span class="text-gray-400">Not set</span>
+                {% endif %}
+            </dd>
+        </div>
+        <div class="space-y-1">
+            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wide">LinkedIn</dt>
+            <dd class="text-base mt-1">
+                {% if resume.profile.linkedin_url %}
+                    <a href="{{ resume.profile.linkedin_url }}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:text-indigo-700 hover:underline transition-colors">View Profile</a>
+                {% else %}
+                    <span class="text-gray-400">Not set</span>
+                {% endif %}
+            </dd>
+        </div>
         {% if resume.profile.professional_summary %}
-        <div class="md:col-span-2"><strong>Summary:</strong> <p class="text-gray-600 mt-1 prose prose-sm max-w-none">{{ resume.profile.professional_summary|linebreaksbr }}</p></div>
+        <div class="md:col-span-2 space-y-2 pt-4 border-t border-gray-200">
+            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Professional Summary</dt>
+            <dd class="text-sm text-gray-700 mt-2 leading-relaxed">{{ resume.profile.professional_summary|linebreaksbr }}</dd>
+        </div>
         {% endif %}
     </div>
 </div>

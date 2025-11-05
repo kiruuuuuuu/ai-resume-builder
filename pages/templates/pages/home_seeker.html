@@ -3,32 +3,64 @@
 {% block title %}Your Dashboard{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <header class="py-10">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" x-data="jobDashboard()">
+    <header class="py-10 animate-fade-in-up">
         <h1 class="text-3xl font-bold tracking-tight text-gray-900">Latest Job Opportunities</h1>
         <p class="mt-2 text-lg text-gray-600">Here are the newest job postings, ranked by how well they match your resume.</p>
     </header>
+    
+    <!-- Filter/Sort Controls -->
+    <div class="mb-8 bg-white p-4 rounded-xl shadow-md border border-gray-200 animate-fade-in-up delay-100">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <select x-model="sortBy" @change="applyFilters()" class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <option value="score">Sort by Match Score</option>
+                <option value="newest">Newest First</option>
+                <option value="title">Job Title A-Z</option>
+            </select>
+            <button @click="showFilters = !showFilters" class="btn-secondary w-full">
+                <svg class="h-5 w-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                Filters
+            </button>
+        </div>
+    </div>
+    
     <div class="space-y-6">
         {% if jobs_with_scores %}
             {% for item in jobs_with_scores %}
-                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                        <div>
-                            <h2 class="text-xl font-bold text-gray-800">{{ item.job.title }}</h2>
+                <div class="card card-hover p-6 animate-fade-in-up delay-{{ forloop.counter0|add:2|add:'00'|slice:':3' }}" role="article" aria-label="Job posting: {{ item.job.title }}">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div class="flex-1">
+                            <h2 class="text-xl font-bold text-gray-800 mb-1">{{ item.job.title }}</h2>
                             <p class="text-gray-600 font-medium">{{ item.job.employer.company_name }} - <span class="text-sm text-gray-500">{{ item.job.location }}</span></p>
+                            {% if item.job.salary_min or item.job.salary_max %}
+                            <p class="text-sm text-gray-500 mt-1">
+                                💰 ${{ item.job.salary_min|default:"—" }} - ${{ item.job.salary_max|default:"—" }}
+                            </p>
+                            {% endif %}
                         </div>
-                        <div class="flex items-center gap-4 mt-4 sm:mt-0">
-                            <div class="text-center">
-                                <p class="text-2xl font-bold 
-                                    {% if item.score >= 75 %}text-green-600
-                                    {% elif item.score >= 50 %}text-yellow-600
-                                    {% else %}text-gray-500
-                                    {% endif %}">
-                                    {{ item.score }}%
-                                </p>
-                                <p class="text-xs text-gray-500 font-medium">Match Score</p>
+                        <div class="flex items-center gap-4 w-full sm:w-auto">
+                            <div class="text-center flex-shrink-0">
+                                <div class="relative inline-block">
+                                    <svg class="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
+                                        <circle cx="18" cy="18" r="16" fill="none" stroke="#e5e7eb" stroke-width="3"></circle>
+                                        <circle cx="18" cy="18" r="16" fill="none" 
+                                                stroke="{% if item.score >= 75 %}#10b981{% elif item.score >= 50 %}#f59e0b{% else %}#6b7280{% endif %}" 
+                                                stroke-width="3" 
+                                                stroke-dasharray="{{ item.score }}, 100"
+                                                stroke-linecap="round"
+                                                class="transition-all duration-1000"></circle>
+                                    </svg>
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <span class="text-lg font-bold {% if item.score >= 75 %}text-green-600{% elif item.score >= 50 %}text-yellow-600{% else %}text-gray-500{% endif %}">{{ item.score }}%</span>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500 font-medium mt-1">Match</p>
                             </div>
-                            <a href="{% url 'jobs:job-detail' job_id=item.job.id %}" class="inline-block bg-indigo-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-indigo-700 transition-colors duration-300 whitespace-nowrap">
+                            <a href="{% url 'jobs:job-detail' job_id=item.job.id %}" 
+                               class="btn-primary whitespace-nowrap flex-shrink-0"
+                               aria-label="View and apply for {{ item.job.title }}">
                                 View & Apply
                             </a>
                         </div>
@@ -36,15 +68,17 @@
                 </div>
             {% endfor %}
         {% else %}
-            <!-- Fallback for users without a resume or if something goes wrong -->
+            <!-- Fallback for users without a resume -->
             {% for job in jobs %}
-                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                        <div>
-                            <h2 class="text-xl font-bold text-gray-800">{{ job.title }}</h2>
+                <div class="card card-hover p-6 animate-fade-in-up delay-{{ forloop.counter0|add:'200'|slice:':3' }}" role="article">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div class="flex-1">
+                            <h2 class="text-xl font-bold text-gray-800 mb-1">{{ job.title }}</h2>
                             <p class="text-gray-600 font-medium">{{ job.employer.company_name }} - <span class="text-sm text-gray-500">{{ job.location }}</span></p>
                         </div>
-                        <a href="{% url 'jobs:job-detail' job_id=job.id %}" class="mt-4 sm:mt-0 inline-block bg-indigo-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-indigo-700 transition-colors duration-300 whitespace-nowrap">
+                        <a href="{% url 'jobs:job-detail' job_id=job.id %}" 
+                           class="btn-primary mt-4 sm:mt-0 whitespace-nowrap"
+                           aria-label="View and apply for {{ job.title }}">
                             View & Apply
                         </a>
                     </div>
@@ -53,11 +87,39 @@
         {% endif %}
 
         {% if not jobs_with_scores and not jobs %}
-            <div class="text-center py-16 bg-white rounded-lg border">
-                <h3 class="text-xl font-medium text-gray-900">No Jobs Found</h3>
-                <p class="text-gray-500 mt-2">No jobs posted yet. Please check back later!</p>
+            <!-- Empty State -->
+            <div class="text-center py-16 bg-white rounded-xl border border-gray-200 animate-fade-in-up" role="status">
+                <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 class="mt-4 text-xl font-medium text-gray-900">No Jobs Found</h3>
+                <p class="mt-2 text-gray-500">No jobs posted yet. Please check back later!</p>
+                <div class="mt-6">
+                    <a href="{% url 'resumes:resume-dashboard' %}" class="btn-primary inline-flex">
+                        Create Your Resume First
+                    </a>
+                </div>
             </div>
         {% endif %}
     </div>
+    
+    <!-- Load More Button (if pagination needed) -->
+    <div class="mt-8 text-center">
+        <button class="btn-secondary animate-pulse-custom">
+            Load More Jobs
+        </button>
+    </div>
 </div>
+
+<script>
+function jobDashboard() {
+    return {
+        sortBy: 'score',
+        showFilters: false,
+        applyFilters() {
+            // Filter logic can be added here
+        }
+    }
+}
+</script>
 {% endblock %}

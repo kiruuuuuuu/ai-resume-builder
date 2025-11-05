@@ -13,6 +13,13 @@ from .views import (
     schedule_interview_view,
     respond_to_interview_view,
     view_applicant_resume,
+    generate_job_description_api,
+    generate_applicant_summary_api,
+    generate_interview_prep_api,
+    interview_prep_view,
+    company_profile_view,
+    download_interview_calendar,
+    job_stats_view,
 )
 
 app_name = 'jobs'
@@ -31,5 +38,12 @@ urlpatterns = [
     path('application/<int:application_id>/schedule/', schedule_interview_view, name='schedule-interview'),
     path('interview/<int:interview_id>/respond/', respond_to_interview_view, name='respond-to-interview'),
     path('notifications/<int:notification_id>/read/', mark_notification_as_read_view, name='mark-notification-read'),
+    path('api/generate-job-description/', generate_job_description_api, name='generate-job-description'),
+    path('api/generate-applicant-summary/', generate_applicant_summary_api, name='generate-applicant-summary'),
+    path('api/generate-interview-prep/', generate_interview_prep_api, name='generate-interview-prep'),
+    path('application/<int:application_id>/interview-prep/', interview_prep_view, name='interview-prep'),
+    path('company/<int:employer_id>/', company_profile_view, name='company-profile'),
+    path('interview/<int:interview_id>/download-calendar/', download_interview_calendar, name='download-interview-calendar'),
+    path('<int:job_id>/stats/', job_stats_view, name='job-stats'),
 ]
 

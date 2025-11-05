@@ -3,75 +3,505 @@
 
 {% block title %}AI Resume Builder{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Enhanced Performance Optimizations */
+    
+    /* Tab transitions with smooth animations */
+    [x-show] {
+        contain: layout style paint;
+    }
+    
+    /* Smooth scrolling for preview */
+    .scrollbar-thin {
+        scrollbar-width: thin;
+    }
+    
+    .scrollbar-thin::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .scrollbar-thin::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+    
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+    
+    /* Enhanced animations */
+    .transition-all {
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Tab enhancements with sliding indicator */
+    .tab-indicator {
+        position: absolute;
+        bottom: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #6366f1, #8b5cf6);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 3px 3px 0 0;
+    }
+    
+    /* Section completion indicator */
+    .section-completion-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        font-size: 11px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .section-completion-badge.complete {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+    
+    .section-completion-badge.partial {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+    
+    .section-completion-badge.empty {
+        background: #e5e7eb;
+        color: #6b7280;
+    }
+    
+    /* Floating label styles */
+    .floating-label-group {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    
+    .floating-label-group input,
+    .floating-label-group textarea,
+    .floating-label-group select {
+        transition: all 0.2s ease;
+    }
+    
+    .floating-label-group input:focus + label,
+    .floating-label-group textarea:focus + label,
+    .floating-label-group input:not(:placeholder-shown) + label,
+    .floating-label-group textarea:not(:placeholder-shown) + label,
+    .floating-label-group select:focus + label,
+    .floating-label-group select:not([value=""]) + label {
+        transform: translateY(-1.75rem) scale(0.85);
+        color: #6366f1;
+    }
+    
+    /* Auto-save indicator */
+    .save-indicator {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 40;
+        padding: 12px 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        opacity: 0;
+        transform: translateY(20px);
+        pointer-events: none;
+    }
+    
+    .save-indicator.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .save-indicator.saving {
+        color: #6366f1;
+    }
+    
+    .save-indicator.saved {
+        color: #10b981;
+    }
+    
+    /* Drag & Drop styles */
+    .draggable-item {
+        cursor: grab;
+        transition: all 0.2s ease;
+    }
+    
+    .draggable-item:active {
+        cursor: grabbing;
+    }
+    
+    .draggable-item.dragging {
+        opacity: 0.5;
+        transform: scale(0.98);
+    }
+    
+    .drag-handle {
+        cursor: grab;
+        color: #9ca3af;
+        transition: color 0.2s ease;
+    }
+    
+    .drag-handle:hover {
+        color: #6366f1;
+    }
+    
+    .drag-over {
+        border-top: 3px solid #6366f1;
+        background: #eef2ff;
+    }
+    
+    /* Enhanced tooltip */
+    .tooltip-container {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .tooltip {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-8px);
+        background: #1f2937;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.2s ease;
+        z-index: 50;
+        margin-bottom: 8px;
+    }
+    
+    .tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: #1f2937;
+    }
+    
+    .tooltip-container:hover .tooltip {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    
+    /* Mobile tab layout */
+    @media (max-width: 1024px) {
+        .tab-navigation {
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .tab-button {
+            width: 100%;
+            text-align: left;
+            border-radius: 8px;
+            padding: 12px 16px;
+        }
+    }
+    
+    /* Enhanced chart animations */
+    @keyframes chartPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    #score-chart-container {
+        animation: chartPulse 2s ease-in-out infinite;
+    }
+    
+    /* Enhanced form input styles */
+    .form-input-enhanced {
+        transition: all 0.2s ease;
+    }
+    
+    .form-input-enhanced:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    /* Loading skeleton */
+    .skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+    
+    /* Enhanced card hover effects */
+    .card-enhanced {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .card-enhanced:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8" x-data="resumeBuilder()">
     
-    <header class="mb-8">
+    <header class="mb-8 relative">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h1 id="resume-title" class="text-3xl font-bold tracking-tight text-gray-900">{{ resume.title }}</h1>
-            <div class="flex items-center gap-2 flex-shrink-0" x-data="{ open: false }">
-                <button @click="open = !open" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
-                    Download PDF
-                    <svg class="ml-2 -mr-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.23 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
-                </button>
-                <div x-show="open" @click.away="open = false" x-cloak class="origin-top-right absolute right-4 mt-40 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-                    <div class="py-1" role="none">
-                        <a href="{% url 'resumes:download-resume-pdf' resume_id=resume.id template_name='classic' %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100">Classic Template</a>
-                        <a href="{% url 'resumes:download-resume-pdf' resume_id=resume.id template_name='modern' %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100">Modern Template</a>
-                        <a href="{% url 'resumes:download-resume-pdf' resume_id=resume.id template_name='professional' %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100">Professional Template</a>
-                    </div>
+            <div class="flex-1">
+                <h1 id="resume-title" class="text-3xl font-bold tracking-tight text-gray-900 mb-2">{{ resume.title }}</h1>
+                <p class="text-sm text-gray-500">Build and enhance your professional resume</p>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <!-- Auto-save indicator -->
+                <div x-data="{ showSaveIndicator: false, saveStatus: 'saved' }" 
+                     x-init="
+                        window.addEventListener('resume-updated', () => {
+                            showSaveIndicator = true;
+                            saveStatus = 'saving';
+                            setTimeout(() => { saveStatus = 'saved'; }, 1000);
+                            setTimeout(() => { showSaveIndicator = false; }, 3000);
+                        });
+                     "
+                     class="save-indicator" 
+                     :class="{ 'show': showSaveIndicator, 'saving': saveStatus === 'saving', 'saved': saveStatus === 'saved' }">
+                    <svg x-show="saveStatus === 'saving'" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <svg x-show="saveStatus === 'saved'" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span x-text="saveStatus === 'saving' ? 'Saving...' : 'Saved'" class="text-sm font-medium"></span>
                 </div>
+                
+                <a href="{% url 'resumes:preview-resume' resume_id=resume.id %}?template=professional&accent_color=indigo" 
+                   target="_blank"
+                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105">
+                    <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Preview & Download
+                </a>
             </div>
         </div>
     </header>
 
-    <!-- AI Score & Feedback -->
-    <div class="bg-white p-6 rounded-xl shadow-md mb-10 border-l-4 border-indigo-500" x-data="scoreChecker({{ resume.id }})" x-init="init()">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">AI Score & Feedback</h2>
-        <div x-show="isLoading" x-cloak class="flex items-center gap-4">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            <div><p class="font-semibold text-gray-700">AI analysis in progress...</p><p class="text-sm text-gray-500">Your score and feedback will appear here shortly.</p></div>
-        </div>
-        <div x-show="!isLoading" x-cloak x-transition class="flex items-start gap-6">
-            <div class="flex-shrink-0 flex flex-col items-center justify-center bg-indigo-100 rounded-full w-28 h-28">
-                <span x-text="score" class="text-4xl font-bold text-indigo-700"></span>
-                <span class="text-sm text-indigo-600">out of 100</span>
+    <!-- AI Score & Feedback - Enhanced -->
+    <div class="bg-gradient-to-br from-white to-indigo-50/30 p-6 rounded-xl shadow-lg mb-10 border border-gray-200 card-enhanced" x-data="scoreChecker({{ resume.id }})" x-init="init()">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="flex-shrink-0 relative">
+                <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <svg class="h-7 w-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                </div>
+                <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
             </div>
-            <div>
-                <h3 class="font-semibold text-gray-700">Actionable Suggestions:</h3>
-                <ul class="list-disc list-inside mt-2 text-gray-600 space-y-2 prose prose-sm">
-                    <template x-for="item in feedback" :key="item"><li x-text="item"></li></template>
-                    <template x-if="!feedback || feedback.length === 0"><li>No feedback available.</li></template>
+            <div class="flex-1">
+                <h2 class="text-2xl font-bold text-gray-900">AI Score & Feedback</h2>
+                <p class="text-sm text-gray-500 mt-1">Get instant feedback on your resume quality</p>
+            </div>
+            <div class="tooltip-container">
+                <button class="p-2 text-gray-400 hover:text-indigo-600 transition-colors rounded-lg hover:bg-indigo-50">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </button>
+                <div class="tooltip">AI analyzes your resume content and provides actionable suggestions to improve your resume quality</div>
+            </div>
+        </div>
+        <div x-show="isLoading" x-cloak class="flex items-center gap-4 py-8">
+            <div class="relative">
+                <div class="spinner"></div>
+            </div>
+            <div class="flex-1">
+                <p class="font-semibold text-gray-700">AI analysis in progress...</p>
+                <p class="text-sm text-gray-500 mt-1">Your score and feedback will appear here shortly.</p>
+                <div class="mt-3 w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 h-2 rounded-full animate-pulse" style="width: 60%"></div>
+                </div>
+            </div>
+        </div>
+        <div x-show="!isLoading && score !== null && score !== undefined" x-cloak x-transition class="flex flex-col md:flex-row items-start gap-8">
+            <div id="score-chart-container" class="flex-shrink-0 flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-2xl p-8 border-2 border-indigo-200 shadow-sm">
+                <canvas id="score-chart" width="180" height="180"></canvas>
+                <p class="text-sm font-bold text-gray-700 mt-5 text-center uppercase tracking-wider" style="letter-spacing: 1.5px; font-family: 'Inter', sans-serif;">Your Score</p>
+                <p class="text-xs text-gray-500 mt-1 text-center">Out of 100</p>
+                <div class="mt-4 px-4 py-2 rounded-full" 
+                     :class="score >= 80 ? 'bg-green-100 text-green-700' : score >= 60 ? 'bg-blue-100 text-blue-700' : score >= 40 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'">
+                    <span class="text-sm font-bold" 
+                          x-text="score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score >= 40 ? 'Fair' : 'Needs Work'"></span>
+                </div>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-xl font-bold text-gray-900 mb-5 tracking-tight" style="font-family: 'Inter', sans-serif;">Actionable Suggestions</h3>
+                <ul class="space-y-4">
+                    <template x-for="(item, index) in feedback" :key="index">
+                        <li class="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+                            <div class="flex-shrink-0 mt-1">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
+                                    <span class="text-white font-bold text-sm" x-text="index + 1"></span>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-base text-gray-800 leading-relaxed" style="font-family: 'Inter', sans-serif; line-height: 1.6;" x-text="item"></p>
+                            </div>
+                        </li>
+                    </template>
+                    <template x-if="!feedback || feedback.length === 0">
+                        <li class="text-sm text-gray-500 italic p-4 bg-gray-50 rounded-lg border border-gray-200">No feedback available at this time.</li>
+                    </template>
                 </ul>
             </div>
         </div>
     </div>
 
-    <!-- Tabbed Interface Container -->
-    <div x-data="{ tab: 'details' }">
-        <div class="mb-8 border-b border-gray-200">
-            <nav class="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
-                <button @click="tab = 'details'" :class="{ 'border-indigo-500 text-indigo-600': tab === 'details', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': tab !== 'details' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Personal Details</button>
+    <!-- Full Width Editor Layout -->
+    <div class="w-full">
+        <!-- Tabbed Interface Container -->
+        <div class="w-full">
+    <div x-data="tabNavigation({{ resume.id }})" x-init="init()">
+        <div class="mb-8 border-b border-gray-200 bg-white sticky top-16 z-30 shadow-sm">
+            <nav class="-mb-px flex space-x-1 overflow-x-auto scrollbar-hide tab-navigation relative" aria-label="Tabs" style="scrollbar-width: none; -ms-overflow-style: none;">
+                <style>.scrollbar-hide::-webkit-scrollbar { display: none; }</style>
+                <!-- Sliding indicator -->
+                <div class="tab-indicator" :style="tabIndicatorStyle"></div>
+                
+                <button @click="switchTab('details')" 
+                        :class="{ 'text-indigo-600 font-semibold': activeTab === 'details', 'text-gray-500 hover:text-gray-700': activeTab !== 'details' }" 
+                        class="whitespace-nowrap py-4 px-5 font-medium text-sm transition-all duration-300 relative z-10 flex items-center gap-2 tab-button"
+                        :aria-current="activeTab === 'details' ? 'page' : null">
+                    <span class="section-completion-badge" 
+                          :class="sectionCompletion.details === 100 ? 'complete' : sectionCompletion.details > 0 ? 'partial' : 'empty'"
+                          x-text="sectionCompletion.details === 100 ? '✓' : sectionCompletion.details > 0 ? '~' : '○'"></span>
+                    Personal Details
+                </button>
                 {% for section in resume_sections %}
-                <button @click="tab = '{{ section.name }}'" :class="{ 'border-indigo-500 text-indigo-600': tab === '{{ section.name }}', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': tab !== '{{ section.name }}' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">{{ section.title }}</button>
+                <button @click="switchTab('{{ section.name }}')" 
+                        :class="{ 'text-indigo-600 font-semibold': activeTab === '{{ section.name }}', 'text-gray-500 hover:text-gray-700': activeTab !== '{{ section.name }}' }" 
+                        class="whitespace-nowrap py-4 px-5 font-medium text-sm transition-all duration-300 relative z-10 flex items-center gap-2 tab-button"
+                        :aria-current="activeTab === '{{ section.name }}' ? 'page' : null">
+                    <span class="section-completion-badge" 
+                          :class="sectionCompletion['{{ section.name }}'] === 100 ? 'complete' : sectionCompletion['{{ section.name }}'] > 0 ? 'partial' : 'empty'"
+                          x-text="sectionCompletion['{{ section.name }}'] === 100 ? '✓' : sectionCompletion['{{ section.name }}'] > 0 ? '~' : '○'"></span>
+                    {{ section.title }}
+                    <span class="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full" x-show="sectionCompletion['{{ section.name }}'] > 0" x-text="getSectionCount('{{ section.name }}')"></span>
+                </button>
                 {% endfor %}
             </nav>
         </div>
 
         <div>
             <!-- Personal Details Panel -->
-            <div x-show="tab === 'details'" x-cloak id="personal-details-container">
+            <div x-show="activeTab === 'details'" 
+                 x-cloak 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 transform translate-y-4"
+                 x-transition:enter-end="opacity-100 transform translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 transform translate-y-0"
+                 x-transition:leave-end="opacity-0 transform translate-y-4"
+                 id="personal-details-container">
                 {% include 'resumes/partials/personal_details_section.html' %}
             </div>
 
             <!-- Dynamic Sections Panels -->
             {% for section in resume_sections %}
-            <div x-show="tab === '{{ section.name }}'" x-cloak>
+            <div x-show="activeTab === '{{ section.name }}'" 
+                 x-cloak
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 transform translate-y-4"
+                 x-transition:enter-end="opacity-100 transform translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 transform translate-y-0"
+                 x-transition:leave-end="opacity-0 transform translate-y-4">
                 {% include 'resumes/partials/dynamic_section.html' with section_name=section.name section_title=section.title form=section.form items=section.items %}
             </div>
             {% endfor %}
         </div>
+        </div>
+        
+        <!-- Preview Action Bar -->
+        <div class="mt-6 bg-white rounded-xl shadow-lg border border-gray-200 p-6" x-data="{ selectedTemplate: 'professional', selectedColor: 'indigo' }">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Preview & Download</h3>
+                    <p class="text-sm text-gray-600">View your resume exactly as it will appear when printed</p>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Template Selection -->
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-medium text-gray-700">Template:</label>
+                        <select x-model="selectedTemplate" 
+                                class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="classic">Classic</option>
+                            <option value="modern">Modern</option>
+                            <option value="professional">Professional</option>
+                            <option value="creative">Creative</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Color Selection -->
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-medium text-gray-700">Color:</label>
+                        <select x-model="selectedColor" 
+                                class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="blue">Blue</option>
+                            <option value="teal">Teal</option>
+                            <option value="indigo">Indigo</option>
+                            <option value="purple">Purple</option>
+                            <option value="red">Red</option>
+                            <option value="graphite">Graphite</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Preview Button -->
+                    <a :href="`{% url 'resumes:preview-resume' resume_id=resume.id %}?template=${selectedTemplate}&accent_color=${selectedColor}`" 
+                       target="_blank"
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Live Preview
+                    </a>
+                    
+                    <!-- Download Button -->
+                    <a :href="`{% url 'resumes:download-resume-pdf' resume_id=resume.id template_name='professional' %}`.replace('/professional/', `/${selectedTemplate}/`) + `?accent_color=${selectedColor}`" 
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors shadow-sm">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Download PDF
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
+    
 
     <!-- Delete Confirmation Modal -->
     <div x-show="confirmationModal.open" x-cloak x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed z-50 inset-0 overflow-y-auto">
@@ -99,16 +529,437 @@
     </div>
 </div>
 
+<!-- Pass resume data to JavaScript via script tag to avoid linter errors -->
+<script type="application/json" id="resume-data">{"score":{% if score is not None %}{{ score }}{% else %}null{% endif %},"feedback":{% if feedback %}{{ feedback|safe }}{% else %}"[]"{% endif %}}</script>
+<script type="application/json" id="section-completion-data">{
+    "details": {% if resume.profile.full_name and resume.profile.professional_summary %}100{% else %}0{% endif %},
+    {% for section in resume_sections %}
+    "{{ section.name }}": {% if section.items|length > 0 %}100{% else %}0{% endif %}{% if not forloop.last %},{% endif %}
+    {% endfor %}
+}</script>
+
 <script>
+    // Initialize score and feedback from Django template
+    // Parse from JSON script tag to avoid linter errors
+    (function() {
+        const dataScript = document.getElementById('resume-data');
+        if (dataScript) {
+            try {
+                window._resumeData = JSON.parse(dataScript.textContent);
+            } catch(e) {
+                console.error('Error parsing resume data:', e);
+                window._resumeData = { score: null, feedback: [] };
+            }
+        } else {
+            window._resumeData = { score: null, feedback: [] };
+        }
+    })();
+    
     function scoreChecker(resumeId) {
+        // Get score and feedback from global object
+        let initialScore = window._resumeData.score;
+        let initialFeedback = window._resumeData.feedback;
+        
+        // Ensure feedback is an array
+        if (!Array.isArray(initialFeedback)) {
+            try {
+                if (typeof initialFeedback === 'string' && initialFeedback !== '[]') {
+                    initialFeedback = JSON.parse(initialFeedback);
+                } else {
+                    initialFeedback = [];
+                }
+            } catch(e) {
+                console.error('Error parsing feedback:', e);
+                initialFeedback = [];
+            }
+        }
+        
         return {
-            resumeId: resumeId, score: {{ score|default:'null' }}, feedback: JSON.parse('{{ feedback|escapejs|default:"[]" }}'), isLoading: true,
-            init() { this.score !== null ? this.isLoading = false : this.checkStatus(); window.addEventListener('resume-updated', () => { this.isLoading = true; this.score = null; this.feedback = []; this.checkStatus(); }); },
-            checkStatus() {
-                fetch(`/resumes/api/check-score-status/${this.resumeId}/`).then(res => res.json()).then(data => {
-                    if (data.status === 'SUCCESS') { this.isLoading = false; this.score = data.score; this.feedback = data.feedback; } 
-                    else { setTimeout(() => this.checkStatus(), 5000); }
-                }).catch(err => { console.error('Error checking score status:', err); setTimeout(() => this.checkStatus(), 5000); });
+            resumeId: resumeId, 
+            score: initialScore, 
+            feedback: initialFeedback, 
+            isLoading: true, 
+            chart: null,
+            init() {
+                // Ensure feedback is always an array
+                if (!Array.isArray(this.feedback)) {
+                    this.feedback = [];
+                }
+                
+                // Always verify score with backend on page load, even if initial data exists
+                // This ensures we have the latest score after page refresh
+                const initializeScore = () => {
+                    console.log('Initializing score checker. Initial score:', this.score, 'Initial feedback:', this.feedback);
+                    
+                    // Wait for Chart.js to be ready
+                    const waitForChartJS = (attempts = 0) => {
+                        if (typeof Chart !== 'undefined') {
+                            console.log('Chart.js loaded, initializing score display');
+                            
+                            // Always check with backend first to ensure we have latest score
+                            // Show initial score if available while checking
+                            if (this.score !== null && this.score !== undefined) {
+                                console.log('Initial score available, rendering chart');
+                                this.isLoading = false;
+                                // Render chart immediately with initial data
+                                setTimeout(() => {
+                                    this.renderChart();
+                                }, 500);
+                            } else {
+                                console.log('No initial score, showing loading state');
+                                this.isLoading = true;
+                            }
+                            
+                            // Always verify with backend (this will update if score changed)
+                            setTimeout(() => {
+                                this.checkStatus();
+                            }, 100);
+                        } else if (attempts < 30) {
+                            setTimeout(() => waitForChartJS(attempts + 1), 100);
+                        } else {
+                            console.error('Chart.js not loaded after 3 seconds, checking status anyway');
+                            this.isLoading = false;
+                            // Still check with backend even if Chart.js isn't loaded
+                            this.checkStatus();
+                        }
+                    };
+                    waitForChartJS();
+                };
+                
+                // Wait for Alpine to be ready
+                if (typeof Alpine !== 'undefined') {
+                    initializeScore();
+                } else {
+                    document.addEventListener('alpine:init', () => {
+                        initializeScore();
+                    });
+                    // Fallback if already initialized
+                    setTimeout(() => {
+                        if (typeof Alpine !== 'undefined') {
+                            initializeScore();
+                        }
+                    }, 100);
+                }
+                
+                // Listen for resume updates
+                window.addEventListener('resume-updated', () => { 
+                    this.isLoading = true; 
+                    this.score = null; 
+                    this.feedback = []; 
+                    if (this.chart) { 
+                        try {
+                            this.chart.destroy(); 
+                        } catch (e) {
+                            console.warn('Error destroying chart on resume update:', e);
+                        }
+                        this.chart = null; 
+                    }
+                    this.checkStatus(); 
+                });
+            },
+            renderChart() {
+                if (this.score === null || this.score === undefined) {
+                    console.log('Score is null/undefined, cannot render chart');
+                    return;
+                }
+                
+                // Destroy existing chart first to prevent conflicts
+                if (this.chart) {
+                    try {
+                        this.chart.destroy();
+                        this.chart = null;
+                    } catch (e) {
+                        console.warn('Error destroying chart:', e);
+                        this.chart = null;
+                    }
+                }
+                
+                // Retry logic to ensure canvas is ready
+                const tryRender = (attempts = 0) => {
+                    const canvas = document.getElementById('score-chart');
+                    if (!canvas) {
+                        if (attempts < 10) {
+                            setTimeout(() => tryRender(attempts + 1), 200);
+                        } else {
+                            console.error('Canvas element not found after multiple attempts');
+                        }
+                        return;
+                    }
+                    
+                    // Check if Chart.js is loaded
+                    if (typeof Chart === 'undefined') {
+                        console.error('Chart.js is not loaded');
+                        return;
+                    }
+                    
+                    // Verify canvas is still in DOM and has context
+                    if (!canvas.parentElement || !canvas.getContext) {
+                        console.warn('Canvas element is not properly attached to DOM');
+                        if (attempts < 5) {
+                            setTimeout(() => tryRender(attempts + 1), 200);
+                        }
+                        return;
+                    }
+                    
+                    // Wait a bit for canvas to be ready and ensure no other chart is being created
+                    setTimeout(() => {
+                        // Double-check canvas still exists and chart wasn't destroyed
+                        const canvasCheck = document.getElementById('score-chart');
+                        if (!canvasCheck || this.chart !== null) {
+                            console.warn('Canvas not found or chart already exists, skipping render');
+                            return;
+                        }
+                        
+                        const score = parseInt(this.score) || 0;
+                        const remaining = Math.max(0, 100 - score);
+                        
+                        const scoreColor = score >= 80 ? '#10b981' : score >= 60 ? '#3b82f6' : score >= 40 ? '#f59e0b' : '#ef4444';
+                        
+                        try {
+                            // Get context and verify it's valid
+                            const ctx = canvasCheck.getContext('2d');
+                            if (!ctx) {
+                                console.error('Could not get 2d context from canvas');
+                                return;
+                            }
+                            
+                            this.chart = new Chart(canvasCheck, {
+                                type: 'doughnut',
+                                data: {
+                                    labels: ['Score', 'Remaining'],
+                                    datasets: [{
+                                        data: [score, remaining],
+                                        backgroundColor: [scoreColor, '#e5e7eb'],
+                                        borderWidth: 0
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: true,
+                                    cutout: '75%',
+                                    plugins: {
+                                        legend: { display: false },
+                                        tooltip: { enabled: false }
+                                    },
+                                    animation: {
+                                        animateRotate: true,
+                                        duration: 1500,
+                                        onComplete: () => {
+                                            // Chart animation complete
+                                            console.log('Chart animation completed');
+                                        }
+                                    },
+                                    // Prevent Chart.js from trying to update if canvas is removed
+                                    onResize: (chart, size) => {
+                                        if (!chart.canvas || !chart.canvas.parentElement) {
+                                            console.warn('Canvas removed during resize, destroying chart');
+                                            try {
+                                                chart.destroy();
+                                                this.chart = null;
+                                            } catch (e) {
+                                                // Ignore errors during cleanup
+                                            }
+                                        }
+                                    }
+                                },
+                                plugins: [{
+                                    id: 'centerText',
+                                    beforeDraw: (chart) => {
+                                        try {
+                                            // Verify chart and canvas are still valid
+                                            if (!chart || !chart.canvas || !chart.ctx) {
+                                                return;
+                                            }
+                                            
+                                            const ctx = chart.ctx;
+                                            const centerX = chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2;
+                                            const centerY = chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2;
+                                            
+                                            ctx.save();
+                                            ctx.font = 'bold 42px Inter, system-ui, sans-serif';
+                                            ctx.fillStyle = scoreColor;
+                                            ctx.textAlign = 'center';
+                                            ctx.textBaseline = 'middle';
+                                            ctx.fillText(score.toString(), centerX, centerY);
+                                            ctx.restore();
+                                        } catch (e) {
+                                            console.warn('Error in beforeDraw:', e);
+                                        }
+                                    }
+                                }]
+                            });
+                            console.log('Chart rendered successfully with score:', score);
+                        } catch (error) {
+                            console.error('Error rendering chart:', error);
+                            this.chart = null;
+                        }
+                    }, 200);
+                };
+                
+                tryRender();
+            },
+            checkStatus(retryCount = 0) {
+                const url = `/resumes/api/check-score-status/${this.resumeId}/`;
+                console.log('Checking score status:', url, 'Retry:', retryCount);
+                
+                fetch(url, {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    cache: 'no-cache',
+                    credentials: 'same-origin'
+                })
+                .then(res => {
+                    if (!res.ok) {
+                        console.error('Score status check failed:', res.status, res.statusText);
+                        throw new Error(`HTTP error! status: ${res.status}`);
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    console.log('Score status response:', data.status, 'Score:', data.score);
+                    if (data.status === 'SUCCESS') { 
+                        // Always update score and feedback from backend
+                        this.score = data.score; 
+                        this.feedback = Array.isArray(data.feedback) ? data.feedback : (data.feedback || []); 
+                        this.isLoading = false;
+                        
+                        console.log('Score updated:', this.score, 'Feedback count:', this.feedback.length);
+                        
+                        // Force re-render of chart if it exists or score changed
+                        if (this.chart) {
+                            try {
+                                this.chart.destroy();
+                            } catch (e) {
+                                console.warn('Error destroying chart during update:', e);
+                            }
+                            this.chart = null;
+                        }
+                        
+                        // Wait a bit before rendering to ensure DOM is stable
+                        setTimeout(() => {
+                            // Verify canvas still exists before rendering
+                            const canvas = document.getElementById('score-chart');
+                            if (canvas && canvas.parentElement) {
+                                this.renderChart();
+                            } else {
+                                console.warn('Canvas not found or not in DOM, skipping chart render');
+                            }
+                        }, 400); 
+                    } else if (data.status === 'PENDING') { 
+                        // Keep checking if pending (with max retries to prevent infinite loops)
+                        if (retryCount < 20) {
+                            setTimeout(() => this.checkStatus(retryCount + 1), 3000);
+                        } else {
+                            console.warn('Score check timed out after 60 seconds');
+                            this.isLoading = false;
+                        }
+                    } else { 
+                        this.isLoading = false; 
+                    } 
+                })
+                .catch(err => { 
+                    console.error('Error checking score status:', err); 
+                    // Retry with exponential backoff (max 3 retries)
+                    if (retryCount < 3) {
+                        const retryDelay = Math.pow(2, retryCount) * 2000; // 2s, 4s, 8s
+                        setTimeout(() => this.checkStatus(retryCount + 1), retryDelay);
+                    } else {
+                        console.error('Failed to check score status after multiple retries');
+                        this.isLoading = false;
+                    }
+                });
+            }
+        }
+    }
+
+    // Initialize section completion data from JSON script tag
+    (function() {
+        const completionScript = document.getElementById('section-completion-data');
+        if (completionScript) {
+            try {
+                window._sectionCompletionData = JSON.parse(completionScript.textContent);
+            } catch(e) {
+                console.error('Error parsing section completion data:', e);
+                window._sectionCompletionData = {};
+            }
+        } else {
+            window._sectionCompletionData = {};
+        }
+    })();
+    
+    function tabNavigation(resumeId) {
+        // Get initial completion data from global object
+        const initialCompletion = window._sectionCompletionData || {};
+        
+        return {
+            activeTab: 'details',
+            tabIndicatorStyle: '',
+            sectionCompletion: {
+                details: initialCompletion.details || 0,
+                experience: initialCompletion.experience || 0,
+                education: initialCompletion.education || 0,
+                skill: initialCompletion.skill || 0,
+                project: initialCompletion.project || 0,
+                certification: initialCompletion.certification || 0,
+                achievement: initialCompletion.achievement || 0,
+                language: initialCompletion.language || 0,
+                hobby: initialCompletion.hobby || 0,
+            },
+            init() {
+                this.updateTabIndicator();
+                // Update completion on resume updates
+                window.addEventListener('resume-updated', () => {
+                    this.updateSectionCompletion();
+                });
+            },
+            switchTab(tab) {
+                this.activeTab = tab;
+                this.updateTabIndicator();
+                // Smooth scroll to top of content
+                const content = document.querySelector('[x-show*="tab"]');
+                if (content) {
+                    content.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            },
+            updateTabIndicator() {
+                this.$nextTick(() => {
+                    const activeButton = document.querySelector(`[aria-current="page"]`);
+                    if (activeButton) {
+                        const rect = activeButton.getBoundingClientRect();
+                        const nav = activeButton.closest('nav');
+                        const navRect = nav.getBoundingClientRect();
+                        this.tabIndicatorStyle = `left: ${rect.left - navRect.left}px; width: ${rect.width}px;`;
+                    }
+                });
+            },
+            getSectionCount(sectionName) {
+                const container = document.getElementById(`items-container-${sectionName}`);
+                if (container) {
+                    const items = container.querySelectorAll('[id^="item-"]');
+                    return items.length;
+                }
+                return 0;
+            },
+            updateSectionCompletion() {
+                // Calculate completion percentages
+                const detailsSection = document.getElementById('personal-details-container');
+                if (detailsSection) {
+                    const hasName = !!detailsSection.querySelector('[data-field="full_name"]')?.textContent?.trim();
+                    const hasSummary = !!detailsSection.querySelector('[data-field="summary"]')?.textContent?.trim();
+                    this.sectionCompletion.details = (hasName && hasSummary) ? 100 : (hasName || hasSummary) ? 50 : 0;
+                }
+                
+                // Update completion for all dynamic sections
+                const sectionNames = ['experience', 'education', 'skill', 'project', 'certification', 'achievement', 'language', 'hobby'];
+                sectionNames.forEach(sectionName => {
+                    const container = document.getElementById(`items-container-${sectionName}`);
+                    if (container) {
+                        const items = container.querySelectorAll('[id^="item-"]');
+                        this.sectionCompletion[sectionName] = items.length > 0 ? 100 : 0;
+                    }
+                });
+                
+                this.updateTabIndicator();
             }
         }
     }
@@ -116,6 +967,8 @@
     function resumeBuilder() {
         return {
             confirmationModal: { open: false, itemToDelete: null },
+            lastSaveTime: null,
+            autoSaveTimer: null,
 
             formatSectionName(name) {
                 if (!name) return 'Item';
@@ -154,15 +1007,42 @@
                 const form = event.target;
                 const formData = new FormData(form);
                 const sectionName = form.dataset.section;
+                const submitButton = form.querySelector('button[type="submit"]');
+                const originalText = submitButton?.textContent;
+                
+                // Disable submit button and show loading
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Adding...';
+                }
                 
                 fetch(form.getAttribute('action'), { method: 'POST', body: formData, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(res => res.json())
                 .then(data => {
-                    if (data.status === 'success') {
-                        document.getElementById(`items-container-${sectionName}`).insertAdjacentHTML('beforeend', data.item_html);
-                        document.getElementById(`empty-message-${sectionName}`)?.remove();
+                        if (data.status === 'success') {
+                        const container = document.getElementById(`items-container-${sectionName}`);
+                        if (container) {
+                            const newItem = document.createElement('div');
+                            newItem.innerHTML = data.item_html;
+                            const itemEl = newItem.firstElementChild;
+                            itemEl.style.opacity = '0';
+                            itemEl.style.transform = 'translateY(-10px) scale(0.95)';
+                            container.appendChild(itemEl);
+                            document.getElementById(`empty-message-${sectionName}`)?.remove();
+                            
+                            // Enhanced animate in with bounce
+                            requestAnimationFrame(() => {
+                                itemEl.style.transition = 'opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                                itemEl.style.opacity = '1';
+                                itemEl.style.transform = 'translateY(0) scale(1)';
+                            });
+                        }
                         form.reset();
                         window.dispatchEvent(new CustomEvent('resume-updated'));
+                        // Update section completion
+                        if (window.tabNavigationInstance) {
+                            window.tabNavigationInstance.updateSectionCompletion();
+                        }
                         this.showToast(`${this.formatSectionName(sectionName)} added successfully!`, 'success');
                     } else { 
                         this.displayErrors(form, data.errors); 
@@ -171,6 +1051,12 @@
                 }).catch(err => {
                     console.error('Form submission error:', err);
                     this.showToast('An unexpected error occurred.', 'error');
+                })
+                .finally(() => {
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.textContent = originalText;
+                    }
                 });
             },
             editItem(event) {
@@ -195,15 +1081,37 @@
                 const form = event.target;
                 const formData = new FormData(form);
                 const sectionName = form.dataset.section;
+                const submitButton = form.querySelector('button[type="submit"]');
+                const originalText = submitButton?.textContent;
+                
+                // Disable submit button and show loading
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Saving...';
+                }
                 
                 fetch(form.getAttribute('action'), { method: 'POST', body: formData, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'success') {
                         const container = (sectionName === 'personal_details') ? document.getElementById('personal-details-container') : document.getElementById(`item-${sectionName}-${data.pk}`);
-                        container.innerHTML = data.item_html;
+                        if (container) {
+                            // Enhanced fade transition with scale
+                            container.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                            container.style.opacity = '0.5';
+                            container.style.transform = 'scale(0.98)';
+                            requestAnimationFrame(() => {
+                                container.innerHTML = data.item_html;
+                                container.style.opacity = '1';
+                                container.style.transform = 'scale(1)';
+                            });
+                        }
                         if (data.new_title) { document.getElementById('resume-title').textContent = data.new_title; }
                         window.dispatchEvent(new CustomEvent('resume-updated'));
+                        // Update section completion
+                        if (window.tabNavigationInstance) {
+                            window.tabNavigationInstance.updateSectionCompletion();
+                        }
                         this.showToast(`${this.formatSectionName(sectionName)} updated successfully!`, 'success');
                     } else { 
                         this.displayErrors(form, data.errors); 
@@ -212,10 +1120,47 @@
                 }).catch(err => {
                     console.error('Update submission error:', err);
                     this.showToast('An unexpected error occurred.', 'error');
+                })
+                .finally(() => {
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.textContent = originalText;
+                    }
                 });
             },
             cancelEdit(pk, sectionName) {
-                window.location.reload();
+                const container = (sectionName === 'personal_details') ? 
+                    document.getElementById('personal-details-container') : 
+                    document.getElementById(`item-${sectionName}-${pk}`);
+                
+                if (!container) {
+                    console.error('Container not found for cancelEdit');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+                formData.append('action', 'get_item_html');
+                formData.append('model_name', sectionName);
+                formData.append('pk', pk);
+
+                fetch("{% url 'resumes:resume-builder' %}", {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        container.innerHTML = data.item_html;
+                    } else {
+                        console.error('Error getting item HTML:', data);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error canceling edit:', err);
+                    this.showToast('Failed to cancel edit.', 'error');
+                });
             },
             deleteItem(event) {
                 const button = event.currentTarget;
@@ -228,6 +1173,10 @@
             confirmDelete() {
                 const { pk, sectionName } = this.confirmationModal.itemToDelete;
                 const itemDiv = document.getElementById(`item-${sectionName}-${pk}`);
+                if (!itemDiv) {
+                    this.confirmationModal.open = false;
+                    return;
+                }
                 
                 const formData = new FormData();
                 formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
@@ -236,18 +1185,45 @@
                 formData.append('pk', pk);
 
                 fetch("{% url 'resumes:resume-builder' %}", { method: 'POST', body: formData, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                .then(res => res.json())
+                .then(async res => {
+                    const data = await res.json();
+                    if (!res.ok) {
+                        throw new Error(data.message || `Server error: ${res.status}`);
+                    }
+                    return data;
+                })
                 .then(data => {
                     if (data.status === 'success') { 
-                        itemDiv.style.transition = 'opacity 0.3s';
+                        // Smooth fade out animation
+                        itemDiv.style.transition = 'opacity 0.3s ease, transform 0.3s ease, margin 0.3s ease';
                         itemDiv.style.opacity = '0';
-                        setTimeout(() => itemDiv.remove(), 300);
-                        window.dispatchEvent(new CustomEvent('resume-updated'));
-                        this.showToast(`${this.formatSectionName(sectionName)} deleted successfully!`, 'success');
+                        itemDiv.style.transform = 'translateX(-20px)';
+                        setTimeout(() => {
+                            if (itemDiv && itemDiv.parentNode) {
+                                itemDiv.remove();
+                            }
+                            window.dispatchEvent(new CustomEvent('resume-updated'));
+                            this.showToast(`${this.formatSectionName(sectionName)} deleted successfully!`, 'success');
+                        }, 300);
+                    } else {
+                        const errorMsg = data.message || 'Failed to delete item.';
+                        this.showToast(errorMsg, 'error');
                     } 
-                }).catch(err => {
+                })
+                .catch(err => {
                     console.error('Delete error:', err);
-                    this.showToast('Failed to delete item.', 'error');
+                    let errorMsg = 'Failed to delete item.';
+                    
+                    // Extract error message if available
+                    if (err.message) {
+                        errorMsg = err.message;
+                    } else if (err instanceof TypeError && err.message.includes('fetch')) {
+                        errorMsg = 'Network error. Please check your connection and try again.';
+                    } else {
+                        errorMsg = 'An unexpected error occurred while deleting the item.';
+                    }
+                    
+                    this.showToast(errorMsg, 'error');
                 })
                 .finally(() => {
                     this.confirmationModal.open = false;
@@ -303,9 +1279,19 @@
         }
     }
     
+
     document.addEventListener('alpine:init', () => {
         Alpine.data('scoreChecker', scoreChecker);
         Alpine.data('resumeBuilder', resumeBuilder);
+        Alpine.data('tabNavigation', tabNavigation);
+        
+        // Store tab navigation instance globally for updates
+        setTimeout(() => {
+            const tabNavElement = document.querySelector('[x-data*="tabNavigation"]');
+            if (tabNavElement && tabNavElement._x_dataStack) {
+                window.tabNavigationInstance = tabNavElement._x_dataStack[0];
+            }
+        }, 500);
     });
 </script>
 {% endblock %}

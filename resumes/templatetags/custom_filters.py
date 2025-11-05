@@ -31,3 +31,37 @@ def index(sequence, position):
         return sequence[position]
     except (IndexError, TypeError):
         return None
+
+@register.filter
+def get_item(dictionary, key):
+    """Get an item from a dictionary by key."""
+    if isinstance(dictionary, dict):
+        return dictionary.get(key, '')
+    return ''
+
+@register.filter
+def bold_star_labels(text):
+    """Make STAR method labels (SITUATION, TASK, ACTION, RESULT) bold for better readability."""
+    import re
+    if not text:
+        return text
+    
+    # Match labels at start of line or after newline, case-insensitive
+    # Handles: S:, SITUATION:, T:, TASK:, A:, ACTION:, R:, RESULT:
+    patterns = [
+        (r'(^|\n)(\s*)(SITUATION:)', r'\1\2<strong>\3</strong>', re.MULTILINE | re.IGNORECASE),
+        (r'(^|\n)(\s*)(TASK:)', r'\1\2<strong>\3</strong>', re.MULTILINE | re.IGNORECASE),
+        (r'(^|\n)(\s*)(ACTION:)', r'\1\2<strong>\3</strong>', re.MULTILINE | re.IGNORECASE),
+        (r'(^|\n)(\s*)(RESULT:)', r'\1\2<strong>\3</strong>', re.MULTILINE | re.IGNORECASE),
+        # Single letter versions: S:, T:, A:, R:
+        (r'(^|\n)(\s*)(S:)(\s)', r'\1\2<strong>\3</strong>\4', re.MULTILINE | re.IGNORECASE),
+        (r'(^|\n)(\s*)(T:)(\s)', r'\1\2<strong>\3</strong>\4', re.MULTILINE | re.IGNORECASE),
+        (r'(^|\n)(\s*)(A:)(\s)', r'\1\2<strong>\3</strong>\4', re.MULTILINE | re.IGNORECASE),
+        (r'(^|\n)(\s*)(R:)(\s)', r'\1\2<strong>\3</strong>\4', re.MULTILINE | re.IGNORECASE),
+    ]
+    
+    result = text
+    for pattern, replacement, flags in patterns:
+        result = re.sub(pattern, replacement, result)
+    
+    return result

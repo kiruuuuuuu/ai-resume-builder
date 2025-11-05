@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, Client
 from .forms import JobPostingForm
 from django.utils import timezone
 import datetime

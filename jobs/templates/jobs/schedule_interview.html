@@ -34,6 +34,11 @@
             
             <div class="flex justify-end pt-4 border-t mt-8">
                 <a href="{% url 'jobs:view-applicants' job_id=application.job_posting.id %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</a>
+                {% if interview and interview.status == 'Scheduled' and interview.confirmed_slot %}
+                    <a href="{% url 'jobs:download-interview-calendar' interview_id=interview.id %}" class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        📅 Download Calendar (.ics)
+                    </a>
+                {% endif %}
                 <button type="submit" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
                     Send Interview Proposal
                 </button>

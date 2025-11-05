@@ -1,112 +1,296 @@
-AI Resume Builder — Development README
-This README provides comprehensive step-by-step instructions to set up and run this Django project on a Windows machine. It covers two setup methods: using Conda (recommended for easier PDF generation) and using a standard Python venv.
+# AI Resume Builder
 
-The project uses Celery and Redis for asynchronous background tasks.
+An intelligent resume creation platform powered by AI that helps job seekers build professional resumes with real-time feedback, scoring, and job matching. Built with Django, Celery, Redis, and Google Gemini AI.
 
-Links
-Miniconda (Conda Installer): https://docs.conda.io/en/latest/miniconda.html
+## 🚀 Features
 
-Redis for Windows (direct download): https://github.com/microsoftarchive/redis/releases/download/win-3.0.504/Redis-x64-3.0.504.zip
+- **AI-Powered Resume Builder**: Create professional resumes with multiple templates (Classic, Modern, Professional, Creative)
+- **Real-time AI Feedback**: Get instant scoring and actionable suggestions to improve your resume
+- **Job Matching**: Intelligent matching between resumes and job postings using AI
+- **Interview Preparation**: AI-generated interview questions tailored to your resume and job requirements
+- **Multiple Resume Templates**: Choose from 4 professionally designed templates with customizable color schemes
+- **PDF Export**: Generate high-quality PDF resumes for download
+- **User Authentication**: Secure login/registration with optional social authentication (Google, GitHub)
+- **Job Application Tracking**: Track your applications with detailed status updates
+- **Employer Dashboard**: Employers can post jobs and manage applications
 
-Setup Instructions
-Follow either the recommended Conda method or the alternative venv method.
+## 📋 Prerequisites
 
-Method 1: Recommended Setup (with Conda)
-This method is highly recommended as it simplifies the installation of WeasyPrint and its dependencies, which are required for generating PDF resumes.
+- Python 3.11+
+- Redis (for Celery background tasks)
+- PostgreSQL (for production) or SQLite (for development)
+- Google AI API Key (for Gemini features)
 
-Install Miniconda: If you don't have it, download and install it from the link above.
+## 🛠️ Installation
 
-Create and Activate Conda Environment:
+### Quick Start
 
-# Create a new environment named 'resume_env' with Python 3.11
-conda create -n resume_env python=3.11 -y
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd AI_Resume_Builder
+   ```
 
-# Activate the environment
-conda activate resume_env
+2. **Set up environment**:
+   ```bash
+   # Copy example environment file
+   cp .env.example .env
+   
+   # Edit .env with your configuration
+   # - Set DJANGO_SECRET_KEY
+   # - Set GOOGLE_AI_API_KEY
+   # - Configure database settings
+   ```
 
-Install WeasyPrint:
+3. **Install dependencies** (see detailed setup below)
 
-# Install WeasyPrint and its native dependencies from the conda-forge channel
-conda install -c conda-forge weasyprint -y
+4. **Run migrations**:
+   ```bash
+   python manage.py migrate
+   ```
 
-Install Python Dependencies & Set Up Database:
+5. **Create superuser** (optional):
+   ```bash
+   python manage.py createsuperuser
+   ```
 
-# Navigate to your project directory
-cd path\to\your\AI_Resume_Builder
+### Detailed Setup Instructions
 
-# Install all required packages
-pip install -r requirements.txt
+For comprehensive setup instructions including Conda installation, WeasyPrint setup, and Redis configuration, please refer to the [Complete Documentation](docs/DOCUMENTATION.md).
 
-# Create the database schema
-python manage.py migrate
+#### Method 1: Recommended Setup (with Conda)
 
-Method 2: Alternative Setup (with venv)
-Use this method if you prefer not to use Conda. Note that PDF generation may fail unless you manually install the required GTK dependencies for WeasyPrint.
+This method is highly recommended as it simplifies the installation of WeasyPrint and its dependencies.
 
-Create and Activate Virtual Environment:
+1. **Install Miniconda**: Download from [Miniconda](https://docs.conda.io/en/latest/miniconda.html)
 
-# Navigate to your project directory
-cd path\to\your\AI_Resume_Builder
+2. **Create and activate environment**:
+   ```bash
+   conda create -n resume_env python=3.11 -y
+   conda activate resume_env
+   ```
 
-# Create a virtual environment named 'resume_env'
+3. **Install WeasyPrint**:
+   ```bash
+   conda install -c conda-forge weasyprint -y
+   ```
+
+4. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+#### Method 2: Alternative Setup (with venv)
+
+```bash
 python -m venv resume_env
-
-# Activate the environment
-.\resume_env\Scripts\Activate.ps1
-
-Install Dependencies & Set Up Database:
-
-# Install all required packages
+source resume_env/bin/activate  # Windows: resume_env\Scripts\activate
 pip install -r requirements.txt
+```
 
-# Create the database schema
-python manage.py migrate
+## 🚀 Running the Application
 
-Running the Application
-After completing either setup method, you need to run three services in three separate terminals.
+You need to run three services in separate terminals:
 
-Terminal 1: Start the Redis Server
-Redis is our message broker for background tasks.
+### Terminal 1: Redis Server
 
-Download and extract Redis from the link provided at the top of this README.
-
-Open a terminal, navigate to the extracted folder, and run the server.
-
-# Example navigation
+**Windows**:
+```bash
+# Download Redis from: https://github.com/microsoftarchive/redis/releases
 cd C:\Redis-x64-3.0.504
-
-# Run the server
-
 .\redis-server.exe
+```
 
-Leave this terminal running.
+**Linux/Mac**:
+```bash
+# Install Redis
+sudo apt-get install redis-server  # Ubuntu/Debian
+# or
+brew install redis  # macOS
 
-Terminal 2: Start the Celery Worker
-This worker process handles the background AI tasks.
+# Start Redis
+redis-server
+# or
+sudo systemctl start redis  # Linux
+```
 
-Open a new terminal and navigate to your project root.
+### Terminal 2: Celery Worker
 
-Activate your environment (conda activate resume_env or .\resume_env\Scripts\Activate.ps1).
+**Windows (Development)**:
+```bash
+celery -A core worker -l info -P solo
+```
 
-Start the Celery worker.
+**Linux/Mac (Production)**:
+```bash
+pip install eventlet
+celery -A core worker -l info -P eventlet --concurrency=50
+```
 
-# The -P eventlet flag is required for Celery on Windows
-celery -A core worker -l info -P eventlet
+### Terminal 3: Django Server
 
-Leave this terminal running.
-
-Terminal 3: Start the Django Server
-This is your main web application.
-
-Open a third terminal and navigate to your project root.
-
-Activate your environment.
-
-Start the Django server.
-
+```bash
 python manage.py runserver
+```
 
-Access the Application
-With all three terminals running, you can access the AI Resume Builder in your web browser at:
+### Access the Application
 
-http://127.0.0.1:8000/
+Open your browser and navigate to:
+- **http://127.0.0.1:8000/**
+
+## 📚 Documentation
+
+For detailed documentation, see:
+- **[Complete Documentation](docs/DOCUMENTATION.md)** - Comprehensive setup, configuration, and deployment guides
+- **Celery Configuration** - See [DOCUMENTATION.md](docs/DOCUMENTATION.md#celery-configuration)
+- **Deployment Guide** - See [DOCUMENTATION.md](docs/DOCUMENTATION.md#deployment-guide)
+- **Social Login Setup** - See [DOCUMENTATION.md](docs/DOCUMENTATION.md#social-login-setup)
+- **Database Configuration** - See [DOCUMENTATION.md](docs/DOCUMENTATION.md#database-configuration)
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Create a `.env` file in the project root (see `.env.example` for template):
+
+**Required**:
+- `DJANGO_SECRET_KEY` - Django secret key
+- `GOOGLE_AI_API_KEY` - Google AI API key for Gemini features
+
+**Optional**:
+- `DEBUG` - Set to `True` for development (default: `True`)
+- `ALLOWED_HOSTS` - Comma-separated list of allowed hosts
+- `USE_POSTGRESQL` - Set to `True` to use PostgreSQL (default: `False`)
+- `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` - PostgreSQL configuration
+- `USE_S3` - Set to `True` for AWS S3 media storage (default: `False`)
+- `CELERY_BROKER_URL` - Redis connection URL (default: `redis://127.0.0.1:6379/0`)
+
+See `.env.example` for the complete list of available variables.
+
+### Database Configuration
+
+**Development (SQLite - Default)**:
+```bash
+# In .env
+USE_POSTGRESQL=False
+```
+
+**Production (PostgreSQL)**:
+```bash
+# In .env
+USE_POSTGRESQL=True
+DB_NAME=ai_resume_builder
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_HOST=localhost
+DB_PORT=5432
+```
+
+For detailed PostgreSQL setup, see [DOCUMENTATION.md](docs/DOCUMENTATION.md#database-configuration).
+
+## 🎨 Features Overview
+
+### Resume Builder
+
+- **Multiple Templates**: Choose from Classic, Modern, Professional, and Creative templates
+- **Color Customization**: Select from multiple color schemes
+- **Live Preview**: Preview your resume in real-time before downloading
+- **PDF Export**: Generate high-quality PDF resumes
+- **AI Scoring**: Get instant feedback on your resume quality
+
+### Job Matching
+
+- **Intelligent Matching**: AI-powered matching between resumes and job postings
+- **Match Score**: Percentage-based compatibility score
+- **Application Tracking**: Track your applications with detailed status updates
+
+### Interview Preparation
+
+- **AI-Generated Questions**: Personalized interview questions based on your resume and job requirements
+- **STAR Method Answers**: Structured answers using Situation, Task, Action, Result format
+- **Practice Questions**: Practice with realistic interview scenarios
+
+### Employer Features
+
+- **Job Posting**: Create and manage job postings
+- **Application Management**: View and manage applications
+- **Interview Scheduling**: Schedule and manage interviews with applicants
+
+## 🧪 Testing
+
+Run the test suite:
+```bash
+python manage.py test
+```
+
+## 📦 Deployment
+
+### Production Checklist
+
+- [ ] Set `DEBUG=False` in `.env`
+- [ ] Configure `ALLOWED_HOSTS` with your domain
+- [ ] Set up PostgreSQL database
+- [ ] Configure Redis for Celery
+- [ ] Set up environment variables
+- [ ] Run `python manage.py collectstatic`
+- [ ] Configure web server (Nginx + Gunicorn recommended)
+- [ ] Set up SSL certificates
+- [ ] Configure process management (systemd/supervisor)
+
+For detailed deployment instructions, see [DOCUMENTATION.md](docs/DOCUMENTATION.md#deployment-guide).
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**WeasyPrint PDF Generation Fails**:
+- Use Conda installation method (recommended)
+- Or manually install GTK dependencies for your platform
+
+**Celery Worker Not Processing Tasks**:
+- Ensure Redis is running
+- Check Celery worker logs for errors
+- Verify `CELERY_BROKER_URL` in settings
+
+**Database Connection Errors**:
+- Verify database credentials in `.env`
+- Ensure PostgreSQL service is running (if using PostgreSQL)
+- Check database user permissions
+
+**Static Files Not Loading**:
+- Run `python manage.py collectstatic`
+- Check `STATIC_ROOT` and `STATIC_URL` settings
+- Verify WhiteNoise is configured correctly
+
+For more troubleshooting tips, see [DOCUMENTATION.md](docs/DOCUMENTATION.md#troubleshooting).
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📝 License
+
+This project is licensed under the MIT License.
+
+## 👨‍💻 Author
+
+Created by Kiran
+
+## 🙏 Acknowledgments
+
+- Django for the excellent web framework
+- Celery for background task processing
+- Google Gemini AI for intelligent features
+- WeasyPrint for PDF generation
+- All open-source contributors
+
+## 📞 Support
+
+For issues or questions:
+1. Check the [Documentation](docs/DOCUMENTATION.md)
+2. Open an issue on the repository
+3. Check existing issues for solutions
+
+---
+
+**Last Updated**: 2025

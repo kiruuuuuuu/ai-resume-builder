@@ -18,13 +18,13 @@
         .header {
             text-align: center;
             padding-bottom: 10px; /* Reduced padding */
-            border-bottom: 1.5px solid #003366;
+            border-bottom: 1.5px solid {{ accent_color|default:'#003366' }};
             margin-bottom: 10px; /* Reduced margin */
         }
         .name { 
             font-size: 24pt;
             font-weight: bold;
-            color: #003366;
+            color: {{ accent_color|default:'#003366' }};
             margin: 0;
             padding: 0;
             letter-spacing: 1px;
@@ -35,7 +35,7 @@
             margin-top: 6px;
         }
         .contact-info a {
-            color: #003366;
+            color: {{ accent_color|default:'#003366' }};
             text-decoration: none;
         }
         .contact-info .separator {
@@ -50,7 +50,7 @@
             align-items: center;
             margin-top: 12px; /* Reduced margin */
             margin-bottom: 6px; /* Reduced margin */
-            border-bottom: 1px solid #003366;
+            border-bottom: 1px solid {{ accent_color|default:'#003366' }};
             padding-bottom: 4px;
             page-break-after: avoid;
         }

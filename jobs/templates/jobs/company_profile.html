@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ company.company_name }} - Company Profile{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="card overflow-hidden animate-scale-in">
+        <!-- Company Header -->
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-12 text-white">
+            <div class="flex items-center gap-6">
+                {% if company.company_logo %}
+                    <img src="{{ company.company_logo.url }}" alt="{{ company.company_name }}" class="w-24 h-24 rounded-lg bg-white p-2 object-contain">
+                {% else %}
+                    <div class="w-24 h-24 rounded-lg bg-white/20 flex items-center justify-center text-4xl font-bold">
+                        {{ company.company_name|first|upper }}
+                    </div>
+                {% endif %}
+                <div>
+                    <h1 class="text-4xl font-bold mb-2">{{ company.company_name }}</h1>
+                    {% if company.location %}
+                        <p class="text-indigo-100 text-lg">📍 {{ company.location }}</p>
+                    {% endif %}
+                    {% if company.industry %}
+                        <p class="text-indigo-100">{{ company.get_industry_display }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Company Info -->
+        <div class="p-8">
+            {% if company.company_bio %}
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">About Us</h2>
+                    <p class="text-gray-700 leading-relaxed whitespace-pre-line">{{ company.company_bio }}</p>
+                </div>
+            {% elif company.company_description %}
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">About Us</h2>
+                    <p class="text-gray-700 leading-relaxed">{{ company.company_description }}</p>
+                </div>
+            {% endif %}
+            
+            {% if company.company_website %}
+                <div class="mb-8">
+                    <a href="{{ company.company_website }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                        Visit Website
+                    </a>
+                </div>
+            {% endif %}
+            
+            <!-- Active Job Listings -->
+            {% if active_jobs %}
+                <div class="mt-10">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Open Positions</h2>
+                    <div class="grid gap-6 md:grid-cols-2">
+                        {% for job in active_jobs %}
+                            <div class="card p-6 animate-fade-in-up delay-{{ forloop.counter0|add:'100'|slice:':3' }}" role="article" aria-label="Job: {{ job.title }}">
+                                <h3 class="text-xl font-semibold text-indigo-600 mb-2">
+                                    <a href="{% url 'jobs:job-detail' job_id=job.id %}">{{ job.title }}</a>
+                                </h3>
+                                <p class="text-gray-600 mb-3">{{ job.location }}</p>
+                                {% if job.salary_min or job.salary_max %}
+                                    <p class="text-green-600 font-medium mb-3">
+                                        ${{ job.salary_min|default:job.salary_max }}{% if job.salary_min and job.salary_max %} - ${{ job.salary_max }}{% endif %}
+                                    </p>
+                                {% endif %}
+                                <p class="text-gray-700 text-sm line-clamp-3">{{ job.description|truncatewords:30 }}</p>
+                                <a href="{% url 'jobs:job-detail' job_id=job.id %}" class="mt-4 inline-block text-indigo-600 font-medium hover:text-indigo-700">
+                                    View Details →
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

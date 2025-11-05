@@ -20,7 +20,7 @@
             padding: 0;
         }
         a {
-            color: #3498db;
+            color: {{ accent_color|default:'#3498db' }};
             text-decoration: none;
         }
         /* --- Header --- */
@@ -48,7 +48,7 @@
             font-size: 13pt;
             font-weight: bold;
             color: #2c3e50;
-            border-bottom: 2px solid #3498db;
+            border-bottom: 2px solid {{ accent_color|default:'#3498db' }};
             padding-bottom: 4px;
             margin-top: 18px; /* Reduced margin */
             margin-bottom: 10px;

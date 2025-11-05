@@ -84,13 +84,17 @@ def resume_builder_view(request):
         score = resume.score
         feedback = resume.feedback
         if feedback and isinstance(feedback, str):
-            try: feedback = json.loads(feedback)
-            except json.JSONDecodeError: feedback = []
+            try: 
+                feedback = json.loads(feedback)
+            except json.JSONDecodeError: 
+                feedback = []
+        elif feedback is None:
+            feedback = []
 
         context = {
             'resume': resume,
             'score': score, 
-            'feedback': json.dumps(feedback),
+            'feedback': json.dumps(feedback) if feedback else '[]',
             'resume_sections': resume_sections,
         }
         return render(request, 'resumes/resume_builder.html', context)
@@ -171,12 +175,37 @@ def handle_ajax_request(request, resume):
             return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
 
     elif action == 'delete':
-        if is_profile: return JsonResponse({'status': 'error', 'message': 'Cannot delete a profile.'}, status=400)
-        item = get_object_or_404(Model, pk=pk, resume=resume)
-        item.delete()
-        resume.score = None; resume.save()
-        transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
-        return JsonResponse({'status': 'success', 'section': model_name})
+        if is_profile: 
+            return JsonResponse({'status': 'error', 'message': 'Cannot delete a profile.'}, status=400)
+        
+        if not pk:
+            return JsonResponse({'status': 'error', 'message': 'Item ID is required.'}, status=400)
+        
+        try:
+            item = Model.objects.get(pk=pk, resume=resume)
+        except Model.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Item not found or you do not have permission to delete it.'}, status=404)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': f'Error deleting item: {str(e)}'}, status=500)
+        
+        try:
+            item.delete()
+            resume.score = None
+            resume.save()
+            transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
+            return JsonResponse({'status': 'success', 'section': model_name})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': f'Failed to delete item: {str(e)}'}, status=500)
+
+    elif action == 'get_item_html':
+        item = get_object_or_404(Model, pk=pk)
+        if not is_profile and item.resume != resume: return JsonResponse({'status': 'error'}, status=403)
+        if is_profile and item.user != request.user: return JsonResponse({'status': 'error'}, status=403)
+
+        context = {'item': item} if not is_profile else {'resume': resume}
+        template_name = f'resumes/partials/{"personal_details_section" if is_profile else model_name + "_item"}.html'
+        item_html = render_to_string(template_name, context, request=request)
+        return JsonResponse({'status': 'success', 'item_html': item_html})
 
     return JsonResponse({'status': 'error', 'message': 'Invalid action.'}, status=400)
 
@@ -339,6 +368,47 @@ def download_resume_pdf(request, resume_id, template_name):
     """
     resume = get_object_or_404(Resume, id=resume_id, profile__user=request.user)
     
+    # Get accent color from query parameter (default to blue)
+    accent_color = request.GET.get('accent_color', 'blue')
+    
+    # Color mapping
+    color_map = {
+        'blue': '#3498db',
+        'teal': '#14b8a6',
+        'indigo': '#6366f1',
+        'purple': '#a855f7',
+        'red': '#ef4444',
+        'graphite': '#475569',
+    }
+    
+    accent_color_hex = color_map.get(accent_color, '#3498db')
+
+    context = _get_resume_context(resume)
+    context['accent_color'] = accent_color_hex
+    
+    template_path = f'resumes/resume_pdf_{template_name}.html'
+    template = get_template(template_path)
+    html = template.render(context)
+
+    if not WEASY_AVAILABLE:
+        messages.error(request, 'PDF generation service is currently unavailable. Please try again later.')
+        return redirect('resumes:resume-builder')
+
+    try:
+        html_obj = HTML(string=html, base_url=request.build_absolute_uri('/'))
+        # Set a standard A4 page margin for all templates
+        pdf_bytes = html_obj.write_pdf(stylesheets=[CSS(string='@page { size: A4; margin: 1.5cm }')])
+    except Exception as e:
+        # Provide a more user-friendly error
+        messages.error(request, f'An error occurred during PDF generation: {e}')
+        return redirect('resumes:resume-builder')
+
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{resume.profile.full_name}_resume.pdf"'
+    return response
+
+def _get_resume_context(resume):
+    """Helper function to prepare resume context for templates."""
     # Pre-process descriptions to create bullet points
     def process_description(items):
         processed_items = []
@@ -363,7 +433,7 @@ def download_resume_pdf(request, resume_id, template_name):
             skills_by_category[category] = []
         skills_by_category[category].append(skill.name)
 
-    context = {
+    return {
         'resume': resume,
         'experiences': process_description(experiences),
         'projects': process_description(projects),
@@ -375,27 +445,40 @@ def download_resume_pdf(request, resume_id, template_name):
         'hobbies': [hobby.name for hobby in Hobby.objects.filter(resume=resume)],
         'settings': settings,
     }
+
+@login_required
+def get_preview_html_view(request, resume_id):
+    """Returns HTML preview of resume for live preview panel."""
+    resume = get_object_or_404(Resume, id=resume_id, profile__user=request.user)
     
+    # Get template and color from query parameters
+    template_name = request.GET.get('template', 'classic')
+    accent_color = request.GET.get('accent_color', 'indigo')
+    
+    # Validate template name
+    valid_templates = ['classic', 'modern', 'professional', 'creative']
+    if template_name not in valid_templates:
+        template_name = 'classic'
+    
+    # Color mapping
+    color_map = {
+        'blue': '#3498db',
+        'teal': '#14b8a6',
+        'indigo': '#6366f1',
+        'purple': '#a855f7',
+        'red': '#ef4444',
+        'graphite': '#475569',
+    }
+    accent_color_hex = color_map.get(accent_color, '#6366f1')
+    
+    context = _get_resume_context(resume)
+    context['accent_color'] = accent_color_hex
+    
+    # Use the selected template for preview
     template_path = f'resumes/resume_pdf_{template_name}.html'
-    template = get_template(template_path)
-    html = template.render(context)
-
-    if not WEASY_AVAILABLE:
-        messages.error(request, 'PDF generation service is currently unavailable. Please try again later.')
-        return redirect('resumes:resume-builder')
-
-    try:
-        html_obj = HTML(string=html, base_url=request.build_absolute_uri('/'))
-        # Set a standard A4 page margin for all templates
-        pdf_bytes = html_obj.write_pdf(stylesheets=[CSS(string='@page { size: A4; margin: 1.5cm }')])
-    except Exception as e:
-        # Provide a more user-friendly error
-        messages.error(request, f'An error occurred during PDF generation: {e}')
-        return redirect('resumes:resume-builder')
-
-    response = HttpResponse(pdf_bytes, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{resume.profile.full_name}_resume.pdf"'
-    return response
+    preview_html = render_to_string(template_path, context, request=request)
+    
+    return JsonResponse({'status': 'success', 'preview_html': preview_html})
 
 @login_required
 def check_score_status_view(request, resume_id):
@@ -407,6 +490,12 @@ def check_score_status_view(request, resume_id):
                 feedback = json.loads(feedback)
             except json.JSONDecodeError:
                 feedback = ["Could not load feedback."]
+        elif feedback is None:
+            feedback = []
+        
+        # Ensure feedback is always a list
+        if not isinstance(feedback, list):
+            feedback = [str(feedback)] if feedback else []
         
         return JsonResponse({
             'status': 'SUCCESS',
@@ -415,3 +504,158 @@ def check_score_status_view(request, resume_id):
         })
     else:
         return JsonResponse({'status': 'PENDING'})
+
+@login_required
+def dismiss_welcome_view(request):
+    """Mark welcome modal as dismissed in session."""
+    request.session['show_welcome_modal'] = False
+    return JsonResponse({'status': 'success'})
+
+@login_required
+def preview_resume_view(request, resume_id):
+    """Dedicated fullscreen preview page showing only resume content."""
+    resume = get_object_or_404(Resume, id=resume_id, profile__user=request.user)
+    
+    # Get template and color from query parameters
+    template_name = request.GET.get('template', 'professional')
+    accent_color = request.GET.get('accent_color', 'indigo')
+    
+    # Validate template name
+    valid_templates = ['classic', 'modern', 'professional', 'creative']
+    if template_name not in valid_templates:
+        template_name = 'professional'
+    
+    # Color mapping
+    color_map = {
+        'blue': '#3498db',
+        'teal': '#14b8a6',
+        'indigo': '#6366f1',
+        'purple': '#a855f7',
+        'red': '#ef4444',
+        'graphite': '#475569',
+    }
+    accent_color_hex = color_map.get(accent_color, '#6366f1')
+    
+    context = _get_resume_context(resume)
+    context['accent_color'] = accent_color_hex
+    context['template_name'] = template_name
+    context['selected_color'] = accent_color
+    context['color_options'] = list(color_map.keys())
+    context['template_options'] = valid_templates
+    
+    # Render the resume template content
+    template_path = f'resumes/resume_pdf_{template_name}.html'
+    resume_html = render_to_string(template_path, context, request=request)
+    
+    # Extract styles and body content properly
+    import re
+    
+    try:
+        # Try using BeautifulSoup for better HTML parsing
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(resume_html, 'html.parser')
+        
+        # Extract all style tags from head
+        style_tags = soup.find_all('style')
+        styles_content = ''
+        for style_tag in style_tags:
+            if style_tag.string:
+                style_text = style_tag.string
+                # Critical fix: Scope html/body styles to .resume-wrapper to prevent page shift
+                # Replace html, body selectors with .resume-wrapper html, .resume-wrapper body
+                style_text = re.sub(r'html\s*,', '.resume-wrapper html,', style_text)
+                style_text = re.sub(r',\s*html\s*{', ', .resume-wrapper html {', style_text)
+                style_text = re.sub(r'body\s*,', '.resume-wrapper body,', style_text)
+                style_text = re.sub(r',\s*body\s*{', ', .resume-wrapper body {', style_text)
+                # Handle standalone html and body rules
+                style_text = re.sub(r'^html\s*{', '.resume-wrapper html {', style_text, flags=re.MULTILINE)
+                style_text = re.sub(r'^body\s*{', '.resume-wrapper body {', style_text, flags=re.MULTILINE)
+                styles_content += style_text + '\n'
+        
+        # Extract body content
+        body_tag = soup.find('body')
+        if body_tag:
+            body_content = str(body_tag.decode_contents())
+        else:
+            # Fallback: get all content if no body tag
+            body_content = str(soup.decode_contents())
+        
+        resume_html = body_content
+        context['resume_styles'] = styles_content
+        
+    except (ImportError, Exception) as e:
+        # Fallback to regex if BeautifulSoup is not available or fails
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"BeautifulSoup not available or failed, using regex fallback: {e}")
+        # Fallback to regex if BeautifulSoup is not available
+        def extract_body_content(html):
+            # Extract styles from head section
+            style_match = re.search(r'<style[^>]*>(.*?)</style>', html, re.DOTALL | re.IGNORECASE)
+            styles = style_match.group(1) if style_match else ''
+            
+            # Remove DOCTYPE
+            html = re.sub(r'<!DOCTYPE[^>]*>', '', html, flags=re.IGNORECASE)
+            # Remove html tags
+            html = re.sub(r'<html[^>]*>', '', html, flags=re.IGNORECASE)
+            html = re.sub(r'</html>', '', html, flags=re.IGNORECASE)
+            # Extract and preserve style tags
+            style_tags = re.findall(r'<style[^>]*>(.*?)</style>', html, re.DOTALL | re.IGNORECASE)
+            all_styles = '\n'.join(style_tags) if style_tags else styles
+            
+            # Critical fix: Scope html/body styles to .resume-wrapper to prevent page shift
+            # Replace html, body selectors with .resume-wrapper html, .resume-wrapper body
+            all_styles = re.sub(r'html\s*,', '.resume-wrapper html,', all_styles)
+            all_styles = re.sub(r',\s*html\s*{', ', .resume-wrapper html {', all_styles)
+            all_styles = re.sub(r'body\s*,', '.resume-wrapper body,', all_styles)
+            all_styles = re.sub(r',\s*body\s*{', ', .resume-wrapper body {', all_styles)
+            # Handle standalone html and body rules
+            all_styles = re.sub(r'^html\s*{', '.resume-wrapper html {', all_styles, flags=re.MULTILINE)
+            all_styles = re.sub(r'^body\s*{', '.resume-wrapper body {', all_styles, flags=re.MULTILINE)
+            
+            # Remove head section but preserve styles
+            html = re.sub(r'<head>.*?</head>', '', html, flags=re.DOTALL | re.IGNORECASE)
+            # Remove title tag if present
+            html = re.sub(r'<title>.*?</title>', '', html, flags=re.DOTALL | re.IGNORECASE)
+            
+            # Try to extract body content
+            body_match = re.search(r'<body[^>]*>(.*)</body>', html, re.DOTALL | re.IGNORECASE)
+            if body_match:
+                context['resume_styles'] = all_styles
+                return body_match.group(1).strip()
+            
+            # If no body tag, try to find main content divs
+            if '<div' in html and 'class=' in html:
+                lines = html.split('\n')
+                in_div = False
+                div_start = -1
+                div_count = 0
+                
+                for i, line in enumerate(lines):
+                    div_open = line.count('<div')
+                    div_close = line.count('</div>')
+                    
+                    if div_open > 0 and div_start == -1:
+                        if 'class=' in line and ('page' in line.lower() or 'resume' in line.lower() or 'container' in line.lower()):
+                            div_start = i
+                            div_count = div_open - div_close
+                            in_div = True
+                            continue
+                    
+                    if in_div:
+                        div_count += div_open - div_close
+                        if div_count <= 0:
+                            context['resume_styles'] = all_styles
+                            return '\n'.join(lines[div_start:i+1]).strip()
+                
+                context['resume_styles'] = all_styles
+                return html.strip()
+            
+            context['resume_styles'] = all_styles
+            return html.strip()
+        
+        resume_html = extract_body_content(resume_html)
+    
+    context['resume_html'] = resume_html
+    
+    return render(request, 'resumes/preview_resume.html', context)

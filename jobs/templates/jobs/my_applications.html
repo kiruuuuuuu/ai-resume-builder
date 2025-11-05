@@ -4,93 +4,863 @@
 {% block title %}My Applications{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-     <header class="py-10">
-        <h1 class="text-3xl font-bold tracking-tight text-gray-900">My Application History</h1>
-    </header>
-    <div class="space-y-8">
+<!-- Enhanced Hero Section -->
+<div class="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 overflow-hidden">
+    <div class="absolute inset-0 bg-black opacity-10"></div>
+    <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+    <div class="relative max-w-7xl mx-auto px-4 py-16 text-center">
+        <div class="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl mb-6">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+        </div>
+        <h1 class="text-5xl md:text-6xl font-bold text-white mb-4 animate-fade-in-up drop-shadow-lg">
+            My Applications
+        </h1>
+        <p class="text-xl text-indigo-100 mb-8 animate-fade-in-up delay-100">
+            Track your job applications and interview progress
+        </p>
+    </div>
+</div>
+
+<div class="max-w-6xl mx-auto px-4 py-12 -mt-8" x-data="appData()" x-init="console.log('Alpine initialized'); console.log('Total apps:', totalCount);">
+    <!-- Enhanced Quick Stats Cards -->
+    {% if apps_with_interview %}
+    {% regroup apps_with_interview by application.status as status_groups %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        {% for status_group in status_groups %}
+        {% if status_group.grouper != 'Interview' and status_group.grouper != 'Approved' %}
+        <div class="group relative overflow-hidden card p-6 bg-gradient-to-br {% if status_group.grouper == 'Offered' %}from-green-50 via-emerald-50 to-teal-50 border-2 border-green-200{% elif status_group.grouper == 'Shortlisted' %}from-blue-50 via-indigo-50 to-violet-50 border-2 border-blue-200{% elif status_group.grouper == 'Rejected' %}from-red-50 via-rose-50 to-pink-50 border-2 border-red-200{% else %}from-gray-50 via-slate-50 to-zinc-50 border-2 border-gray-200{% endif %} animate-fade-in-up delay-{{ forloop.counter0|add:'100'|slice:':3' }} hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+            <div class="absolute top-0 right-0 w-32 h-32 opacity-10 transform rotate-12 translate-x-8 -translate-y-8">
+                {% if status_group.grouper == 'Offered' %}
+                    <svg class="w-full h-full text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                {% elif status_group.grouper == 'Interview' %}
+                    <svg class="w-full h-full text-purple-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                {% elif status_group.grouper == 'Shortlisted' %}
+                    <svg class="w-full h-full text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M5 13l4 4L19 7" />
+                    </svg>
+                {% elif status_group.grouper == 'Rejected' %}
+                    <svg class="w-full h-full text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                {% else %}
+                    <svg class="w-full h-full text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                {% endif %}
+            </div>
+            <div class="relative flex items-center justify-between">
+                <div class="flex-1">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">{{ status_group.grouper }}</p>
+                    <p class="text-4xl font-extrabold {% if status_group.grouper == 'Offered' %}text-green-700{% elif status_group.grouper == 'Interview' %}text-purple-700{% elif status_group.grouper == 'Shortlisted' %}text-blue-700{% elif status_group.grouper == 'Rejected' %}text-red-700{% else %}text-gray-700{% endif %} mb-1">
+                        {{ status_group.list|length }}
+                    </p>
+                    <p class="text-xs text-gray-500">Application{{ status_group.list|length|pluralize }}</p>
+                </div>
+                <div class="p-4 {% if status_group.grouper == 'Offered' %}bg-gradient-to-br from-green-500 to-emerald-600{% elif status_group.grouper == 'Interview' %}bg-gradient-to-br from-purple-500 to-pink-600{% elif status_group.grouper == 'Shortlisted' %}bg-gradient-to-br from-blue-500 to-indigo-600{% elif status_group.grouper == 'Rejected' %}bg-gradient-to-br from-red-500 to-rose-600{% else %}bg-gradient-to-br from-gray-500 to-slate-600{% endif %} rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    {% if status_group.grouper == 'Offered' %}
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    {% elif status_group.grouper == 'Interview' %}
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    {% elif status_group.grouper == 'Shortlisted' %}
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
+                    {% elif status_group.grouper == 'Rejected' %}
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    {% else %}
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Filter/Sort Section -->
+    <div class="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white card p-4">
+        <div class="flex items-center gap-3">
+            <label class="text-sm font-semibold text-gray-700">Filter by Status:</label>
+            <select x-model="selectedStatus" @change="filterApplications()" class="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 font-medium shadow-sm hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
+                <option value="">All Applications</option>
+                <option value="Submitted">Submitted</option>
+                <option value="Under Review">Under Review</option>
+                <option value="Shortlisted">Shortlisted</option>
+                <option value="Interview">Interview</option>
+                <option value="Offered">Offered</option>
+                <option value="Rejected">Rejected</option>
+            </select>
+        </div>
+        <div class="text-sm text-gray-600">
+            <span x-show="selectedStatus !== ''" class="font-medium">
+                Showing <span x-text="filteredCount"></span> of <span x-text="totalCount"></span> applications
+            </span>
+            <span x-show="selectedStatus === ''" class="font-medium">
+                <span x-text="totalCount"></span> total applications
+            </span>
+        </div>
+    </div>
+    
+    <!-- Applications List -->
+    <div class="space-y-6">
         {% for item in apps_with_interview %}
-            <div class="bg-white rounded-xl shadow-md border overflow-hidden p-6">
-                <div class="grid grid-cols-12 gap-4">
-                    <!-- Job Info -->
-                    <div class="col-span-12 sm:col-span-6">
-                        <p class="text-lg font-semibold text-indigo-600">{{ item.application.job_posting.title }}</p>
-                        <p class="text-md text-gray-700">{{ item.application.job_posting.employer.company_name }}</p>
-                        <p class="text-sm text-gray-500 mt-1">Applied on {{ item.application.applied_at|date:"F d, Y" }}</p>
+            <div x-show="selectedStatus === '' || selectedStatus === '{{ item.application.status }}'" 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="card overflow-hidden p-8 border-l-4 {% if item.application.status == 'Offered' %}border-green-500{% elif item.application.status == 'Interview' %}border-purple-500{% elif item.application.status == 'Shortlisted' %}border-blue-500{% elif item.application.status == 'Rejected' %}border-red-500{% else %}border-indigo-500{% endif %} animate-fade-in-up delay-{{ forloop.counter0|add:'200'|slice:':3' }} hover:shadow-xl transition-all duration-300" 
+                 role="article" 
+                 aria-label="Application for {{ item.application.job_posting.title }}" 
+                 data-status="{{ item.application.status }}">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Job Info Section -->
+                    <div class="lg:col-span-7">
+                        <div class="flex items-start gap-4 mb-4">
+                            <div class="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg flex-shrink-0">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ item.application.job_posting.title }}</h2>
+                                <div class="flex items-center gap-4 text-gray-600 mb-3">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                        </svg>
+                                        <span class="font-semibold text-gray-700">{{ item.application.job_posting.employer.company_name }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 text-sm">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        <span class="text-gray-500">Applied {{ item.application.applied_at|date:"M d, Y" }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Action/Status Button -->
-                    <div class="col-span-12 sm:col-span-6 flex items-center justify-end">
+                    <!-- Status & Actions Section -->
+                    <div class="lg:col-span-5 flex flex-col items-end gap-4">
                         {% if item.application.status == 'Interview' and item.interview and item.interview.status == 'Proposed' and item.interview.slots.all %}
-                            <a href="{% url 'jobs:respond-to-interview' interview_id=item.interview.id %}" class="inline-block bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 text-sm">Respond to Interview</a>
+                            <a href="{% url 'jobs:respond-to-interview' interview_id=item.interview.id %}" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                Respond to Interview
+                            </a>
                         {% elif item.interview and item.interview.status == 'Scheduled' %}
-                            <div class="text-right">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">Interview Scheduled</span>
-                                <div class="text-xs text-gray-500 mt-2">
-                                   {{ item.interview.interview_details|urlize|linebreaksbr }}
+                            <div class="text-right space-y-3">
+                                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200 shadow-sm">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Interview Scheduled
+                                </span>
+                                <div class="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-3 space-y-2">
+                                    <p class="text-xs font-medium text-purple-900">Interview Details</p>
+                                    <p class="text-xs text-gray-700">{{ item.interview.interview_details|urlize|linebreaksbr }}</p>
+                                    <p class="text-xs font-semibold text-purple-700">
+                                        <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        {{ item.interview.confirmed_slot|date:"F d, Y, P" }}
+                                    </p>
                                 </div>
-                                <p class="text-xs text-gray-500">Time: {{ item.interview.confirmed_slot|date:"F d, Y, P" }}</p>
+                                <a href="{% url 'jobs:interview-prep' application_id=item.application.id %}" 
+                                   onclick="this.classList.add('opacity-50', 'cursor-wait', 'pointer-events-none'); this.innerHTML = '<svg class=\'animate-spin h-4 w-4 text-white inline mr-2\' xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\'><circle class=\'opacity-25\' cx=\'12\' cy=\'12\' r=\'10\' stroke=\'currentColor\' stroke-width=\'4\'></circle><path class=\'opacity-75\' fill=\'currentColor\' d=\'M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\'></path></svg>Generating...';"
+                                   class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                    </svg>
+                                    AI Interview Prep
+                                </a>
                             </div>
+                        {% elif item.application.status == 'Interview' %}
+                            <a href="{% url 'jobs:interview-prep' application_id=item.application.id %}" 
+                               onclick="this.classList.add('opacity-50', 'cursor-wait', 'pointer-events-none'); this.innerHTML = '<svg class=\'animate-spin h-4 w-4 text-white inline mr-2\' xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\'><circle class=\'opacity-25\' cx=\'12\' cy=\'12\' r=\'10\' stroke=\'currentColor\' stroke-width=\'4\'></circle><path class=\'opacity-75\' fill=\'currentColor\' d=\'M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\'></path></svg>Generating...';"
+                               class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                </svg>
+                                AI Interview Prep
+                            </a>
                         {% elif item.application.status == 'Offered' %}
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">Offer Extended!</span>
+                            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200 shadow-sm">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Offer Extended!
+                            </span>
                         {% elif item.application.status == 'Rejected' %}
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">Not selected</span>
+                            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-red-100 to-rose-100 text-red-800 border border-red-200 shadow-sm">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Not Selected
+                            </span>
                         {% else %}
-                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 border border-gray-200 shadow-sm">
                                 {{ item.application.status }}
                             </span>
                         {% endif %}
                     </div>
                     
-                    <!-- Visual Timeline -->
-                    <div class="col-span-12 mt-6 mb-4">
-                        <nav aria-label="Progress">
-                            <ol role="list" class="flex items-center">
+                    <!-- Enhanced Visual Timeline -->
+                    <div class="lg:col-span-12 mt-6 pt-6 border-t border-gray-200">
+                        <div class="relative">
+                            <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                                <div class="w-full border-t border-gray-200"></div>
+                            </div>
+                            <nav aria-label="Progress" class="relative">
+                                <ol role="list" class="flex items-center justify-between">
                                 {% for step in item.steps %}
-                                <li class="relative {% if not forloop.last %}pr-8 sm:pr-24{% endif %}">
+                                    <li class="relative flex-1">
                                     {% if item.application.status == 'Rejected' and forloop.counter0 == item.current_index|add:1 %}
                                         <!-- Rejected Step -->
-                                        <div class="absolute inset-0 flex items-center" aria-hidden="true"><div class="h-0.5 w-full bg-gray-200"></div></div>
-                                        <div class="relative w-8 h-8 flex items-center justify-center bg-red-600 rounded-full">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                            <div class="flex flex-col items-center">
+                                                <div class="relative w-10 h-10 flex items-center justify-center bg-red-600 rounded-full shadow-lg border-4 border-white ring-4 ring-red-100">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                </div>
+                                                <p class="absolute -bottom-7 text-xs font-bold text-center w-24 text-red-600">
+                                                    Rejected
+                                                </p>
                                         </div>
                                     {% elif item.current_index != -1 and forloop.counter0 < item.current_index %}
                                         <!-- Completed Step -->
-                                        <div class="absolute inset-0 flex items-center" aria-hidden="true"><div class="h-0.5 w-full bg-indigo-600"></div></div>
-                                        <div class="relative w-8 h-8 flex items-center justify-center bg-indigo-600 rounded-full">
-                                            <svg class="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                                            <div class="flex flex-col items-center">
+                                                <div class="relative w-10 h-10 flex items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full shadow-lg border-4 border-white ring-4 ring-indigo-100">
+                                                    <svg class="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                                                </div>
+                                                <p class="absolute -bottom-7 text-xs text-center w-24 text-gray-600 font-medium">
+                                                    {{ step }}
+                                                </p>
                                         </div>
                                     {% elif item.application.status == step %}
                                         <!-- Current Step -->
-                                        <div class="absolute inset-0 flex items-center" aria-hidden="true"><div class="h-0.5 w-full bg-gray-200"></div></div>
-                                        <div class="relative w-8 h-8 flex items-center justify-center bg-white border-2 border-indigo-600 rounded-full">
-                                            <span class="h-2.5 w-2.5 bg-indigo-600 rounded-full" aria-hidden="true"></span>
+                                            <div class="flex flex-col items-center">
+                                                <div class="relative w-10 h-10 flex items-center justify-center bg-white border-4 border-indigo-600 rounded-full shadow-lg ring-4 ring-indigo-100 animate-pulse">
+                                                    <span class="h-3 w-3 bg-indigo-600 rounded-full" aria-hidden="true"></span>
+                                                </div>
+                                                <p class="absolute -bottom-7 text-xs font-bold text-center w-24 text-indigo-600">
+                                                    {{ step }}
+                                                </p>
                                         </div>
                                     {% else %}
                                         <!-- Upcoming Step -->
-                                        <div class="absolute inset-0 flex items-center" aria-hidden="true"><div class="h-0.5 w-full bg-gray-200"></div></div>
-                                        <div class="relative w-8 h-8 flex items-center justify-center bg-white border-2 border-gray-300 rounded-full">
-                                            <span class="h-2.5 w-2.5 bg-transparent rounded-full" aria-hidden="true"></span>
+                                            <div class="flex flex-col items-center">
+                                                <div class="relative w-10 h-10 flex items-center justify-center bg-white border-2 border-gray-300 rounded-full shadow-sm">
+                                                    <span class="h-2 w-2 bg-gray-300 rounded-full" aria-hidden="true"></span>
+                                                </div>
+                                                <p class="absolute -bottom-7 text-xs text-center w-24 text-gray-400">
+                                                    {{ step }}
+                                                </p>
                                         </div>
                                     {% endif %}
-                                    <p class="absolute -bottom-7 text-xs text-center w-20 -left-6 {% if item.application.status == step %}font-bold text-indigo-600{% elif item.application.status == 'Rejected' and forloop.counter0 == item.current_index|add:1 %}font-bold text-red-600{% else %}text-gray-500{% endif %}">
-                                        {% if item.application.status == 'Rejected' and forloop.counter0 == item.current_index|add:1 %}Rejected{% else %}{{ step }}{% endif %}
-                                    </p>
                                 </li>
                                 {% endfor %}
                             </ol>
                         </nav>
+                        </div>
                     </div>
                 </div>
             </div>
         {% empty %}
-            <div class="text-center py-16 bg-white rounded-lg border">
-                <h3 class="text-xl font-medium text-gray-900">No Applications Yet</h3>
-                <p class="text-gray-500 mt-2">You have not applied for any jobs yet.</p>
-                <a href="{% url 'jobs:job-list' %}" class="mt-4 inline-block bg-indigo-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-indigo-700">Browse Jobs</a>
+            <!-- Enhanced Empty State -->
+            <div class="card p-16 text-center">
+                <div class="max-w-md mx-auto">
+                    <div class="mb-6 inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full">
+                        <svg class="w-12 h-12 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-800 mb-3">No Applications Yet</h3>
+                    <p class="text-gray-600 mb-8 text-lg">Start your job search journey by applying to positions that match your skills and interests.</p>
+                    <a href="{% url 'jobs:job-list' %}" class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Browse Jobs
+                    </a>
+                </div>
             </div>
         {% endfor %}
+        
+        <!-- Empty state when filtered -->
+        <div x-show="selectedStatus !== '' && filteredCount === 0" x-cloak class="card p-12 text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            <p class="text-gray-600 font-medium mb-2">No applications found</p>
+            <p class="text-sm text-gray-500 mb-4">No applications match the selected filter.</p>
+            <button @click="selectedStatus = ''; filterApplications()" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+                Clear Filter
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function appData() {
+        return {
+            // Interview Prep
+            modalOpen: false,
+            loading: false,
+            questions: [],
+            error: null,
+            currentApplicationId: null,
+            
+            // Filter
+            selectedStatus: '',
+            totalCount: {{ apps_with_interview|length }},
+            filteredCount: {{ apps_with_interview|length }},
+            
+            filterApplications() {
+                console.log('🔍 Filter function called with status:', this.selectedStatus);
+                
+                // Force Alpine to update the DOM first
+                this.$nextTick(() => {
+                    // Count visible applications based on x-show condition
+                    setTimeout(() => {
+                        const articles = Array.from(document.querySelectorAll('[role="article"]'));
+                        console.log('📊 Total articles found:', articles.length);
+                        
+                        let visibleCount = 0;
+                        articles.forEach((el, idx) => {
+                            const status = el.getAttribute('data-status');
+                            const style = window.getComputedStyle(el);
+                            const isVisible = style.display !== 'none' && style.visibility !== 'hidden';
+                            const shouldShow = this.selectedStatus === '' || this.selectedStatus === status;
+                            
+                            if (isVisible) visibleCount++;
+                            
+                            console.log(`📄 Article ${idx}: status="${status}", visible=${isVisible}, selectedStatus="${this.selectedStatus}", shouldShow=${shouldShow}`);
+                        });
+                        
+                        this.filteredCount = visibleCount;
+                        console.log('✅ Filter applied:', this.selectedStatus);
+                        console.log('✅ Visible applications:', this.filteredCount);
+                    }, 200);
+                });
+            },
+            
+            init() {
+                this.filterApplications();
+            },
+            
+            // Interview Prep Methods
+            openInterviewPrep(applicationId) {
+                // Prevent multiple clicks
+                if (this.loading) {
+                    return;
+                }
+                
+                this.currentApplicationId = applicationId;
+                this.modalOpen = true;
+                this.loading = true;
+                this.questions = [];
+                this.error = null;
+                
+                const csrftoken = this.getCookie('csrftoken') || '{{ csrf_token }}';
+                
+                fetch("{% url 'jobs:generate-interview-prep' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({application_id: applicationId})
+                })
+                .then(async res => {
+                    const data = await res.json();
+                    console.log('Interview prep API response:', data);
+                    if (!res.ok) {
+                        throw new Error(data.error || `HTTP error! status: ${res.status}`);
+                    }
+                    return data;
+                })
+                .then(data => {
+                    // Debug logging
+                    console.log('Response data:', data);
+                    console.log('Status:', data.status);
+                    console.log('Questions:', data.questions);
+                    console.log('Questions type:', typeof data.questions);
+                    console.log('Is array:', Array.isArray(data.questions));
+                    
+                    if (data.status === 'success') {
+                        if (data.questions && Array.isArray(data.questions) && data.questions.length > 0) {
+                            console.log('Setting questions:', data.questions);
+                            // Clear error first
+                            this.error = null;
+                            
+                            // Clear and set in next tick to ensure reactivity
+                            this.questions = [];
+                            
+                            // Force Alpine.js reactivity by reassigning
+                            const mappedQuestions = data.questions.map((q, idx) => ({
+                                id: idx,
+                                question: String(q.question || q['question'] || `Question ${idx + 1}`),
+                                answer: String(q.answer || q['answer'] || 'No answer provided')
+                            }));
+                            
+                            // Set questions first, then loading to false
+                            // This ensures Alpine sees the questions before hiding loading
+                            this.questions = mappedQuestions;
+                            
+                            // Small delay before setting loading to false to ensure Alpine processes questions
+                            setTimeout(() => {
+                                this.loading = false;
+                                this.error = null;
+                                
+                                console.log('✅ Questions set successfully. Current questions:', this.questions);
+                                console.log('✅ Questions length:', this.questions.length);
+                                console.log('✅ Modal open:', this.modalOpen);
+                                console.log('✅ Loading:', this.loading);
+                                console.log('✅ Error:', this.error);
+                                console.log('✅ Should display:', !this.loading && !this.error && Array.isArray(this.questions) && this.questions.length > 0);
+                                console.log('📍 QUESTIONS ARE NOW VISIBLE IN THE MODAL!');
+                                console.log('📍 Look for the green success banner and scroll down inside the modal to see all questions.');
+                                
+                                // Force display after a short delay to ensure Alpine has processed
+                                setTimeout(() => {
+                                    // Get the questions container
+                                    const questionsDiv = document.getElementById('questions-display-container');
+                                    const successBanner = document.querySelector('[x-show*="!loading && !error && questions && questions.length"]');
+                                    
+                                    if (questionsDiv) {
+                                        console.log('✅ Found questions display div:', questionsDiv);
+                                        
+                                        // Remove x-show attribute FIRST to prevent Alpine from hiding it
+                                        questionsDiv.removeAttribute('x-show');
+                                        questionsDiv.removeAttribute('x-cloak');
+                                        
+                                        // Then force display using setProperty with !important flag
+                                        questionsDiv.style.setProperty('display', 'block', 'important');
+                                        questionsDiv.style.setProperty('visibility', 'visible', 'important');
+                                        questionsDiv.style.setProperty('opacity', '1', 'important');
+                                        
+                                        // Force Alpine to re-evaluate by dispatching an event
+                                        if (window.Alpine) {
+                                            // Dispatch custom event to trigger Alpine updates
+                                            window.dispatchEvent(new CustomEvent('alpine:update'));
+                                        }
+                                        
+                                        // Check computed style
+                                        const computedStyle = window.getComputedStyle(questionsDiv);
+                                        console.log('✅ Questions div computed style:', {
+                                            display: computedStyle.display,
+                                            visibility: computedStyle.visibility,
+                                            opacity: computedStyle.opacity,
+                                            height: computedStyle.height
+                                        });
+                                        
+                                        // Wait a bit for Alpine x-for to process, then check
+                                        setTimeout(() => {
+                                            // Check if template elements are rendered
+                                            const questionCards = questionsDiv.querySelectorAll('.border-2.border-gray-200');
+                                            console.log('✅ Number of question cards found after delay:', questionCards.length);
+                                            
+                                            if (questionCards.length === 0) {
+                                                console.warn('⚠️ No question cards found - manually rendering questions');
+                                                
+                                                // Manually render questions if Alpine x-for failed
+                                                // Use questions from the current scope (this.questions)
+                                                const questions = this.questions || [];
+                                                
+                                                if (questions && questions.length > 0) {
+                                                    // Escape HTML to prevent XSS
+                                                    const escapeHtml = (text) => {
+                                                        const div = document.createElement('div');
+                                                        div.textContent = text;
+                                                        return div.innerHTML;
+                                                    };
+                                                    
+                                                    const questionsHTML = questions.map((item, index) => {
+                                                        const question = escapeHtml(item.question || item['question'] || `Question ${index + 1}`);
+                                                        const answer = escapeHtml(item.answer || item['answer'] || 'No answer provided').replace(/\n/g, '<br>');
+                                                        return `
+                                                            <div class="border-2 border-gray-200 rounded-xl p-6 hover:border-indigo-300 hover:shadow-xl transition-all duration-200 bg-gradient-to-br from-white to-gray-50 mb-4">
+                                                                <div class="flex items-start gap-4">
+                                                                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-lg">
+                                                                        ${index + 1}
+                                                                    </div>
+                                                                    <div class="flex-1">
+                                                                        <h4 class="text-xl font-bold text-gray-900 mb-4">${question}</h4>
+                                                                        <div class="prose prose-sm max-w-none">
+                                                                            <p class="text-gray-700 whitespace-pre-line leading-relaxed text-base">${answer}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        `;
+                                                    }).join('');
+                                                    
+                                                    // Find the info box and insert questions after it
+                                                    const infoBox = questionsDiv.querySelector('.bg-gradient-to-r.from-blue-50');
+                                                    if (infoBox) {
+                                                        // Remove any existing template
+                                                        const templateElement = infoBox.nextElementSibling;
+                                                        if (templateElement && templateElement.tagName === 'TEMPLATE') {
+                                                            templateElement.remove();
+                                                        }
+                                                        
+                                                        // Insert questions HTML
+                                                        infoBox.insertAdjacentHTML('afterend', questionsHTML);
+                                                        console.log('✅ Manually rendered ' + questions.length + ' questions HTML');
+                                                    } else {
+                                                        // Fallback: insert at the beginning
+                                                        questionsDiv.insertAdjacentHTML('afterbegin', questionsHTML);
+                                                        console.log('✅ Manually rendered questions HTML (fallback)');
+                                                    }
+                                                }
+                                            }
+                                        }, 500);
+                                        
+                                        console.log('✅ Questions div should now be visible!');
+                                    } else {
+                                        console.error('❌ Questions display div not found!');
+                                    }
+                                    
+                                    if (successBanner) {
+                                        successBanner.style.display = 'block';
+                                        successBanner.removeAttribute('x-cloak');
+                                        console.log('✅ Success banner displayed');
+                                    }
+                                    
+                                    // Scroll to top of modal content
+                                    const modalContent = document.querySelector('.max-h-\\[70vh\\]');
+                                    if (modalContent) {
+                                        modalContent.scrollTop = 0;
+                                        console.log('✅ Scrolled modal to top');
+                                    }
+                                }, 300);
+                            }, 50);
+                        } else if (data.questions && typeof data.questions === 'object' && !Array.isArray(data.questions)) {
+                            // Handle case where questions might be an object instead of array
+                            console.warn('Questions is an object, converting to array');
+                            const questionsArray = Object.values(data.questions);
+                            if (questionsArray.length > 0) {
+                                this.error = null;
+                                this.questions = [];
+                                requestAnimationFrame(() => {
+                                    requestAnimationFrame(() => {
+                                        this.questions = questionsArray.map((q, idx) => ({
+                                            id: idx,
+                                            question: String(q.question || q['question'] || `Question ${idx + 1}`),
+                                            answer: String(q.answer || q['answer'] || 'No answer provided')
+                                        }));
+                                        setTimeout(() => {
+                                            this.loading = false;
+                                        }, 10);
+                                    });
+                                });
+                            } else {
+                                this.loading = false;
+                                throw new Error('No valid questions found in response.');
+                            }
+                        } else {
+                            console.error('No questions in response:', data);
+                            this.loading = false;
+                            throw new Error(data.error || 'No interview questions were generated. Please try again.');
+                        }
+                    } else {
+                        console.error('Invalid response format:', data);
+                        this.loading = false;
+                        throw new Error(data.error || 'Failed to generate interview prep questions. No questions were returned.');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error generating interview prep:', err);
+                    this.loading = false;
+                    this.error = err.message || 'An error occurred while generating interview prep. Please make sure you have a resume and the application is valid.';
+                    this.questions = [];
+                });
+            },
+            getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            },
+            closeModal() {
+                this.modalOpen = false;
+                this.questions = [];
+                this.error = null;
+            }
+        }
+    }
+    
+    // Legacy function for compatibility
+    function interviewPrep() {
+        return {
+            modalOpen: false,
+            loading: false,
+            questions: [],
+            error: null,
+            currentApplicationId: null,
+            openInterviewPrep(applicationId) {
+                this.currentApplicationId = applicationId;
+                this.modalOpen = true;
+                this.loading = true;
+                this.questions = [];
+                this.error = null;
+                
+                const csrftoken = this.getCookie('csrftoken') || '{{ csrf_token }}';
+                
+                fetch("{% url 'jobs:generate-interview-prep' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({application_id: applicationId})
+                })
+                .then(async res => {
+                    const data = await res.json();
+                    console.log('Interview prep API response:', data);
+                    if (!res.ok) {
+                        throw new Error(data.error || `HTTP error! status: ${res.status}`);
+                    }
+                    return data;
+                })
+                .then(data => {
+                    // Debug logging
+                    console.log('Response data:', data);
+                    console.log('Status:', data.status);
+                    console.log('Questions:', data.questions);
+                    console.log('Questions type:', typeof data.questions);
+                    console.log('Is array:', Array.isArray(data.questions));
+                    
+                    if (data.status === 'success') {
+                        if (data.questions && Array.isArray(data.questions) && data.questions.length > 0) {
+                            console.log('Setting questions:', data.questions);
+                            // Clear error and stop loading first
+                            this.error = null;
+                            this.loading = false;
+                            
+                            // Direct assignment - Alpine.js should handle reactivity automatically
+                            // Create new array reference to trigger reactivity
+                            this.questions = data.questions.map(q => ({
+                                question: q.question || q['question'] || '',
+                                answer: q.answer || q['answer'] || ''
+                            }));
+                            console.log('Questions set successfully. Current questions:', this.questions);
+                            console.log('Questions length after setting:', this.questions.length);
+                            console.log('Modal open state:', this.modalOpen);
+                            console.log('Loading state:', this.loading);
+                            console.log('Error state:', this.error);
+                            console.log('Display condition (should be true):', !this.loading && !this.error && this.questions.length > 0);
+                        } else if (data.questions && typeof data.questions === 'object' && !Array.isArray(data.questions)) {
+                            // Handle case where questions might be an object instead of array
+                            console.warn('Questions is an object, converting to array');
+                            const questionsArray = Object.values(data.questions);
+                            if (questionsArray.length > 0) {
+                                this.error = null;
+                                this.loading = false;
+                                this.questions = [];
+                                this.$nextTick(() => {
+                                    this.questions = questionsArray.map(q => ({...q}));
+                                });
+                            } else {
+                                throw new Error('No valid questions found in response.');
+                            }
+                        } else {
+                            console.error('No questions in response:', data);
+                            throw new Error(data.error || 'No interview questions were generated. Please try again.');
+                        }
+                    } else {
+                        console.error('Invalid response format:', data);
+                        throw new Error(data.error || 'Failed to generate interview prep questions. No questions were returned.');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error generating interview prep:', err);
+                    this.error = err.message || 'An error occurred while generating interview prep. Please make sure you have a resume and the application is valid.';
+                    this.questions = [];
+                    // Don't close modal, show error instead
+                })
+                .finally(() => {
+                    this.loading = false;
+                });
+            },
+            getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            },
+            closeModal() {
+                this.modalOpen = false;
+                this.questions = [];
+                this.error = null;
+            }
+        }
+    }
+</script>
+
+<!-- Enhanced Interview Prep Modal -->
+<div x-show="modalOpen" x-cloak x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed z-50 inset-0 overflow-y-auto" @click.away="closeModal()">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:p-0">
+        <div class="fixed inset-0 transition-opacity bg-gray-900 opacity-75" @click="closeModal()"></div>
+        
+        <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full" @click.stop>
+            <div class="bg-gradient-to-br from-indigo-50 to-purple-50 px-6 pt-6 pb-4 border-b border-indigo-100">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900">AI Interview Preparation</h3>
+                    </div>
+                    <button @click="closeModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="bg-white px-6 pt-6 pb-6 max-h-[70vh] overflow-y-auto">
+                <!-- Debug Info - Shows where questions will appear -->
+                <div x-show="!loading && !error && questions && questions.length > 0" class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p class="text-sm text-green-800 font-semibold">
+                        ✅ <span x-text="questions.length"></span> interview questions loaded successfully! Scroll down to see them below.
+                    </p>
+                </div>
+                
+                <!-- Loading State -->
+                <div x-show="loading" x-cloak class="text-center py-12">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full mb-4">
+                        <div class="animate-spin rounded-full h-10 w-10 border-4 border-indigo-600 border-t-transparent"></div>
+                    </div>
+                    <p class="text-gray-600 font-medium">Generating personalized interview questions...</p>
+                    <p class="text-sm text-gray-500 mt-2">This may take a few moments</p>
+                </div>
+                
+                <!-- Error Display -->
+                <div x-show="!loading && error" x-cloak class="text-center py-12">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">Error Generating Questions</h4>
+                    <p class="text-gray-600 mb-4" x-text="error"></p>
+                    <button @click="openInterviewPrep(currentApplicationId)" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Try Again
+                    </button>
+                </div>
+                
+                <!-- Empty State -->
+                <div x-show="!loading && !error && questions.length === 0" x-cloak class="text-center py-12">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                    </div>
+                    <p class="text-gray-600 font-medium">No questions generated</p>
+                    <p class="text-sm text-gray-500 mt-2">Please try again or contact support if the issue persists.</p>
+                </div>
+                
+                <!-- Questions Display - This section appears INSIDE THE MODAL when questions are loaded -->
+                <!-- 
+                    WHERE TO FIND THE QUESTIONS:
+                    1. Click the "AI Interview Prep" button on any application card
+                    2. A modal/popup window will open in the center of your screen
+                    3. Wait for the loading spinner to finish (button will show "Generating Questions...")
+                    4. The questions will appear INSIDE this modal, below the header "AI Interview Preparation"
+                    5. Each question will be displayed as a card with a number badge (1, 2, 3, etc.)
+                    6. Scroll down inside the modal to see all questions and answers
+                -->
+                <div x-show="!loading && !error && questions && Array.isArray(questions) && questions.length > 0" 
+                     class="space-y-6"
+                     id="questions-display-container">
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-5 mb-6">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div>
+                                <p class="text-sm font-semibold text-blue-900 mb-1">Personalized Interview Questions</p>
+                                <p class="text-sm text-blue-700">Based on your resume and the job requirements, here are likely questions with STAR-method answers:</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <template x-for="(item, index) in questions" :key="index" x-show="questions && questions.length > 0">
+                        <div class="border-2 border-gray-200 rounded-xl p-6 hover:border-indigo-300 hover:shadow-xl transition-all duration-200 bg-gradient-to-br from-white to-gray-50">
+                            <div class="flex items-start gap-4">
+                                <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-lg">
+                                    <span x-text="index + 1"></span>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-xl font-bold text-gray-900 mb-4" x-text="item.question || item['question'] || 'Question ' + (index + 1)"></h4>
+                            <div class="prose prose-sm max-w-none">
+                                        <p class="text-gray-700 whitespace-pre-line leading-relaxed text-base" x-text="item.answer || item['answer'] || 'No answer provided'"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <div class="mt-8 p-5 bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-6 h-6 text-indigo-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div>
+                                <p class="text-sm font-semibold text-indigo-900 mb-1">Pro Tip</p>
+                                <p class="text-sm text-indigo-800">Practice these answers out loud and customize them with your own examples. The STAR method (Situation, Task, Action, Result) helps you structure clear, compelling responses.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
-

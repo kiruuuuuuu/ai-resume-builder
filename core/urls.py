@@ -12,6 +12,9 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", home_view, name="home"),
     
+    # django-allauth URLs (must be before users.urls to override login)
+    path("accounts/", include("allauth.urls")),
+    
     # Include app-specific URLs. The namespace is now defined in each app's urls.py
     path("users/", include("users.urls")),
     path("resumes/", include("resumes.urls")),

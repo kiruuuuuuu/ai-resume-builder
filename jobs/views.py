@@ -5,9 +5,15 @@ from django.utils import timezone
 from django import forms
 from django.urls import reverse
 from django.db.models import Q, Prefetch
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from icalendar import Calendar, Event
+from datetime import timedelta
 from django.conf import settings
 from django.template.loader import get_template
+import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Celery Task
 from .tasks import calculate_and_save_match_score_task
@@ -58,6 +64,233 @@ def post_job_view(request):
     return render(request, 'jobs/post_job.html', {'form': form, 'is_editing': False})
 
 @login_required
+def generate_job_description_api(request):
+    """AJAX endpoint to generate job description using AI."""
+    if request.user.user_type != 'employer':
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            job_title = data.get('title', '').strip()
+            keywords = data.get('keywords', '').strip()
+            
+            if not job_title:
+                return JsonResponse({'error': 'Job title is required.'}, status=400)
+            
+            from .matcher import generate_job_description
+            result = generate_job_description(job_title, keywords)
+            
+            if result.get('description') and result.get('requirements'):
+                return JsonResponse({
+                    'status': 'success',
+                    'description': result['description'],
+                    'requirements': result['requirements']
+                })
+            else:
+                return JsonResponse({'error': 'Failed to generate job description.'}, status=500)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data.'}, status=400)
+        except Exception as e:
+            logger.error(f"Error in generate_job_description_api: {e}")
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+@login_required
+def generate_applicant_summary_api(request):
+    """AJAX endpoint to generate AI summary for an applicant."""
+    if request.user.user_type != 'employer':
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            application_id = data.get('application_id')
+            
+            if not application_id:
+                return JsonResponse({'error': 'Application ID is required.'}, status=400)
+            
+            application = get_object_or_404(Application, id=application_id)
+            
+            # Verify employer owns the job
+            if application.job_posting.employer.user != request.user:
+                return JsonResponse({'error': 'Unauthorized'}, status=403)
+            
+            # Get applicant's latest resume
+            try:
+                applicant_resume = Resume.objects.filter(profile=application.applicant).latest('created_at')
+            except Resume.DoesNotExist:
+                return JsonResponse({'error': 'Applicant has no resume.'}, status=404)
+            
+            # Get resume text and job description
+            from resumes.parser import get_full_resume_text
+            resume_text = get_full_resume_text(applicant_resume)
+            job_description = f"{application.job_posting.title}\n\n{application.job_posting.description}\n\n{application.job_posting.requirements}"
+            
+            if not resume_text.strip():
+                return JsonResponse({'error': 'Resume is empty.'}, status=400)
+            
+            from .matcher import generate_applicant_summary
+            summary = generate_applicant_summary(resume_text, job_description)
+            
+            if summary:
+                return JsonResponse({
+                    'status': 'success',
+                    'summary': summary
+                })
+            else:
+                return JsonResponse({'error': 'Failed to generate summary.'}, status=500)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data.'}, status=400)
+        except Exception as e:
+            logger.error(f"Error in generate_applicant_summary_api: {e}")
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+@login_required
+def generate_interview_prep_api(request):
+    """AJAX endpoint to generate AI interview preparation questions."""
+    if request.user.user_type != 'job_seeker':
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            application_id = data.get('application_id')
+            
+            if not application_id:
+                return JsonResponse({'error': 'Application ID is required.'}, status=400)
+            
+            application = get_object_or_404(Application, id=application_id, applicant__user=request.user)
+            
+            # Get applicant's latest resume
+            try:
+                applicant_resume = Resume.objects.filter(profile=application.applicant).latest('created_at')
+            except Resume.DoesNotExist:
+                return JsonResponse({'error': 'You have no resume. Please create one first.'}, status=404)
+            
+            # Get resume text and job description
+            from resumes.parser import get_full_resume_text
+            resume_text = get_full_resume_text(applicant_resume)
+            job_description = f"{application.job_posting.title}\n\n{application.job_posting.description}\n\n{application.job_posting.requirements}"
+            
+            if not resume_text.strip():
+                return JsonResponse({'error': 'Resume is empty.'}, status=400)
+            
+            from .matcher import generate_interview_prep
+            result = generate_interview_prep(resume_text, job_description)
+            
+            if result.get('questions') and len(result['questions']) > 0:
+                return JsonResponse({
+                    'status': 'success',
+                    'questions': result['questions']
+                })
+            else:
+                return JsonResponse({'error': 'Failed to generate interview prep questions.'}, status=500)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data.'}, status=400)
+        except Exception as e:
+            logger.error(f"Error in generate_interview_prep_api: {e}")
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+@login_required
+def interview_prep_view(request, application_id):
+    """Dedicated page to display AI-generated interview preparation questions."""
+    if request.user.user_type != 'job_seeker':
+        messages.error(request, "This page is for job seekers only.")
+        return redirect('home')
+    
+    application = get_object_or_404(Application, id=application_id, applicant__user=request.user)
+    
+    # Get applicant's latest resume
+    try:
+        applicant_resume = Resume.objects.filter(profile=application.applicant).latest('created_at')
+    except Resume.DoesNotExist:
+        messages.error(request, "You have no resume. Please create one first.")
+        return redirect('resumes:resume-dashboard')
+    
+    # Get resume text and job description
+    resume_text = get_full_resume_text(applicant_resume)
+    job_description = f"{application.job_posting.title}\n\n{application.job_posting.description}\n\n{application.job_posting.requirements}"
+    
+    if not resume_text.strip():
+        messages.error(request, "Resume is empty.")
+        return redirect('resumes:resume-dashboard')
+    
+    # Generate interview prep questions
+    # This may take a few seconds, so we show a loading state via button disable
+    try:
+        from .matcher import generate_interview_prep
+        result = generate_interview_prep(resume_text, job_description)
+        questions = result.get('questions', []) if result else []
+        
+        # Ensure questions are properly formatted (list of dicts)
+        if questions:
+            # Convert to list of dicts if needed
+            formatted_questions = []
+            for q in questions:
+                if isinstance(q, dict):
+                    # Ensure both question and answer keys exist - try multiple key variations
+                    question_text = (q.get('question') or q.get('Question') or 
+                                   q.get('q') or q.get('Q') or '')
+                    answer_text = (q.get('answer') or q.get('Answer') or 
+                                 q.get('a') or q.get('A') or '')
+                    formatted_questions.append({
+                        'question': str(question_text) if question_text else '',
+                        'answer': str(answer_text) if answer_text else ''
+                    })
+                else:
+                    # Handle case where it might be a different structure
+                    formatted_questions.append({
+                        'question': str(q) if q else '',
+                        'answer': ''
+                    })
+            questions = formatted_questions
+            logger.info(f"Formatted {len(questions)} questions for interview prep")
+            # Debug: Log first question structure
+            if questions:
+                logger.info(f"First question structure: {questions[0]}")
+                logger.info(f"First question keys: {questions[0].keys() if isinstance(questions[0], dict) else 'Not a dict'}")
+    except Exception as e:
+        logger.error(f"Error generating interview prep: {e}")
+        questions = []
+        messages.warning(request, "There was an issue generating interview questions. Please try again.")
+    
+    context = {
+        'application': application,
+        'job_posting': application.job_posting,
+        'questions': questions,
+        'resume': applicant_resume,
+    }
+    
+    return render(request, 'jobs/interview_prep.html', context)
+
+def company_profile_view(request, employer_id):
+    """Public company profile page."""
+    employer_profile = get_object_or_404(EmployerProfile, user_id=employer_id)
+    
+    # Get active jobs
+    active_jobs = JobPosting.objects.filter(
+        employer=employer_profile
+    ).filter(
+        Q(application_deadline__gte=timezone.now()) | Q(application_deadline__isnull=True)
+    ).order_by('-created_at')[:10]
+    
+    context = {
+        'company': employer_profile,
+        'active_jobs': active_jobs,
+    }
+    
+    return render(request, 'jobs/company_profile.html', context)
+
+@login_required
 def edit_job_view(request, job_id):
     job = get_object_or_404(JobPosting, id=job_id, employer=request.user.employerprofile)
     if request.method == 'POST':
@@ -74,11 +307,64 @@ def edit_job_view(request, job_id):
 def job_list_view(request):
     jobs = JobPosting.objects.filter(
         Q(application_deadline__gte=timezone.now()) | Q(application_deadline__isnull=True)
-    ).order_by('-created_at')
+    )
+    
+    # Search and filter logic
+    search_query = request.GET.get('search', '').strip()
+    location_query = request.GET.get('location', '').strip()
+    salary_min = request.GET.get('salary_min')
+    salary_max = request.GET.get('salary_max')
+    sort_by = request.GET.get('sort', 'newest')
+    
+    # Apply search filter
+    if search_query:
+        jobs = jobs.filter(
+            Q(title__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(requirements__icontains=search_query) |
+            Q(employer__company_name__icontains=search_query)
+        )
+    
+    # Apply location filter
+    if location_query:
+        jobs = jobs.filter(location__icontains=location_query)
+    
+    # Apply salary filters (check both new and old fields for compatibility)
+    if salary_min:
+        try:
+            min_val = int(salary_min)
+            jobs = jobs.filter(
+                Q(salary_min__gte=min_val) | Q(salary_max__gte=min_val) |
+                Q(salary_range__icontains=str(min_val))  # Fallback for old salary_range field
+            )
+        except ValueError:
+            pass
+    
+    if salary_max:
+        try:
+            max_val = int(salary_max)
+            jobs = jobs.filter(
+                Q(salary_max__lte=max_val) | Q(salary_min__lte=max_val) |
+                Q(salary_range__icontains=str(max_val))  # Fallback for old salary_range field
+            )
+        except ValueError:
+            pass
+    
+    # Apply sorting
+    if sort_by == 'oldest':
+        jobs = jobs.order_by('created_at')
+    elif sort_by == 'title':
+        jobs = jobs.order_by('title')
+    elif sort_by == 'company':
+        jobs = jobs.order_by('employer__company_name')
+    else:  # newest (default)
+        jobs = jobs.order_by('-created_at')
 
+    has_resume = False
     if request.user.is_authenticated and request.user.user_type == 'job_seeker':
         try:
             applicant_resume = Resume.objects.filter(profile=request.user.jobseekerprofile).latest('created_at')
+            has_resume = True
             
             jobs_with_scores = []
             job_ids = [job.id for job in jobs]
@@ -105,12 +391,18 @@ def job_list_view(request):
                 score = cached_score_data['score'] if cached_score_data else 0
                 jobs_with_scores.append({'job': job, 'score': score})
 
-            return render(request, 'jobs/job_list.html', {'jobs_with_scores': jobs_with_scores})
+            return render(request, 'jobs/job_list.html', {
+                'jobs_with_scores': jobs_with_scores,
+                'has_resume': has_resume
+            })
 
         except (Resume.DoesNotExist, JobSeekerProfile.DoesNotExist):
             pass # Fallback to showing jobs without scores
 
-    return render(request, 'jobs/job_list.html', {'jobs': jobs})
+    return render(request, 'jobs/job_list.html', {
+        'jobs': jobs,
+        'has_resume': has_resume
+    })
 
 
 def job_detail_view(request, job_id):
@@ -233,7 +525,32 @@ def view_applicants_view(request, job_id):
 
     ranked_applicants.sort(key=lambda x: x['score'], reverse=True)
 
-    context = {'job': job, 'ranked_applicants': ranked_applicants}
+    # Calculate score distribution for chart
+    score_ranges = {
+        '90-100': 0,
+        '80-89': 0,
+        '70-79': 0,
+        '60-69': 0,
+        '50-59': 0,
+        '0-49': 0
+    }
+    
+    for item in ranked_applicants:
+        score = item['score']
+        if score >= 90:
+            score_ranges['90-100'] += 1
+        elif score >= 80:
+            score_ranges['80-89'] += 1
+        elif score >= 70:
+            score_ranges['70-79'] += 1
+        elif score >= 60:
+            score_ranges['60-69'] += 1
+        elif score >= 50:
+            score_ranges['50-59'] += 1
+        else:
+            score_ranges['0-49'] += 1
+
+    context = {'job': job, 'ranked_applicants': ranked_applicants, 'score_distribution': score_ranges}
     return render(request, 'jobs/view_applicants.html', context)
 
 
@@ -353,8 +670,121 @@ def schedule_interview_view(request, application_id):
     else:
         formset = InterviewSlotFormSet()
 
-    context = {'application': application, 'formset': formset}
+    context = {'application': application, 'formset': formset, 'interview': interview}
     return render(request, 'jobs/schedule_interview.html', context)
+
+@login_required
+def download_interview_calendar(request, interview_id):
+    """Generate and download .ics calendar file for interview."""
+    interview = get_object_or_404(Interview, id=interview_id)
+    
+    # Verify user has permission (employer or applicant)
+    if request.user != interview.application.job_posting.employer.user and request.user != interview.application.applicant.user:
+        messages.error(request, "You are not authorized to access this calendar.")
+        return redirect('home')
+    
+    # Determine which time to use
+    interview_time = interview.confirmed_slot
+    if not interview_time and interview.slots.exists():
+        interview_time = interview.slots.first().proposed_time
+    
+    if not interview_time:
+        messages.error(request, "No interview time available.")
+        redirect_url = 'jobs:my-applications' if request.user.user_type == 'job_seeker' else reverse('jobs:view-applicants', args=[interview.application.job_posting.id])
+        return redirect(redirect_url)
+    
+    # Create calendar
+    cal = Calendar()
+    cal.add('prodid', '-//AI Resume Builder//Interview Calendar//EN')
+    cal.add('version', '2.0')
+    
+    # Create event
+    event = Event()
+    event.add('summary', f"Interview: {interview.application.job_posting.title}")
+    event.add('description', f"Interview for {interview.application.job_posting.title} at {interview.application.job_posting.employer.company_name}\n\n{interview.interview_details or ''}")
+    event.add('dtstart', interview_time)
+    event.add('dtend', interview_time + timedelta(hours=1))
+    event.add('dtstamp', timezone.now())
+    event.add('location', interview.interview_details or 'TBD')
+    event.add('organizer', interview.application.job_posting.employer.user.email)
+    event.add('attendee', interview.application.applicant.user.email)
+    event.add('status', 'CONFIRMED')
+    
+    cal.add_component(event)
+    
+    # Generate response
+    response = HttpResponse(cal.to_ical(), content_type='text/calendar')
+    response['Content-Disposition'] = f'attachment; filename="interview_{interview.id}.ics"'
+    return response
+
+@login_required
+def job_stats_view(request, job_id):
+    """Job statistics dashboard with charts."""
+    if request.user.user_type != 'employer':
+        messages.error(request, "This page is for employers only.")
+        return redirect('home')
+    
+    job = get_object_or_404(JobPosting, id=job_id, employer=request.user.employerprofile)
+    applications = Application.objects.filter(job_posting=job)
+    
+    # Applications over time (last 30 days)
+    from django.db.models import Count
+    from django.db.models.functions import TruncDate
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    applications_over_time = applications.filter(applied_at__gte=thirty_days_ago).annotate(
+        date=TruncDate('applied_at')
+    ).values('date').annotate(count=Count('id')).order_by('date')
+    
+    # Create date list for chart
+    date_counts = {}
+    for item in applications_over_time:
+        date_counts[item['date'].isoformat()] = item['count']
+    
+    # Score distribution
+    score_ranges = {
+        '90-100': 0,
+        '80-89': 0,
+        '70-79': 0,
+        '60-69': 0,
+        '50-59': 0,
+        '0-49': 0
+    }
+    
+    for app in applications:
+        try:
+            resume = Resume.objects.filter(profile=app.applicant).latest('created_at')
+            score_data = JobMatchScore.objects.filter(resume=resume, job_posting=job).first()
+            if score_data:
+                score = score_data.score
+                if score >= 90:
+                    score_ranges['90-100'] += 1
+                elif score >= 80:
+                    score_ranges['80-89'] += 1
+                elif score >= 70:
+                    score_ranges['70-79'] += 1
+                elif score >= 60:
+                    score_ranges['60-69'] += 1
+                elif score >= 50:
+                    score_ranges['50-59'] += 1
+                else:
+                    score_ranges['0-49'] += 1
+        except Resume.DoesNotExist:
+            pass
+    
+    # Status distribution
+    status_counts = applications.values('status').annotate(count=Count('status'))
+    status_data = {item['status']: item['count'] for item in status_counts}
+    
+    # Serialize data for JavaScript
+    context = {
+        'job': job,
+        'applications_count': applications.count(),
+        'date_counts': json.dumps(date_counts),
+        'score_distribution': json.dumps(score_ranges),
+        'status_data': json.dumps(status_data),
+    }
+    
+    return render(request, 'jobs/job_stats.html', context)
 
 @login_required
 def respond_to_interview_view(request, interview_id):
@@ -405,6 +835,11 @@ def my_applications_view(request):
         
         steps = ['Submitted', 'Under Review', 'Shortlisted', 'Interview', 'Offered']
         
+        # Calculate status distribution for chart
+        from django.db.models import Count
+        status_counts = applications.values('status').annotate(count=Count('status'))
+        status_data = {item['status']: item['count'] for item in status_counts}
+        
         apps_with_data = []
         for app in applications:
             interview = Interview.objects.filter(application=app).first()
@@ -428,7 +863,8 @@ def my_applications_view(request):
 
     except JobSeekerProfile.DoesNotExist:
         apps_with_data = []
+        status_data = {}
 
-    context = {'apps_with_interview': apps_with_data}
+    context = {'apps_with_interview': apps_with_data, 'status_data': status_data}
     return render(request, 'jobs/my_applications.html', context)
 

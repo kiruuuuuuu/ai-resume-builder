@@ -12,7 +12,9 @@ class JobPosting(models.Model):
     description = models.TextField()
     requirements = models.TextField()
     location = models.CharField(max_length=255)
-    salary_range = models.CharField(max_length=100, null=True, blank=True)
+    salary_range = models.CharField(max_length=100, null=True, blank=True)  # Deprecated, use salary_min/salary_max
+    salary_min = models.IntegerField(null=True, blank=True, help_text="Minimum salary in USD")
+    salary_max = models.IntegerField(null=True, blank=True, help_text="Maximum salary in USD")
     vacancies = models.PositiveIntegerField(default=1, help_text="Number of available positions for this role.")
     application_deadline = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

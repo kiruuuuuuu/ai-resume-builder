@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import CustomUser, JobSeekerProfile
+from .models import CustomUser, JobSeekerProfile, EmployerProfile
 from datetime import date, timedelta
 import re
 import os
@@ -95,4 +95,44 @@ class ProfileUpdateForm(forms.ModelForm):
             if os.path.splitext(photo.name)[1].lower() not in ['.jpg', '.jpeg', '.png']: raise forms.ValidationError("Unsupported file extension. Please use JPG, JPEG, or PNG.")
         
         return photo
+
+class EmployerOnboardingForm(forms.ModelForm):
+    """Form for employer onboarding - requires company details."""
+    
+    class Meta:
+        model = EmployerProfile
+        fields = ['company_name', 'company_website', 'company_description']
+        widgets = {
+            'company_name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md'}),
+            'company_website': forms.URLInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md', 'placeholder': 'https://example.com'}),
+            'company_description': forms.Textarea(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md', 'rows': 5}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['company_name'].required = True
+        self.fields['company_website'].required = True
+        self.fields['company_description'].required = True
+        
+        self.fields['company_name'].label = 'Company Name'
+        self.fields['company_website'].label = 'Company Website'
+        self.fields['company_description'].label = 'Company Description'
+    
+    def clean_company_name(self):
+        name = self.cleaned_data.get('company_name')
+        if not name or len(name.strip()) < 2:
+            raise forms.ValidationError('Please enter a valid company name.')
+        return name.strip()
+    
+    def clean_company_website(self):
+        website = self.cleaned_data.get('company_website')
+        if website and not website.startswith(('http://', 'https://')):
+            website = 'https://' + website
+        return website
+    
+    def clean_company_description(self):
+        desc = self.cleaned_data.get('company_description')
+        if desc and len(desc.strip()) < 20:
+            raise forms.ValidationError('Company description should be at least 20 characters long.')
+        return desc
 

@@ -9,6 +9,9 @@ from .views import (
     parsing_progress_view,
     check_parsing_status_view,
     check_score_status_view,
+    dismiss_welcome_view,
+    get_preview_html_view,
+    preview_resume_view,
 )
 
 app_name = 'resumes'
@@ -23,5 +26,8 @@ urlpatterns = [
     path('parsing-progress/', parsing_progress_view, name='parsing-progress'),
     path('check-parsing-status/', check_parsing_status_view, name='check-parsing-status'),
     path('api/check-score-status/<int:resume_id>/', check_score_status_view, name='check-score-status'),
+    path('api/dismiss-welcome/', dismiss_welcome_view, name='dismiss-welcome'),
+    path('api/get-preview-html/<int:resume_id>/', get_preview_html_view, name='get-preview-html'),
+    path('<int:resume_id>/preview/', preview_resume_view, name='preview-resume'),
 ]
 

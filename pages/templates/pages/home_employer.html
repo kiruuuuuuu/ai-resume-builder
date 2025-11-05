@@ -3,21 +3,153 @@
 {% block title %}Employer Dashboard{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <header class="py-10 text-center">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" x-data="employerDashboard()">
+    <header class="py-10 text-center animate-fade-in-up">
         <h1 class="text-4xl font-bold text-gray-800 mb-4">Employer Dashboard</h1>
         <p class="text-xl text-gray-600 mb-8">Manage your job postings and find the best talent.</p>
-        <a href="{% url 'jobs:post-job' %}" class="inline-block bg-green-600 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:bg-green-700 transition duration-300">
+        <a href="{% url 'jobs:post-job' %}" 
+           class="inline-block bg-green-600 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:bg-green-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+           aria-label="Post a new job opening">
+            <svg class="inline-block h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
             Post a New Job
         </a>
     </header>
 
-    <!-- This is a placeholder for future content, like recent applicants or job stats -->
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div class="card p-6 animate-fade-in-up delay-100">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-500">Active Jobs</div>
+                    <div class="text-2xl font-semibold text-gray-900" x-text="stats.activeJobs">0</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card p-6 animate-fade-in-up delay-200">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-md bg-green-500 text-white">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-500">Total Applicants</div>
+                    <div class="text-2xl font-semibold text-gray-900" x-text="stats.totalApplicants">0</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card p-6 animate-fade-in-up delay-300">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-md bg-yellow-500 text-white">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-500">Pending Reviews</div>
+                    <div class="text-2xl font-semibold text-gray-900" x-text="stats.pendingReviews">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+        <a href="{% url 'jobs:post-job' %}" class="card card-hover p-6 animate-fade-in-up delay-400">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="flex items-center justify-center h-10 w-10 rounded-md bg-indigo-100 text-indigo-600">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-medium text-gray-900">Post New Job</h3>
+                    <p class="text-sm text-gray-500">Create a new job posting</p>
+                </div>
+            </div>
+        </a>
+        
+        <a href="{% url 'jobs:my-jobs' %}" class="card card-hover p-6 animate-fade-in-up delay-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="flex items-center justify-center h-10 w-10 rounded-md bg-green-100 text-green-600">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-medium text-gray-900">View All Jobs</h3>
+                    <p class="text-sm text-gray-500">Manage your job postings</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Recent Activity Placeholder -->
     <div class="mt-10">
-        <div class="text-center py-16 bg-white rounded-lg border">
-            <h3 class="text-xl font-medium text-gray-900">Welcome to your dashboard</h3>
-            <p class="text-gray-500 mt-2">Your active job postings and applicants will appear here.</p>
+        <div class="card p-12 text-center animate-fade-in-up delay-600" role="status" aria-live="polite">
+            <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 class="mt-4 text-xl font-medium text-gray-900">Welcome to your dashboard</h3>
+            <p class="mt-2 text-gray-500">Your active job postings and applicants will appear here.</p>
+            <div class="mt-6">
+                <a href="{% url 'jobs:post-job' %}" class="btn-primary">
+                    Post Your First Job
+                </a>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+function employerDashboard() {
+    return {
+        stats: {
+            activeJobs: 0,
+            totalApplicants: 0,
+            pendingReviews: 0
+        },
+        init() {
+            // Animate counters
+            this.animateCounter('activeJobs', 0);
+            this.animateCounter('totalApplicants', 0);
+            this.animateCounter('pendingReviews', 0);
+        },
+        animateCounter(prop, target) {
+            const duration = 2000;
+            const steps = 60;
+            const increment = target / steps;
+            let current = 0;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    this.stats[prop] = target;
+                    clearInterval(timer);
+                } else {
+                    this.stats[prop] = Math.floor(current);
+                }
+            }, duration / steps);
+        }
+    }
+}
+</script>
 {% endblock %}

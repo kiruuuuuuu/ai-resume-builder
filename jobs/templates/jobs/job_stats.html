@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}Statistics for {{ job.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="jobStatsChart()" x-init="init()">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Statistics: {{ job.title }}</h1>
+        <p class="text-gray-600">Comprehensive analytics for this job posting</p>
+        <a href="{% url 'jobs:my-jobs' %}" class="mt-4 inline-block text-indigo-600 hover:text-indigo-800">&larr; Back to My Jobs</a>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-indigo-500">
+            <h3 class="text-sm font-medium text-gray-500 mb-1">Total Applications</h3>
+            <p class="text-3xl font-bold text-gray-800">{{ applications_count }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
+            <h3 class="text-sm font-medium text-gray-500 mb-1">Vacancies</h3>
+            <p class="text-3xl font-bold text-gray-800">{{ job.vacancies }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-500">
+            <h3 class="text-sm font-medium text-gray-500 mb-1">Application Rate</h3>
+            <p class="text-3xl font-bold text-gray-800">{% if job.vacancies > 0 %}{{ applications_count|floatformat:0|div:job.vacancies|floatformat:1 }}{% else %}0{% endif %} per vacancy</p>
+        </div>
+    </div>
+    
+    <!-- Charts Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Applications Over Time -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Applications Over Time (Last 30 Days)</h2>
+            <canvas id="applications-time-chart" width="400" height="200"></canvas>
+        </div>
+        
+        <!-- Score Distribution -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Applicants by Match Score</h2>
+            <canvas id="score-distribution-chart" width="400" height="200"></canvas>
+        </div>
+    </div>
+    
+    <!-- Status Distribution -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Applications by Status</h2>
+        <div class="flex justify-center">
+            <canvas id="status-chart" width="300" height="300"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    function jobStatsChart() {
+        return {
+            init() {
+                // Applications Over Time Chart
+                {% if date_counts %}
+                const dateCounts = JSON.parse('{{ date_counts|escapejs }}');
+                const dates = Object.keys(dateCounts).sort();
+                const counts = dates.map(d => dateCounts[d] || 0);
+                
+                const timeCtx = document.getElementById('applications-time-chart');
+                if (timeCtx) {
+                    new Chart(timeCtx, {
+                        type: 'line',
+                        data: {
+                            labels: dates,
+                            datasets: [{
+                                label: 'Applications',
+                                data: counts,
+                                borderColor: '#6366f1',
+                                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                            }
+                        }
+                    });
+                }
+                {% endif %}
+                
+                // Score Distribution Chart
+                {% if score_distribution %}
+                const scoreDist = JSON.parse('{{ score_distribution|escapejs }}');
+                const scoreLabels = Object.keys(scoreDist).reverse();
+                const scoreData = Object.values(scoreDist).reverse();
+                
+                const scoreCtx = document.getElementById('score-distribution-chart');
+                if (scoreCtx) {
+                    new Chart(scoreCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: scoreLabels,
+                            datasets: [{
+                                label: 'Number of Applicants',
+                                data: scoreData,
+                                backgroundColor: [
+                                    '#10b981', '#3b82f6', '#6366f1', '#f59e0b', '#ef4444', '#6b7280'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            indexAxis: 'y',
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                x: { beginAtZero: true, ticks: { stepSize: 1 } }
+                            }
+                        }
+                    });
+                }
+                {% endif %}
+                
+                // Status Distribution Chart
+                {% if status_data %}
+                const statusData = JSON.parse('{{ status_data|escapejs }}');
+                const statusLabels = Object.keys(statusData);
+                const statusValues = Object.values(statusData);
+                
+                const colors = {
+                    'Submitted': '#6366f1',
+                    'Under Review': '#3b82f6',
+                    'Shortlisted': '#8b5cf6',
+                    'Interview': '#f59e0b',
+                    'Offered': '#10b981',
+                    'Rejected': '#ef4444'
+                };
+                
+                const statusColors = statusLabels.map(label => colors[label] || '#6b7280');
+                
+                const statusCtx = document.getElementById('status-chart');
+                if (statusCtx) {
+                    new Chart(statusCtx, {
+                        type: 'pie',
+                        data: {
+                            labels: statusLabels,
+                            datasets: [{
+                                data: statusValues,
+                                backgroundColor: statusColors,
+                                borderWidth: 2,
+                                borderColor: '#ffffff'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { position: 'bottom' }
+                            }
+                        }
+                    });
+                }
+                {% endif %}
+            }
+        }
+    }
+</script>
+{% endblock %}
+

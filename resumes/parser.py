@@ -16,6 +16,40 @@ from .models import Experience, Education, Skill, Project, Certification, Achiev
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# --- Prompt Injection Protection ---
+def sanitize_prompt_input(text: str) -> str:
+    """
+    Sanitizes user input to prevent prompt injection attacks.
+    Strips common injection phrases and escapes special characters.
+    """
+    if not text:
+        return ""
+    
+    # Common prompt injection phrases to remove or neutralize
+    injection_phrases = [
+        r'ignore\s+all\s+previous\s+instructions',
+        r'ignore\s+previous\s+instructions',
+        r'new\s+prompt\s*:',
+        r'return\s+only',
+        r'you\s+are\s+now',
+        r'forget\s+everything',
+        r'disregard\s+the\s+above',
+        r'system\s*:',
+        r'user\s*:',
+        r'assistant\s*:',
+    ]
+    
+    sanitized = text
+    for phrase in injection_phrases:
+        sanitized = re.sub(phrase, '', sanitized, flags=re.IGNORECASE)
+    
+    # Limit length to prevent extremely long inputs
+    max_length = 50000
+    if len(sanitized) > max_length:
+        sanitized = sanitized[:max_length] + "... [truncated]"
+    
+    return sanitized.strip()
+
 # --- Gemini API Functions ---
 
 def _get_gemini_model(model_name: str = 'models/gemini-2.5-flash'):
@@ -57,6 +91,9 @@ def parse_text_with_gemini(text: str) -> Dict[str, Any]:
     model = _get_gemini_model()
     if not model or not text:
         return None
+
+    # Sanitize user input to prevent prompt injection
+    sanitized_text = sanitize_prompt_input(text)
 
     prompt = f"""
     You are an expert resume parsing system. Analyze the following resume text and extract the information into a structured JSON object.
@@ -116,10 +153,10 @@ def parse_text_with_gemini(text: str) -> Dict[str, Any]:
     ---
 
     --- ACTUAL RESUME TEXT TO PARSE ---
-    {text}
+    {sanitized_text}
     ---
 
-    Return ONLY the raw JSON object, without any surrounding text or markdown.
+    CRITICAL: You MUST return ONLY the raw JSON object. Do not include any other text, markdown formatting, or explanatory comments.
     """
 
     try:
@@ -152,6 +189,9 @@ def enhance_text_with_gemini(text_to_enhance: str, context: str) -> str:
     model = _get_gemini_model()
     if not model or not text_to_enhance:
         return text_to_enhance
+
+    # Sanitize user input to prevent prompt injection
+    sanitized_text = sanitize_prompt_input(text_to_enhance)
         
     context_instructions = ""
     # --- THE FIX IS HERE: Updated character limits ---
@@ -171,8 +211,10 @@ def enhance_text_with_gemini(text_to_enhance: str, context: str) -> str:
     Return ONLY the enhanced plain text, without any markdown formatting (like asterisks or bullet points) or introductory phrases like "Here's the enhanced text:".
 
     --- ORIGINAL TEXT ---
-    {text_to_enhance}
+    {sanitized_text}
     ---
+    
+    CRITICAL: You MUST return ONLY the enhanced plain text. Do not include any markdown, JSON, or other formatting.
     
     ENHANCED TEXT:
     """
@@ -198,6 +240,9 @@ def score_and_critique_resume(full_resume_text: str) -> Dict[str, Any]:
     if not model or not full_resume_text:
         return {'score': 0, 'feedback': ['Could not analyze resume. Add some content first.']}
 
+    # Sanitize user input to prevent prompt injection
+    sanitized_text = sanitize_prompt_input(full_resume_text)
+
     prompt = f"""
     You are an expert and encouraging career coach reviewing a resume. Analyze the complete resume text provided below.
 
@@ -215,8 +260,10 @@ def score_and_critique_resume(full_resume_text: str) -> Dict[str, Any]:
     - Each point should be a single, concise sentence.
 
     --- RESUME TEXT ---
-    {full_resume_text}
+    {sanitized_text}
     ---
+
+    CRITICAL: You MUST return ONLY a single, raw JSON object with two keys: "score" (an integer) and "feedback" (a list of strings). Do not include any other text, markdown formatting, or explanatory comments.
 
     Return a single, raw JSON object with two keys: "score" (an integer) and "feedback" (a list of strings).
     Example for a fresher: {{"score": 85, "feedback": ["Your project descriptions are detailed and use strong action verbs.", "Consider adding a link to your GitHub or portfolio to showcase your work directly."]}}

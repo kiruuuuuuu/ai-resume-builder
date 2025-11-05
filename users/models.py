@@ -35,10 +35,25 @@ class EmployerProfile(models.Model):
     Profile for users who are employers/recruiters.
     Linked one-to-one with the CustomUser model.
     """
+    INDUSTRY_CHOICES = [
+        ('Technology', 'Technology'),
+        ('Finance', 'Finance'),
+        ('Healthcare', 'Healthcare'),
+        ('Education', 'Education'),
+        ('Retail', 'Retail'),
+        ('Manufacturing', 'Manufacturing'),
+        ('Consulting', 'Consulting'),
+        ('Other', 'Other'),
+    ]
+    
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, primary_key=True)
     company_name = models.CharField(max_length=255, null=True, blank=True)
     company_website = models.URLField(null=True, blank=True)
     company_description = models.TextField(null=True, blank=True)
+    company_logo = models.ImageField(upload_to='company_logos/', null=True, blank=True)
+    company_bio = models.TextField(null=True, blank=True, help_text="Extended company biography for public profile")
+    location = models.CharField(max_length=255, null=True, blank=True)
+    industry = models.CharField(max_length=50, choices=INDUSTRY_CHOICES, null=True, blank=True)
 
     def __str__(self):
         return self.company_name or self.user.username
