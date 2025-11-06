@@ -40,7 +40,120 @@
         </div>
     </nav>
 
-    <form id="validate-resume-form" method="POST" enctype="multipart/form-data" class="space-y-4">
+    <!-- Error Summary (shown when form has errors) -->
+    {% if profile_form.errors or experience_formset.errors or education_formset.errors or skill_formset.errors or project_formset.errors or certification_formset.errors or achievement_formset.errors or language_formset.errors or hobby_formset.errors %}
+    <div id="error-summary" class="mb-6 p-6 bg-red-50 border-2 border-red-200 rounded-xl shadow-lg">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <svg class="h-6 w-6 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3 flex-1">
+                <h3 class="text-lg font-semibold text-red-800 mb-2">Please fix the following errors:</h3>
+                <ul class="list-disc list-inside space-y-1 text-sm text-red-700">
+                    {% if profile_form.errors %}
+                        {% for field, errors in profile_form.errors.items %}
+                            {% for error in errors %}
+                                <li><strong>{{ field|title }}:</strong> {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    {% endif %}
+                    {% if experience_formset.errors %}
+                        {% for form in experience_formset %}
+                            {% if form.errors %}
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li><strong>Experience {{ forloop.parentloop.counter }} - {{ field|title }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    {% if education_formset.errors %}
+                        {% for form in education_formset %}
+                            {% if form.errors %}
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li><strong>Education {{ forloop.parentloop.counter }} - {{ field|title }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    {% if skill_formset.errors %}
+                        {% for form in skill_formset %}
+                            {% if form.errors %}
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li><strong>Skill {{ forloop.parentloop.counter }} - {{ field|title }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    {% if project_formset.errors %}
+                        {% for form in project_formset %}
+                            {% if form.errors %}
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li><strong>Project {{ forloop.parentloop.counter }} - {{ field|title }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    {% if certification_formset.errors %}
+                        {% for form in certification_formset %}
+                            {% if form.errors %}
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li><strong>Certification {{ forloop.parentloop.counter }} - {{ field|title }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    {% if achievement_formset.errors %}
+                        {% for form in achievement_formset %}
+                            {% if form.errors %}
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li><strong>Achievement {{ forloop.parentloop.counter }} - {{ field|title }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    {% if language_formset.errors %}
+                        {% for form in language_formset %}
+                            {% if form.errors %}
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li><strong>Language {{ forloop.parentloop.counter }} - {{ field|title }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    {% if hobby_formset.errors %}
+                        {% for form in hobby_formset %}
+                            {% if form.errors %}
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li><strong>Hobby {{ forloop.parentloop.counter }} - {{ field|title }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <form id="validate-resume-form" method="POST" enctype="multipart/form-data" class="space-y-4" novalidate>
         {% csrf_token %}
 
         <!-- Personal Information -->
@@ -403,39 +516,108 @@
     // Handle form submission and show validation errors
     function handleFormSubmit(event) {
         const form = document.getElementById('validate-resume-form');
-        if (!form.checkValidity()) {
-            event.preventDefault();
-            event.stopPropagation();
+        event.preventDefault();
+        
+        // Collect all errors from the form
+        const errors = [];
+        const errorFields = [];
+        
+        // Check for Django form errors (server-side validation) - look for error text elements
+        const errorTextElements = form.querySelectorAll('.text-red-600, .text-red-700, [class*="error"]');
+        errorTextElements.forEach(errorEl => {
+            const errorText = errorEl.textContent.trim();
+            if (errorText && errorText.length > 0 && !errors.includes(errorText)) {
+                // Skip if it's just an icon or empty
+                if (!errorText.match(/^[\s\S]*<svg[\s\S]*$/)) {
+                    errors.push(errorText);
+                }
+            }
+            // Find the associated input field
+            const input = errorEl.closest('.mb-4')?.querySelector('input, textarea, select') || 
+                         errorEl.previousElementSibling || 
+                         errorEl.parentElement?.querySelector('input, textarea, select') ||
+                         form.querySelector(`input[name="${errorEl.closest('[class*="field"]')?.querySelector('input, textarea, select')?.name}"]`);
+            if (input && !errorFields.includes(input)) {
+                errorFields.push(input);
+            }
+        });
+        
+        // Also check for fields with error classes
+        const invalidInputs = form.querySelectorAll('input.is-invalid, textarea.is-invalid, select.is-invalid, .border-red-500');
+        invalidInputs.forEach(input => {
+            if (!errorFields.includes(input)) {
+                errorFields.push(input);
+            }
+        });
+        
+        // Check for HTML5 validation errors (if any fields have required or pattern attributes)
+        const requiredFields = form.querySelectorAll('input[required], textarea[required], select[required]');
+        requiredFields.forEach(field => {
+            if (!field.value || field.value.trim() === '') {
+                const label = form.querySelector(`label[for="${field.id}"]`)?.textContent?.replace('*', '').trim() || field.name;
+                const errorMsg = `${label} is required.`;
+                if (!errors.includes(errorMsg)) {
+                    errors.push(errorMsg);
+                }
+                if (!errorFields.includes(field)) {
+                    errorFields.push(field);
+                }
+            }
+        });
+        
+        // If there are errors, display them and scroll to first one
+        if (errors.length > 0 || errorFields.length > 0) {
+            // Scroll error summary into view if it exists
+            const errorSummary = document.getElementById('error-summary');
+            if (errorSummary) {
+                errorSummary.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
             
-            // Find first invalid field
-            const firstInvalid = form.querySelector(':invalid');
-            if (firstInvalid) {
-                // Open the section containing the invalid field
-                const section = firstInvalid.closest('[id^="formset-"]');
-                if (section) {
+            // Show detailed error message using toast
+            if (window.toast && errors.length > 0) {
+                const errorMessage = `Please fix ${errors.length} error${errors.length > 1 ? 's' : ''}. See the error summary above for details.`;
+                window.toast.error(errorMessage, 8000);
+            } else if (window.toast) {
+                window.toast.error('Please fix the errors highlighted in red before submitting.', 8000);
+            }
+            
+            // Open sections with errors and scroll to first error field
+            if (errorFields.length > 0) {
+                const firstErrorField = errorFields[0];
+                let section = firstErrorField.closest('[id^="formset-"]');
+                
+                if (!section) {
+                    // Try to find parent section
+                    section = firstErrorField.closest('[x-show]')?.parentElement ||
+                             firstErrorField.closest('.bg-white');
+                }
+                
+                if (section && section.id) {
                     const sectionId = section.id.replace('formset-', '');
                     const manager = Alpine.$data(document.querySelector('[x-data="formsetManager()"]'));
                     if (manager) {
                         manager.openSection = sectionId;
                         manager.$nextTick(() => {
-                            firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            firstInvalid.focus();
+                            setTimeout(() => {
+                                firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                firstErrorField.focus();
+                            }, 300);
                         });
                     }
                 } else {
-                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    firstInvalid.focus();
+                    // Fallback: just scroll to the field
+                    setTimeout(() => {
+                        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstErrorField.focus();
+                    }, 100);
                 }
             }
             
-            // Show error message
-            if (window.toast) {
-                window.toast.error('Please fix the errors highlighted in red before submitting.');
-            } else {
-                alert('Please fix the errors highlighted in red before submitting.');
-            }
+            return false;
         }
-        form.classList.add('was-validated');
+        
+        // If no errors, submit the form
+        form.submit();
     }
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -448,7 +630,11 @@
                 const textInput = document.getElementById(targetId);
 
                 if (!textInput || !textInput.value) {
-                    alert('Please enter some text to enhance.');
+                    if (window.toast) {
+                        window.toast.warning('Please enter some text to enhance.');
+                    } else {
+                        alert('Please enter some text to enhance.');
+                    }
                     return;
                 }
 
@@ -472,12 +658,22 @@
                     if (data.enhanced_text) {
                         textInput.value = data.enhanced_text;
                     } else {
-                        alert(data.error || 'Sorry, we encountered an error.');
+                        const errorMsg = data.error || 'Sorry, we encountered an error.';
+                        if (window.toast) {
+                            window.toast.error(errorMsg);
+                        } else {
+                            alert(errorMsg);
+                        }
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('An error occurred. Please check the console for details.');
+                    const errorMsg = 'An error occurred. Please check the console for details.';
+                    if (window.toast) {
+                        window.toast.error(errorMsg);
+                    } else {
+                        alert(errorMsg);
+                    }
                 })
                 .finally(() => {
                     button.innerHTML = originalButtonText;
