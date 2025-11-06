@@ -18,8 +18,7 @@ def register_view(request):
             elif user_type == 'employer':
                 EmployerProfile.objects.create(user=user)
 
-            # Specify backend since we have multiple authentication backends
-            from django.contrib.auth import get_backends
+            # Specify backend since we have multiple authentication backends configured
             backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, user, backend=backend)
             messages.success(request, "Welcome! Your account has been created successfully.")
