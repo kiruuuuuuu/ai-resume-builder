@@ -9,7 +9,7 @@
 
 **An intelligent resume creation platform powered by AI** that helps job seekers build professional resumes with real-time feedback, scoring, and job matching. Built with Django, Celery, Redis, and Google Gemini AI.
 
-[Features](#-features) • [Installation](#-installation) • [Documentation](#-documentation) • [Contributing](#-contributing)
+[Features](#-features) • [Installation](#-installation) • [Deployment](#-deployment) • [Documentation](#-documentation) • [Contributing](#-contributing)
 
 </div>
 
@@ -148,6 +148,20 @@ python manage.py runserver
 
 Open your browser and navigate to:
 - **http://127.0.0.1:8000/**
+
+## 🚀 Deployment
+
+For production deployment instructions, see the comprehensive [**Deployment Guide**](DEPLOYMENT.md).
+
+The guide includes:
+- Step-by-step server setup
+- Database and Redis configuration
+- Gunicorn and Nginx setup
+- SSL certificate configuration
+- Celery worker setup
+- Docker deployment option
+- Platform-specific guides (Heroku, DigitalOcean, AWS)
+- Security checklist and troubleshooting
 
 ## 📚 Documentation
 
