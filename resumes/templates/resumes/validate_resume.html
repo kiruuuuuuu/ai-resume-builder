@@ -59,8 +59,43 @@
                 </div>
             </button>
             <div x-show="openSection === 'personal'" x-cloak x-transition class="p-6 border-t border-gray-200" id="formset-personal">
+                {% if profile_form.non_field_errors %}
+                    <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800">Form Errors</h3>
+                                <div class="mt-2 text-sm text-red-700">
+                                    <ul class="list-disc list-inside">
+                                        {% for error in profile_form.non_field_errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
                 {% for field in profile_form.visible_fields %}
-                    {{ field|as_crispy_field }}
+                    <div class="mb-4">
+                        {{ field|as_crispy_field }}
+                        {% if field.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {% for error in field.errors %}
+                                    <p class="flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                        </svg>
+                                        {{ error }}
+                                    </p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
                     {% if field.name == 'professional_summary' %}
                         <div class="flex justify-end -mt-2 mb-4">
                             <button type="button" class="enhance-btn text-sm font-medium text-purple-600 hover:text-purple-800" 
@@ -268,7 +303,7 @@
         </div>
         
         <div class="pt-5">
-            <button type="submit" form="validate-resume-form" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white font-bold py-4 px-6 rounded-xl hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 transition-all duration-300 text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5">
+            <button type="submit" form="validate-resume-form" onclick="handleFormSubmit(event)" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white font-bold py-4 px-6 rounded-xl hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 transition-all duration-300 text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -299,6 +334,21 @@
     function formsetManager() {
         return {
             openSection: '{{ first_error_section|default:"personal" }}',
+            init() {
+                // Auto-open section with errors on page load
+                {% if profile_form.errors %}
+                    this.openSection = 'personal';
+                {% endif %}
+                
+                // Scroll to first error field on page load
+                this.$nextTick(() => {
+                    const firstErrorField = document.querySelector('.is-invalid input, .is-invalid textarea, .is-invalid select, input:invalid, textarea:invalid, select:invalid');
+                    if (firstErrorField) {
+                        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstErrorField.focus();
+                    }
+                });
+            },
             toggleSection(section) {
                 this.openSection = (this.openSection === section) ? null : section;
             },
@@ -348,6 +398,44 @@
                 }
             }
         }
+    }
+
+    // Handle form submission and show validation errors
+    function handleFormSubmit(event) {
+        const form = document.getElementById('validate-resume-form');
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Find first invalid field
+            const firstInvalid = form.querySelector(':invalid');
+            if (firstInvalid) {
+                // Open the section containing the invalid field
+                const section = firstInvalid.closest('[id^="formset-"]');
+                if (section) {
+                    const sectionId = section.id.replace('formset-', '');
+                    const manager = Alpine.$data(document.querySelector('[x-data="formsetManager()"]'));
+                    if (manager) {
+                        manager.openSection = sectionId;
+                        manager.$nextTick(() => {
+                            firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            firstInvalid.focus();
+                        });
+                    }
+                } else {
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstInvalid.focus();
+                }
+            }
+            
+            // Show error message
+            if (window.toast) {
+                window.toast.error('Please fix the errors highlighted in red before submitting.');
+            } else {
+                alert('Please fix the errors highlighted in red before submitting.');
+            }
+        }
+        form.classList.add('was-validated');
     }
 
     document.addEventListener('DOMContentLoaded', function () {
