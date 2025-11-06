@@ -173,6 +173,7 @@
                                         <input type="email" 
                                                id="{{ field.id_for_label }}" 
                                                name="{{ field.name }}"
+                                               @input="validateForm()"
                                                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all {% if field.errors %}border-red-500{% elif field.value and not field.errors %}border-green-500{% else %}border-gray-300{% endif %}"
                                                value="{{ field.value|default:'' }}"
                                                placeholder="{{ field.field.widget.attrs.placeholder|default:field.label }}"
@@ -185,6 +186,7 @@
                                         <input type="text" 
                                                id="{{ field.id_for_label }}" 
                                                name="{{ field.name }}"
+                                               @input="validateForm()"
                                                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all {% if field.errors %}border-red-500{% elif field.value and not field.errors %}border-green-500{% else %}border-gray-300{% endif %}"
                                                value="{{ field.value|default:'' }}"
                                                placeholder="{{ field.field.widget.attrs.placeholder|default:field.label }}"
@@ -318,6 +320,35 @@ function registerForm() {
                 this.validateForm();
             });
             
+            // Watch for password changes
+            this.$watch('password', () => {
+                this.validateForm();
+            });
+            
+            this.$watch('password2', () => {
+                this.validateForm();
+            });
+            
+            this.$watch('agreeTerms', () => {
+                this.validateForm();
+            });
+            
+            // Watch for username and email field changes
+            const usernameField = document.querySelector('input[name="username"]');
+            const emailField = document.querySelector('input[name="email"]');
+            
+            if (usernameField) {
+                usernameField.addEventListener('input', () => {
+                    this.validateForm();
+                });
+            }
+            
+            if (emailField) {
+                emailField.addEventListener('input', () => {
+                    this.validateForm();
+                });
+            }
+            
             this.validateForm();
         },
         
@@ -344,11 +375,16 @@ function registerForm() {
         
         validateForm() {
             // Check all required validations
-            const hasUsername = document.querySelector('input[name="username"]')?.value?.trim().length >= 3;
-            const hasEmail = document.querySelector('input[name="email"]')?.value?.trim().length > 0;
+            const usernameField = document.querySelector('input[name="username"]');
+            const hasUsername = usernameField ? usernameField.value?.trim().length >= 3 : true; // Username might not be visible
+            const emailField = document.querySelector('input[name="email"]');
+            const hasEmail = emailField ? emailField.value?.trim().length > 0 : false;
             const hasValidPassword = this.password.length >= 8 && this.passwordStrength >= 2;
-            const passwordsMatch = this.passwordMatch || !this.password2;
+            const passwordsMatch = this.passwordMatch || (!this.password2 && this.password.length === 0);
             const hasUserType = this.userType !== '';
+            
+            // Debug logging (remove in production)
+            // console.log('Validation:', { hasUsername, hasEmail, hasValidPassword, passwordsMatch, hasUserType, agreeTerms: this.agreeTerms });
             
             this.isFormValid = hasUsername && hasEmail && hasValidPassword && passwordsMatch && hasUserType && this.agreeTerms;
         },
