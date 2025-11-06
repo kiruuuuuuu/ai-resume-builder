@@ -417,8 +417,13 @@ Then:
 4. Go to **Credentials** → **Create Credentials** → **OAuth client ID**
 5. Choose **Web application**
 6. Add authorized redirect URIs:
-   - Development: `http://127.0.0.1:8000/accounts/google/login/callback/`
-   - Production: `https://yourdomain.com/accounts/google/login/callback/`
+   - **Development**: `http://127.0.0.1:8000/accounts/google/login/callback/`
+     - ✅ Add this for local testing
+   - **Production**: `https://yourdomain.com/accounts/google/login/callback/`
+     - ⚠️ Replace `yourdomain.com` with your actual domain (e.g., `myresumebuilder.com`)
+     - ⚠️ Must use `https://` (not `http://`) for production
+     - ⚠️ Add this when you deploy your application
+   - **Note**: You can add both URIs to the same OAuth client - Google will use the appropriate one based on where the request comes from
 7. Copy the **Client ID** and **Client Secret**
 
 #### 5. Get GitHub OAuth Credentials
