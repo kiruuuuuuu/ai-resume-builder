@@ -55,13 +55,13 @@
                                 {% if field.field.required %}<span class="text-red-500" aria-label="required">*</span>{% endif %}
                             </label>
                             
-                            {% if field.name == 'password' or field.name == 'password2' %}
+                            {% if field.name == 'password1' or field.name == 'password2' %}
                                 <div class="relative">
                                     <input type="password" 
                                            id="{{ field.id_for_label }}" 
                                            name="{{ field.name }}"
-                                           x-model="{% if field.name == 'password' %}password{% else %}password2{% endif %}"
-                                           @input="{% if field.name == 'password' %}checkPasswordStrength(){% else %}checkPasswordMatch(){% endif %}"
+                                           x-model="{% if field.name == 'password1' %}password{% else %}password2{% endif %}"
+                                           @input="{% if field.name == 'password1' %}checkPasswordStrength(){% else %}checkPasswordMatch(){% endif %}"
                                            :type="showPassword{% if field.name == 'password2' %}2{% endif %} ? 'text' : 'password'"
                                            class="appearance-none block w-full px-3 py-2 border rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all {% if field.errors %}border-red-500{% elif field.value and not field.errors %}border-green-500{% else %}border-gray-300{% endif %}"
                                            value="{{ field.value|default:'' }}"
@@ -81,7 +81,7 @@
                                     </button>
                                 </div>
                                 
-                                {% if field.name == 'password' %}
+                                {% if field.name == 'password1' %}
                                     <!-- Password Strength Indicator -->
                                     <div x-show="password.length > 0" x-cloak class="mt-2">
                                         <div class="flex items-center gap-2 mb-1">
@@ -296,6 +296,22 @@ function registerForm() {
             // Initialize user type from form
             const userTypeInput = document.querySelector('input[name="user_type"]:checked');
             if (userTypeInput) this.userType = userTypeInput.value;
+            
+            // Initialize password values from form fields (if form was re-rendered with errors)
+            const password1Field = document.querySelector('input[name="password1"]');
+            const password2Field = document.querySelector('input[name="password2"]');
+            if (password1Field && password1Field.value) {
+                this.password = password1Field.value;
+            }
+            if (password2Field && password2Field.value) {
+                this.password2 = password2Field.value;
+            }
+            
+            // Re-check password match if both fields have values
+            if (this.password && this.password2) {
+                this.checkPasswordMatch();
+                this.checkPasswordStrength();
+            }
             
             // Watch for user type changes
             this.$watch('userType', () => {
