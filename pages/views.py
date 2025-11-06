@@ -1,6 +1,13 @@
 from django.shortcuts import render
 from django.utils import timezone
 from django.db.models import Q, Count
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+from django.core.files.base import ContentFile
+import json
+import base64
+import re
 
 # Import necessary models for the caching logic
 from jobs.models import JobPosting, JobMatchScore, Application
@@ -8,6 +15,7 @@ from resumes.models import Resume
 from users.models import JobSeekerProfile, CustomUser
 # Import async task for match score calculation
 from jobs.tasks import calculate_and_save_match_score_task
+from .models import BugReport
 
 def home_view(request):
     # Check if the user is authenticated (logged in)
@@ -50,16 +58,7 @@ def home_view(request):
 
                 for job in jobs:
                     cached_score_data = scores_map.get(job.id)
-                    
-                    is_stale = (not cached_score_data or 
-                                applicant_resume.updated_at > cached_score_data['last_calculated'] or 
-                                job.updated_at > cached_score_data['last_calculated'])
-
-                    if is_stale:
-                        # Trigger background task instead of calculating synchronously
-                        calculate_and_save_match_score_task.delay(applicant_resume.id, job.id)
-                    
-                    # Use cached score (may be stale, will update on next page refresh)
+                    # Use cached score only - match scoring is now triggered on resume/job updates
                     score = cached_score_data['score'] if cached_score_data else 0
                     jobs_with_scores.append({'job': job, 'score': score})
                 # --- END CACHING LOGIC ---
@@ -88,4 +87,60 @@ def home_view(request):
         'total_applications': total_applications,
     }
     return render(request, 'pages/home_public.html', context)
+
+@require_POST
+def report_bug_view(request):
+    """
+    API endpoint to receive bug reports from users.
+    Accepts JSON with description, url, screenshot (base64), and browser_info.
+    """
+    try:
+        data = json.loads(request.body)
+        url = data.get('url', 'N/A')
+        description = data.get('description', 'No description')
+        screenshot_data = data.get('screenshot', None)  # Base64 encoded image
+        browser_info = data.get('browser_info', None)
+        
+        if not description or len(description.strip()) < 10:
+            return JsonResponse({'status': 'error', 'message': 'Please provide a detailed description (at least 10 characters).'}, status=400)
+        
+        # Create bug report
+        bug_report = BugReport.objects.create(
+            user=request.user if request.user.is_authenticated else None,
+            url=url[:1024],  # Ensure URL doesn't exceed max_length
+            description=description,
+            browser_info=browser_info[:255] if browser_info else None,
+        )
+        
+        # Handle screenshot if provided (base64 encoded)
+        if screenshot_data:
+            try:
+                # Remove data URL prefix if present (e.g., "data:image/png;base64,")
+                if ',' in screenshot_data:
+                    screenshot_data = screenshot_data.split(',')[1]
+                
+                # Decode base64 image
+                image_data = base64.b64decode(screenshot_data)
+                
+                # Generate filename
+                import uuid
+                filename = f"bug_{bug_report.id}_{uuid.uuid4().hex[:8]}.png"
+                
+                # Save screenshot
+                bug_report.screenshot.save(filename, ContentFile(image_data), save=True)
+            except Exception as e:
+                # If screenshot processing fails, log but don't fail the entire request
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to process screenshot for bug report {bug_report.id}: {e}")
+        
+        return JsonResponse({'status': 'success', 'message': 'Bug report submitted successfully. Thank you!'})
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON data.'}, status=400)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error in report_bug_view: {e}")
+        return JsonResponse({'status': 'error', 'message': 'An error occurred while submitting the bug report.'}, status=500)
 

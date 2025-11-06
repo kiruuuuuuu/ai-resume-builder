@@ -57,6 +57,11 @@ def post_job_view(request):
             job_posting = form.save(commit=False)
             job_posting.employer = employer_profile
             job_posting.save()
+            # Trigger match score calculation for all existing resumes
+            from resumes.models import Resume
+            resume_ids = Resume.objects.values_list('id', flat=True)
+            for resume_id in resume_ids:
+                calculate_and_save_match_score_task.delay(resume_id, job_posting.id)
             messages.success(request, "Your job has been posted successfully!")
             return redirect('jobs:my-jobs')
     else:
@@ -74,12 +79,21 @@ def generate_job_description_api(request):
             data = json.loads(request.body)
             job_title = data.get('title', '').strip()
             keywords = data.get('keywords', '').strip()
+            responsibilities = data.get('responsibilities', '').strip()
+            experience_level = data.get('experienceLevel', 'Mid-level').strip()
+            company_tone = data.get('companyTone', 'Professional').strip()
             
             if not job_title:
                 return JsonResponse({'error': 'Job title is required.'}, status=400)
             
             from .matcher import generate_job_description
-            result = generate_job_description(job_title, keywords)
+            result = generate_job_description(
+                job_title, 
+                keywords, 
+                responsibilities, 
+                experience_level, 
+                company_tone
+            )
             
             if result.get('description') and result.get('requirements'):
                 return JsonResponse({
@@ -460,6 +474,7 @@ def apply_for_job_view(request, job_id):
         Application.objects.create(
             job_posting=job, 
             applicant=applicant_profile,
+            resume=applicant_resume,  # Save the specific resume version
             resume_template=template_choice
         )
         
@@ -561,11 +576,16 @@ def view_applicant_resume(request, application_id):
         messages.error(request, "You are not authorized to view this resume.")
         return redirect('home')
     
-    try:
-        resume = Resume.objects.filter(profile=application.applicant).latest('created_at')
-    except Resume.DoesNotExist:
-        messages.error(request, "The applicant does not have a resume to display.")
-        return redirect('jobs:view-applicants', job_id=application.job_posting.id)
+    # Use the specific resume from the application, or fallback to latest if not set
+    if application.resume:
+        resume = application.resume
+    else:
+        # Fallback for old applications that don't have resume linked
+        try:
+            resume = Resume.objects.filter(profile=application.applicant).latest('created_at')
+        except Resume.DoesNotExist:
+            messages.error(request, "The applicant does not have a resume to display.")
+            return redirect('jobs:view-applicants', job_id=application.job_posting.id)
 
     template_name = application.resume_template
     

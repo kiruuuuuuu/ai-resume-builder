@@ -51,6 +51,7 @@ class Application(models.Model):
     ]
     job_posting = models.ForeignKey(JobPosting, on_delete=models.CASCADE)
     applicant = models.ForeignKey(JobSeekerProfile, on_delete=models.CASCADE)
+    resume = models.ForeignKey(Resume, on_delete=models.SET_NULL, null=True, blank=True, help_text="The specific resume version used for this application")
     applied_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Submitted')
     resume_template = models.CharField(max_length=20, choices=TEMPLATE_CHOICES, default='classic')

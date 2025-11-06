@@ -12,6 +12,8 @@ from .views import (
     dismiss_welcome_view,
     get_preview_html_view,
     preview_resume_view,
+    check_pdf_status,
+    download_generated_pdf,
 )
 
 app_name = 'resumes'
@@ -29,5 +31,7 @@ urlpatterns = [
     path('api/dismiss-welcome/', dismiss_welcome_view, name='dismiss-welcome'),
     path('api/get-preview-html/<int:resume_id>/', get_preview_html_view, name='get-preview-html'),
     path('<int:resume_id>/preview/', preview_resume_view, name='preview-resume'),
+    path('api/check-pdf-status/<int:pdf_generation_id>/', check_pdf_status, name='check-pdf-status'),
+    path('api/download-pdf/<int:pdf_generation_id>/', download_generated_pdf, name='download-generated-pdf'),
 ]
 

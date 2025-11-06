@@ -969,6 +969,7 @@
             confirmationModal: { open: false, itemToDelete: null },
             lastSaveTime: null,
             autoSaveTimer: null,
+            originalTextBuffer: {},  // Store original text before AI enhancement
 
             formatSectionName(name) {
                 if (!name) return 'Item';
@@ -1238,6 +1239,10 @@
 
                 if (!targetTextarea || !targetTextarea.value) { this.showToast('Please enter some text to enhance.', 'error'); return; }
                 
+                // Store original text before enhancement
+                const textareaId = targetTextarea.id || targetTextarea.name;
+                this.originalTextBuffer[textareaId] = targetTextarea.value;
+                
                 const originalText = button.innerHTML;
                 button.innerHTML = 'Enhancing...'; button.disabled = true;
 
@@ -1251,6 +1256,8 @@
                     if (data.enhanced_text) { 
                         targetTextarea.value = data.enhanced_text; 
                         this.showToast('Text enhanced successfully!', 'success');
+                        // Trigger update to show undo button
+                        targetTextarea.dispatchEvent(new Event('input'));
                     } else { 
                         this.showToast(data.error || 'An error occurred.', 'error');
                     } 
@@ -1260,6 +1267,36 @@
                     this.showToast('An unexpected error occurred during enhancement.', 'error');
                 })
                 .finally(() => { button.innerHTML = originalText; button.disabled = false; });
+            },
+            undoEnhance(targetId) {
+                // Try multiple possible IDs/names
+                const possibleIds = [targetId, `id_${targetId}`, targetId.replace('id_', '')];
+                let targetTextarea = null;
+                let bufferKey = null;
+                
+                for (const id of possibleIds) {
+                    targetTextarea = document.getElementById(id) || document.querySelector(`textarea[name="${id}"]`);
+                    if (targetTextarea) {
+                        // Check if we have a buffer entry for this field
+                        bufferKey = Object.keys(this.originalTextBuffer).find(key => 
+                            key === id || key === `id_${id}` || key === id.replace('id_', '')
+                        );
+                        if (bufferKey) break;
+                    }
+                }
+                
+                if (targetTextarea && bufferKey && this.originalTextBuffer[bufferKey]) {
+                    targetTextarea.value = this.originalTextBuffer[bufferKey];
+                    delete this.originalTextBuffer[bufferKey];
+                    this.showToast('Text reverted to original.', 'success');
+                    // Trigger update to hide undo button
+                    targetTextarea.dispatchEvent(new Event('input'));
+                }
+            },
+            hasUndoBuffer(fieldName) {
+                // Check if we have an undo buffer for this field
+                const possibleKeys = [fieldName, `id_${fieldName}`, fieldName.replace('id_', '')];
+                return possibleKeys.some(key => this.originalTextBuffer[key] !== undefined);
             },
             displayErrors(form, errors) {
                 form.querySelectorAll('.error-message').forEach(el => el.remove());
@@ -1284,6 +1321,22 @@
         Alpine.data('scoreChecker', scoreChecker);
         Alpine.data('resumeBuilder', resumeBuilder);
         Alpine.data('tabNavigation', tabNavigation);
+        
+        // Scroll to personal details section if hash is present
+        if (window.location.hash === '#personal-details') {
+            setTimeout(() => {
+                const personalDetailsSection = document.getElementById('personal-details');
+                if (personalDetailsSection) {
+                    personalDetailsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Highlight the section briefly
+                    personalDetailsSection.style.transition = 'box-shadow 0.3s ease';
+                    personalDetailsSection.style.boxShadow = '0 0 0 4px rgba(99, 102, 241, 0.3)';
+                    setTimeout(() => {
+                        personalDetailsSection.style.boxShadow = '';
+                    }, 2000);
+                }
+            }, 500);
+        }
         
         // Store tab navigation instance globally for updates
         setTimeout(() => {

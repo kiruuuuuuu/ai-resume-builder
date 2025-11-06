@@ -1,5 +1,6 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
+from django.contrib.auth import password_validation
 from .models import CustomUser, JobSeekerProfile, EmployerProfile
 from datetime import date, timedelta
 import re
@@ -78,10 +79,15 @@ class ProfileUpdateForm(forms.ModelForm):
         return address
 
     def clean_date_of_birth(self):
+        from django.conf import settings
         dob = self.cleaned_data.get('date_of_birth')
         if not dob: return dob
-        today = date.today(); age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-        if not (18 <= age <= 50): raise forms.ValidationError('Age must be between 18 and 50 years old.')
+        today = date.today()
+        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        min_age = getattr(settings, 'MIN_AGE', 18)
+        max_age = getattr(settings, 'MAX_AGE', 100)
+        if not (min_age <= age <= max_age):
+            raise forms.ValidationError(f'Age must be between {min_age} and {max_age} years old.')
         return dob
 
     def clean_profile_photo(self):
@@ -135,4 +141,105 @@ class EmployerOnboardingForm(forms.ModelForm):
         if desc and len(desc.strip()) < 20:
             raise forms.ValidationError('Company description should be at least 20 characters long.')
         return desc
+
+class UserCredentialsForm(forms.ModelForm):
+    """Form for editing user login credentials (username and email)."""
+    
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'email']
+        widgets = {
+            'username': forms.TextInput(attrs={
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm',
+                'placeholder': 'Enter your username'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm',
+                'placeholder': 'Enter your email address'
+            }),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].required = True
+        self.fields['email'].required = True
+        self.fields['username'].help_text = 'Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.'
+    
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if username:
+            # Check if username is already taken by another user
+            if CustomUser.objects.filter(username=username).exclude(pk=self.instance.pk).exists():
+                raise forms.ValidationError('This username is already taken. Please choose another one.')
+        return username
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email:
+            # Check if email is already taken by another user
+            if CustomUser.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
+                raise forms.ValidationError('This email is already registered. Please use another email address.')
+        return email
+
+class CustomPasswordChangeForm(forms.Form):
+    """Form for changing user password with old password verification."""
+    
+    old_password = forms.CharField(
+        label='Current Password',
+        widget=forms.PasswordInput(attrs={
+            'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm',
+            'placeholder': 'Enter your current password',
+            'autocomplete': 'current-password'
+        }),
+        required=True,
+        help_text='Enter your current password to confirm the change.'
+    )
+    
+    new_password1 = forms.CharField(
+        label='New Password',
+        widget=forms.PasswordInput(attrs={
+            'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm',
+            'placeholder': 'Enter your new password',
+            'autocomplete': 'new-password'
+        }),
+        required=True,
+        help_text=password_validation.password_validators_help_text_html(),
+    )
+    
+    new_password2 = forms.CharField(
+        label='Confirm New Password',
+        widget=forms.PasswordInput(attrs={
+            'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm',
+            'placeholder': 'Confirm your new password',
+            'autocomplete': 'new-password'
+        }),
+        required=True,
+        help_text='Enter the same password as above, for verification.',
+    )
+    
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+    
+    def clean_old_password(self):
+        old_password = self.cleaned_data.get('old_password')
+        if not self.user.check_password(old_password):
+            raise forms.ValidationError('Your current password is incorrect. Please try again.')
+        return old_password
+    
+    def clean_new_password2(self):
+        password1 = self.cleaned_data.get('new_password1')
+        password2 = self.cleaned_data.get('new_password2')
+        if password1 and password2:
+            if password1 != password2:
+                raise forms.ValidationError("The two password fields didn't match.")
+        password_validation.validate_password(password2, self.user)
+        return password2
+    
+    def save(self, commit=True):
+        password = self.cleaned_data['new_password1']
+        self.user.set_password(password)
+        if commit:
+            self.user.save()
+        return self.user
 

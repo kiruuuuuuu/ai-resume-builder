@@ -421,7 +421,7 @@
     </style>
     <script src="{% static 'js/toast.js' %}"></script>
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="flex flex-col min-h-screen" x-data="{ bugReportModalOpen: false, bugMessage: '', bugUrl: window.location.href, bugFormSubmitted: false, bugScreenshot: null, bugBrowserInfo: navigator.userAgent }">
     <!-- Skip to Content Link (Accessibility) -->
     <a href="#main-content" class="skip-to-content">Skip to main content</a>
     
@@ -449,6 +449,12 @@
                                 <a href="{% url 'jobs:my-jobs' %}" class="nav-link-enhanced text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-indigo-50/50">My Jobs</a>
                                 <a href="{% url 'jobs:post-job' %}" class="nav-link-enhanced text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-indigo-50/50">Post Job</a>
                             {% endif %}
+                            <a href="{% url 'users:edit-profile' %}" class="nav-link-enhanced text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-indigo-50/50 inline-flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                Edit Profile
+                            </a>
                             <div class="w-px h-6 bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-2"></div>
                             <form action="{% url 'users:logout' %}" method="post">
                                 {% csrf_token %}
@@ -506,6 +512,12 @@
                              <a href="{% url 'jobs:my-jobs' %}" role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-indigo-500 hover:text-indigo-600 transition-all duration-200">My Jobs</a>
                             <a href="{% url 'jobs:post-job' %}" role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-indigo-500 hover:text-indigo-600 transition-all duration-200">Post Job</a>
                         {% endif %}
+                        <a href="{% url 'users:edit-profile' %}" role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-indigo-500 hover:text-indigo-600 transition-all duration-200 inline-flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            Edit Profile
+                        </a>
                         <div class="border-t border-gray-200 pt-4 pb-3">
                            <div class="px-2">
                                 <form action="{% url 'users:logout' %}" method="post">
@@ -533,6 +545,124 @@
                 </div>
             </div>
         </header>
+
+        <!-- Welcome Message Banner -->
+        {% if user.is_authenticated %}
+            {% if user.user_type == 'job_seeker' %}
+                {% if user.jobseekerprofile.full_name %}
+                    {% with display_name=user.jobseekerprofile.full_name %}
+                    <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white py-3 px-4 shadow-lg" 
+                         x-data="{ show: !sessionStorage.getItem('welcomeBannerDismissed_{{ user.id }}') }" 
+                         x-show="show" 
+                         x-transition
+                         x-cloak>
+                        <div class="max-w-7xl mx-auto flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p class="text-sm font-semibold">Welcome back, {{ display_name }}!</p>
+                            </div>
+                            <button @click="show = false; sessionStorage.setItem('welcomeBannerDismissed_{{ user.id }}', 'true')" 
+                                    class="text-white/80 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-white rounded p-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    {% endwith %}
+                {% else %}
+                    <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white py-3 px-4 shadow-lg" 
+                         x-data="{ show: !sessionStorage.getItem('welcomeBannerDismissed_{{ user.id }}') }" 
+                         x-show="show" 
+                         x-transition
+                         x-cloak>
+                        <div class="max-w-7xl mx-auto flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p class="text-sm font-semibold">Welcome back, {{ user.username }}!</p>
+                            </div>
+                            <button @click="show = false; sessionStorage.setItem('welcomeBannerDismissed_{{ user.id }}', 'true')" 
+                                    class="text-white/80 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-white rounded p-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                {% endif %}
+            {% elif user.user_type == 'employer' %}
+                {% if user.employerprofile.company_name %}
+                    {% with display_name=user.employerprofile.company_name %}
+                    <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white py-3 px-4 shadow-lg" 
+                         x-data="{ show: !sessionStorage.getItem('welcomeBannerDismissed_{{ user.id }}') }" 
+                         x-show="show" 
+                         x-transition
+                         x-cloak>
+                        <div class="max-w-7xl mx-auto flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p class="text-sm font-semibold">Welcome back, {{ display_name }}!</p>
+                            </div>
+                            <button @click="show = false; sessionStorage.setItem('welcomeBannerDismissed_{{ user.id }}', 'true')" 
+                                    class="text-white/80 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-white rounded p-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    {% endwith %}
+                {% else %}
+                    <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white py-3 px-4 shadow-lg" 
+                         x-data="{ show: !sessionStorage.getItem('welcomeBannerDismissed_{{ user.id }}') }" 
+                         x-show="show" 
+                         x-transition
+                         x-cloak>
+                        <div class="max-w-7xl mx-auto flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p class="text-sm font-semibold">Welcome back, {{ user.username }}!</p>
+                            </div>
+                            <button @click="show = false; sessionStorage.setItem('welcomeBannerDismissed_{{ user.id }}', 'true')" 
+                                    class="text-white/80 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-white rounded p-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white py-3 px-4 shadow-lg" 
+                     x-data="{ show: !sessionStorage.getItem('welcomeBannerDismissed_{{ user.id }}') }" 
+                     x-show="show" 
+                     x-transition
+                     x-cloak>
+                    <div class="max-w-7xl mx-auto flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p class="text-sm font-semibold">Welcome back, {{ user.username }}!</p>
+                        </div>
+                        <button @click="show = false; sessionStorage.setItem('welcomeBannerDismissed_{{ user.id }}', 'true')" 
+                                class="text-white/80 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-white rounded p-1">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
 
         <main id="main-content" role="main">
             {% block content %}{% endblock %}
@@ -700,6 +830,16 @@
                                 kiruk421@gmail.com
                             </a>
                         </li>
+                        <li>
+                            <a href="https://www.instagram.com/itz_me_kiru_/" target="_blank" rel="noopener noreferrer" class="text-gray-600 hover:text-indigo-600 text-sm font-medium transition-all duration-300 hover:translate-x-1 inline-flex items-center gap-2 group">
+                                <div class="p-1.5 bg-gradient-to-br from-pink-100 to-purple-100 rounded-lg group-hover:from-pink-200 group-hover:to-purple-200 transition-all duration-300">
+                                    <svg class="w-4 h-4 text-pink-600" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.17.053 1.905.24 2.59.516.764.3 1.298.662 1.838 1.202.54.54.902 1.073 1.202 1.838.276.685.463 1.42.516 2.59.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.053 1.17-.24 1.905-.516 2.59a4.808 4.808 0 01-1.202 1.838 4.808 4.808 0 01-1.838 1.202c-.685.276-1.42.463-2.59.516-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.17-.053-1.905-.24-2.59-.516a4.808 4.808 0 01-1.838-1.202 4.808 4.808 0 01-1.202-1.838c-.276-.685-.463-1.42-.516-2.59C2.175 15.584 2.163 15.204 2.163 12s.012-3.584.07-4.85c.053-1.17.24-1.905.516-2.59a4.808 4.808 0 011.202-1.838A4.808 4.808 0 015.79 3.249c.685-.276 1.42-.463 2.59-.516C9.646 2.175 10.026 2.163 12 2.163zM12 0c-3.26 0-3.66.014-4.948.072-1.288.058-2.164.248-2.92.53-1.004.37-1.77.85-2.552 1.63C.8 2.99 0.32 3.756 0.05 4.76c-.282.756-.472 1.632-.53 2.92C-.014 8.94 0 9.34 0 12s.014 3.06.072 4.348c.058 1.288.248 2.164.53 2.92.37 1.004.85 1.77 1.63 2.552.78.78 1.548 1.26 2.552 1.63.756.282 1.632.472 2.92.53C8.94 23.986 9.34 24 12 24s3.06-.014 4.348-.072c1.288-.058 2.164-.248 2.92-.53 1.004-.37 1.77-.85 2.552-1.63.78-.78 1.26-1.548 1.63-2.552.282-.756.472-1.632.53-2.92C23.986 15.06 24 14.66 24 12s-.014-3.06-.072-4.348c-.058-1.288-.248-2.164-.53-2.92-.37-1.004-.85-1.77-1.63-2.552-.78-.78-1.548-1.26-2.552-1.63-.756-.282-1.632-.472-2.92-.53C15.06.014 14.66 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.88 1.44 1.44 0 000-2.88z"></path>
+                                    </svg>
+                                </div>
+                                Instagram
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -793,6 +933,194 @@
             <p class="text-sm text-gray-600">Loading...</p>
         </div>
     </div>
+
+    <!-- Bug Report Floating Button -->
+    <button @click="bugReportModalOpen = true; bugFormSubmitted = false; bugMessage = ''; bugUrl = window.location.href; bugScreenshot = null" 
+            class="fixed bottom-6 right-6 z-50 p-4 bg-red-600 text-white rounded-full shadow-lg hover:bg-red-700 transition-all transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            aria-label="Report a bug">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+    </button>
+
+    <!-- Bug Report Modal -->
+    <div x-show="bugReportModalOpen" 
+         x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[60] overflow-y-auto"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="bug-report-title">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75" @click="bugReportModalOpen = false"></div>
+        
+        <!-- Modal Content -->
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="relative bg-white rounded-lg shadow-xl max-w-2xl w-full p-6"
+                 @click.stop>
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-4">
+                    <h3 id="bug-report-title" class="text-lg font-semibold text-gray-900">Report a Bug</h3>
+                    <button @click="bugReportModalOpen = false" 
+                            class="text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-md p-1"
+                            aria-label="Close">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Form Content -->
+                <div x-show="!bugFormSubmitted">
+                    <p class="text-sm text-gray-500 mb-4">Found an issue? Please describe it below and optionally attach a screenshot.</p>
+                    
+                    <form @submit.prevent="window.submitBugReport()">
+                        <div class="space-y-4">
+                            <!-- Description -->
+                            <div>
+                                <label for="bug-description" class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                                <textarea x-model="bugMessage" 
+                                          id="bug-description"
+                                          rows="4" 
+                                          required
+                                          minlength="10"
+                                          class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                          placeholder="Describe the bug in detail..."></textarea>
+                                <p class="text-xs text-gray-400 mt-1">Minimum 10 characters required</p>
+                            </div>
+
+                            <!-- URL Display -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Page URL</label>
+                                <p class="text-xs text-gray-500 break-all" x-text="bugUrl"></p>
+                            </div>
+
+                            <!-- Screenshot Capture -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Screenshot (Optional)</label>
+                                <div class="flex items-center space-x-4">
+                                    <button type="button" 
+                                            @click="window.captureScreenshot()"
+                                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        </svg>
+                                        Capture Screenshot
+                                    </button>
+                                    <div x-show="bugScreenshot" class="flex items-center space-x-2">
+                                        <span class="text-sm text-green-600">✓ Screenshot captured</span>
+                                        <button type="button" 
+                                                @click="bugScreenshot = null"
+                                                class="text-sm text-red-600 hover:text-red-700">Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="flex justify-end space-x-3 pt-4">
+                                <button type="button" 
+                                        @click="bugReportModalOpen = false"
+                                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Cancel
+                                </button>
+                                <button type="submit" 
+                                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                    Submit Report
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Success Message -->
+                <div x-show="bugFormSubmitted" class="text-center py-8">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                        <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Thank You!</h3>
+                    <p class="text-sm text-gray-600 mb-4">Your bug report has been submitted successfully. We'll review it and get back to you if needed.</p>
+                    <button @click="bugReportModalOpen = false" 
+                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Bug Report Functions - Available globally for Alpine.js
+        window.captureScreenshot = function() {
+            // For now, show a message that screenshot requires html2canvas library
+            // Users can manually take screenshots and we can add html2canvas later if needed
+            window.toast?.info('To capture a screenshot, please use your browser\'s screenshot tool (e.g., Snipping Tool on Windows, Screenshot on Mac) or a browser extension. You can still submit the report without a screenshot.');
+        };
+
+        window.submitBugReport = function() {
+            const body = document.body;
+            if (!body.__x || !body.__x.$data) {
+                window.toast?.error('Form submission failed. Please refresh the page and try again.');
+                return;
+            }
+
+            const data = body.__x.$data;
+            const description = data.bugMessage?.trim();
+            
+            if (!description || description.length < 10) {
+                window.toast?.error('Please provide a detailed description (at least 10 characters).');
+                return;
+            }
+
+            const payload = {
+                url: data.bugUrl || window.location.href,
+                description: description,
+                screenshot: data.bugScreenshot || null,
+                browser_info: data.bugBrowserInfo || navigator.userAgent
+            };
+
+            // Get CSRF token
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                            (document.cookie.match(/csrftoken=([^;]+)/) ? document.cookie.match(/csrftoken=([^;]+)/)[1] : '');
+
+            fetch("{% url 'report-bug' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken || ''
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    data.bugFormSubmitted = true;
+                    data.bugMessage = '';
+                    data.bugScreenshot = null;
+                    if (window.toast) {
+                        window.toast.success(result.message || 'Bug report submitted successfully!');
+                    }
+                } else {
+                    if (window.toast) {
+                        window.toast.error(result.message || 'Failed to submit bug report. Please try again.');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting bug report:', error);
+                if (window.toast) {
+                    window.toast.error('An error occurred while submitting the bug report. Please try again.');
+                }
+            });
+        };
+    </script>
 </body>
 </html>
 

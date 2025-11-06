@@ -7,6 +7,8 @@ from django.template.loader import render_to_string, get_template
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.db import transaction
+from django.db.models import Q
+from django.utils import timezone
 import json
 
 # Celery Tasks
@@ -131,6 +133,15 @@ def handle_ajax_request(request, resume):
             item = form.save(commit=False); item.resume = resume; item.save()
             resume.score = None; resume.save()
             transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
+            # Trigger match score recalculation for all jobs
+            from jobs.tasks import calculate_and_save_match_score_task
+            from jobs.models import JobPosting
+            job_ids = list(JobPosting.objects.filter(
+                Q(application_deadline__gte=timezone.now()) | Q(application_deadline__isnull=True)
+            ).values_list('id', flat=True))
+            resume_id = resume.id
+            for job_id in job_ids:
+                transaction.on_commit(lambda jid=job_id, rid=resume_id: calculate_and_save_match_score_task.delay(rid, jid))
             item_html = render_to_string(f'resumes/partials/{model_name}_item.html', {'item': item})
             return JsonResponse({'status': 'success', 'item_html': item_html, 'section': model_name})
         else:
@@ -162,6 +173,15 @@ def handle_ajax_request(request, resume):
             item = form.save()
             resume.score = None; resume.save()
             transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
+            # Trigger match score recalculation for all jobs
+            from jobs.tasks import calculate_and_save_match_score_task
+            from jobs.models import JobPosting
+            job_ids = list(JobPosting.objects.filter(
+                Q(application_deadline__gte=timezone.now()) | Q(application_deadline__isnull=True)
+            ).values_list('id', flat=True))
+            resume_id = resume.id
+            for job_id in job_ids:
+                transaction.on_commit(lambda jid=job_id, rid=resume_id: calculate_and_save_match_score_task.delay(rid, jid))
             
             if is_profile:
                 resume.refresh_from_db()
@@ -193,6 +213,15 @@ def handle_ajax_request(request, resume):
             resume.score = None
             resume.save()
             transaction.on_commit(lambda: update_resume_score_task.delay(resume.id))
+            # Trigger match score recalculation for all jobs
+            from jobs.tasks import calculate_and_save_match_score_task
+            from jobs.models import JobPosting
+            job_ids = list(JobPosting.objects.filter(
+                Q(application_deadline__gte=timezone.now()) | Q(application_deadline__isnull=True)
+            ).values_list('id', flat=True))
+            resume_id = resume.id
+            for job_id in job_ids:
+                transaction.on_commit(lambda jid=job_id, rid=resume_id: calculate_and_save_match_score_task.delay(rid, jid))
             return JsonResponse({'status': 'success', 'section': model_name})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': f'Failed to delete item: {str(e)}'}, status=500)
@@ -351,9 +380,28 @@ def enhance_description_api(request):
             if not text_to_enhance:
                 return JsonResponse({'error': 'No text provided.'}, status=400)
 
+            # Define character limits for validation
+            char_limits = {
+                'experience_description': 500,
+                'professional_summary': 600,
+                'project_description': 400,
+            }
+            max_chars = char_limits.get(context, 500)
+            original_length = len(text_to_enhance) if text_to_enhance else 0
+
             enhanced_text = enhance_text_with_gemini(text_to_enhance, context)
             if enhanced_text:
-                return JsonResponse({'enhanced_text': enhanced_text})
+                # Check if truncation occurred
+                was_truncated = len(enhanced_text) > max_chars
+                if was_truncated:
+                    # Final safety check - truncate if still over limit
+                    enhanced_text = enhanced_text[:max_chars].rsplit(' ', 1)[0]
+                
+                response_data = {
+                    'enhanced_text': enhanced_text,
+                    'was_truncated': len(enhanced_text) >= max_chars - 10,  # Warn if close to limit
+                }
+                return JsonResponse(response_data)
             else:
                 return JsonResponse({'error': 'Failed to enhance text.'}, status=500)
         except Exception as e:
@@ -363,14 +411,95 @@ def enhance_description_api(request):
 @login_required
 def download_resume_pdf(request, resume_id, template_name):
     """
-    Generates and serves a PDF resume.
-    This view now pre-processes descriptions into bullet points.
+    Initiates async PDF generation and returns task ID.
+    For backward compatibility, if async is disabled or table doesn't exist, falls back to sync generation.
     """
     resume = get_object_or_404(Resume, id=resume_id, profile__user=request.user)
     
     # Get accent color from query parameter (default to blue)
     accent_color = request.GET.get('accent_color', 'blue')
     
+    # Check if async is enabled (Celery available) and table exists
+    use_async = False
+    try:
+        from .models import ResumePDFGeneration
+        from .tasks import generate_resume_pdf_task
+        from django.db import connection
+        
+        # Check if table exists (works for both SQLite and PostgreSQL)
+        table_name = ResumePDFGeneration._meta.db_table
+        table_exists = False
+        
+        with connection.cursor() as cursor:
+            if 'sqlite' in connection.vendor:
+                cursor.execute("""
+                    SELECT name FROM sqlite_master 
+                    WHERE type='table' AND name=?
+                """, [table_name])
+            elif 'postgresql' in connection.vendor:
+                cursor.execute("""
+                    SELECT tablename FROM pg_tables 
+                    WHERE schemaname = 'public' AND tablename = %s
+                """, [table_name])
+            else:
+                # For other databases, try to query the table (will fail if it doesn't exist)
+                try:
+                    ResumePDFGeneration.objects.first()
+                    table_exists = True
+                except:
+                    table_exists = False
+            
+            if not table_exists:
+                table_exists = cursor.fetchone() is not None
+        
+        # Check if Celery is configured
+        celery_configured = bool(getattr(settings, 'CELERY_BROKER_URL', None))
+        
+        use_async = table_exists and celery_configured
+    except Exception:
+        # If any error occurs (ImportError, table doesn't exist, etc.), fall back to sync
+        use_async = False
+    
+    if use_async:
+        try:
+            # Create PDF generation record
+            pdf_gen = ResumePDFGeneration.objects.create(
+                resume=resume,
+                template_name=template_name,
+                accent_color=accent_color,
+                status='pending'
+            )
+            
+            # Trigger async task
+            base_url = request.build_absolute_uri('/')
+            task = generate_resume_pdf_task.delay(pdf_gen.id, base_url)
+            pdf_gen.task_id = task.id
+            pdf_gen.save(update_fields=['task_id'])
+            
+            # Return JSON response with task ID for frontend polling
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.GET.get('format') == 'json':
+                return JsonResponse({
+                    'status': 'pending',
+                    'task_id': task.id,
+                    'pdf_generation_id': pdf_gen.id,
+                    'message': 'PDF generation started. Please wait...'
+                })
+            
+            # For regular requests, redirect to status page or show message
+            messages.info(request, 'PDF generation started. You will be notified when it\'s ready.')
+            return redirect('resumes:resume-builder')
+        except Exception as e:
+            # If async fails for any reason, fall back to sync
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Async PDF generation failed, falling back to sync: {e}")
+            return _generate_pdf_sync(request, resume, template_name, accent_color)
+    else:
+        # Fallback to synchronous generation for backward compatibility
+        return _generate_pdf_sync(request, resume, template_name, accent_color)
+
+def _generate_pdf_sync(request, resume, template_name, accent_color):
+    """Synchronous PDF generation (fallback when async is not available)."""
     # Color mapping
     color_map = {
         'blue': '#3498db',
@@ -405,6 +534,47 @@ def download_resume_pdf(request, resume_id, template_name):
 
     response = HttpResponse(pdf_bytes, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{resume.profile.full_name}_resume.pdf"'
+    return response
+
+@login_required
+def check_pdf_status(request, pdf_generation_id):
+    """Check the status of a PDF generation task."""
+    from .models import ResumePDFGeneration
+    
+    pdf_gen = get_object_or_404(ResumePDFGeneration, id=pdf_generation_id, resume__profile__user=request.user)
+    
+    response_data = {
+        'status': pdf_gen.status,
+        'pdf_generation_id': pdf_gen.id,
+    }
+    
+    if pdf_gen.status == 'completed' and pdf_gen.pdf_file:
+        response_data['download_url'] = pdf_gen.pdf_file.url
+        response_data['filename'] = pdf_gen.pdf_file.name.split('/')[-1]
+    elif pdf_gen.status == 'failed':
+        response_data['error'] = pdf_gen.error_message or 'PDF generation failed.'
+    
+    return JsonResponse(response_data)
+
+@login_required
+def download_generated_pdf(request, pdf_generation_id):
+    """Download a completed PDF."""
+    from .models import ResumePDFGeneration
+    from django.http import FileResponse
+    
+    pdf_gen = get_object_or_404(
+        ResumePDFGeneration, 
+        id=pdf_generation_id, 
+        resume__profile__user=request.user,
+        status='completed'
+    )
+    
+    if not pdf_gen.pdf_file:
+        messages.error(request, 'PDF file not found.')
+        return redirect('resumes:resume-builder')
+    
+    response = FileResponse(pdf_gen.pdf_file.open('rb'), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{pdf_gen.resume.profile.full_name}_resume.pdf"'
     return response
 
 def _get_resume_context(resume):
@@ -547,7 +717,7 @@ def preview_resume_view(request, resume_id):
     template_path = f'resumes/resume_pdf_{template_name}.html'
     resume_html = render_to_string(template_path, context, request=request)
     
-    # Extract styles and body content properly
+    # Extract styles and body content properly - ensure ALL content is preserved
     import re
     
     try:
@@ -555,13 +725,14 @@ def preview_resume_view(request, resume_id):
         from bs4 import BeautifulSoup
         soup = BeautifulSoup(resume_html, 'html.parser')
         
-        # Extract all style tags from head
+        # Extract all style tags from head - preserve ALL styles
         style_tags = soup.find_all('style')
         styles_content = ''
         for style_tag in style_tags:
             if style_tag.string:
                 style_text = style_tag.string
                 # Critical fix: Scope html/body styles to .resume-wrapper to prevent page shift
+                # But preserve all other styles exactly as they are
                 # Replace html, body selectors with .resume-wrapper html, .resume-wrapper body
                 style_text = re.sub(r'html\s*,', '.resume-wrapper html,', style_text)
                 style_text = re.sub(r',\s*html\s*{', ', .resume-wrapper html {', style_text)
@@ -570,16 +741,20 @@ def preview_resume_view(request, resume_id):
                 # Handle standalone html and body rules
                 style_text = re.sub(r'^html\s*{', '.resume-wrapper html {', style_text, flags=re.MULTILINE)
                 style_text = re.sub(r'^body\s*{', '.resume-wrapper body {', style_text, flags=re.MULTILINE)
+                # Also scope @page rules to prevent page layout issues
+                style_text = re.sub(r'@page\s*{', '@media print { .resume-wrapper {', style_text)
                 styles_content += style_text + '\n'
         
-        # Extract body content
+        # Extract body content - preserve ALL HTML structure exactly
         body_tag = soup.find('body')
         if body_tag:
-            body_content = str(body_tag.decode_contents())
+            # Get all content inside body, preserving all tags and structure
+            body_content = ''.join(str(child) for child in body_tag.children)
         else:
-            # Fallback: get all content if no body tag
+            # Fallback: get all content if no body tag - preserve everything
             body_content = str(soup.decode_contents())
         
+        # Ensure we have all content - no truncation
         resume_html = body_content
         context['resume_styles'] = styles_content
         
@@ -590,18 +765,15 @@ def preview_resume_view(request, resume_id):
         logger.warning(f"BeautifulSoup not available or failed, using regex fallback: {e}")
         # Fallback to regex if BeautifulSoup is not available
         def extract_body_content(html):
-            # Extract styles from head section
-            style_match = re.search(r'<style[^>]*>(.*?)</style>', html, re.DOTALL | re.IGNORECASE)
-            styles = style_match.group(1) if style_match else ''
+            # Extract ALL styles from head section - preserve all style tags
+            style_matches = re.findall(r'<style[^>]*>(.*?)</style>', html, re.DOTALL | re.IGNORECASE)
+            all_styles = '\n'.join(style_matches) if style_matches else ''
             
             # Remove DOCTYPE
             html = re.sub(r'<!DOCTYPE[^>]*>', '', html, flags=re.IGNORECASE)
             # Remove html tags
             html = re.sub(r'<html[^>]*>', '', html, flags=re.IGNORECASE)
             html = re.sub(r'</html>', '', html, flags=re.IGNORECASE)
-            # Extract and preserve style tags
-            style_tags = re.findall(r'<style[^>]*>(.*?)</style>', html, re.DOTALL | re.IGNORECASE)
-            all_styles = '\n'.join(style_tags) if style_tags else styles
             
             # Critical fix: Scope html/body styles to .resume-wrapper to prevent page shift
             # Replace html, body selectors with .resume-wrapper html, .resume-wrapper body
@@ -612,45 +784,23 @@ def preview_resume_view(request, resume_id):
             # Handle standalone html and body rules
             all_styles = re.sub(r'^html\s*{', '.resume-wrapper html {', all_styles, flags=re.MULTILINE)
             all_styles = re.sub(r'^body\s*{', '.resume-wrapper body {', all_styles, flags=re.MULTILINE)
+            # Also scope @page rules
+            all_styles = re.sub(r'@page\s*{', '@media print { .resume-wrapper {', all_styles)
             
             # Remove head section but preserve styles
             html = re.sub(r'<head>.*?</head>', '', html, flags=re.DOTALL | re.IGNORECASE)
             # Remove title tag if present
             html = re.sub(r'<title>.*?</title>', '', html, flags=re.DOTALL | re.IGNORECASE)
             
-            # Try to extract body content
+            # Try to extract body content - preserve ALL content
             body_match = re.search(r'<body[^>]*>(.*)</body>', html, re.DOTALL | re.IGNORECASE)
             if body_match:
                 context['resume_styles'] = all_styles
-                return body_match.group(1).strip()
+                # Return full body content - no truncation
+                return body_match.group(1)
             
-            # If no body tag, try to find main content divs
-            if '<div' in html and 'class=' in html:
-                lines = html.split('\n')
-                in_div = False
-                div_start = -1
-                div_count = 0
-                
-                for i, line in enumerate(lines):
-                    div_open = line.count('<div')
-                    div_close = line.count('</div>')
-                    
-                    if div_open > 0 and div_start == -1:
-                        if 'class=' in line and ('page' in line.lower() or 'resume' in line.lower() or 'container' in line.lower()):
-                            div_start = i
-                            div_count = div_open - div_close
-                            in_div = True
-                            continue
-                    
-                    if in_div:
-                        div_count += div_open - div_close
-                        if div_count <= 0:
-                            context['resume_styles'] = all_styles
-                            return '\n'.join(lines[div_start:i+1]).strip()
-                
-                context['resume_styles'] = all_styles
-                return html.strip()
-            
+            # If no body tag, preserve all remaining HTML content
+            # This ensures nothing is lost
             context['resume_styles'] = all_styles
             return html.strip()
         

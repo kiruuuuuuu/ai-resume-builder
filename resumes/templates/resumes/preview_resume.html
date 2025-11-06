@@ -155,19 +155,69 @@
         .resume-wrapper {
             background: white;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.05);
-            width: 210mm !important; /* A4 width - force with !important */
+            width: 210mm; /* A4 width */
+            max-width: 210mm;
             min-height: 297mm; /* A4 height */
             position: relative;
             margin-left: auto !important; /* Force center with auto margins */
             margin-right: auto !important;
             margin-top: 0;
             margin-bottom: 0;
-            /* Ensure exact A4 dimensions */
-            page-size: A4;
             flex-shrink: 0; /* Prevent flex from shrinking */
             border-radius: 12px;
-            overflow: hidden;
+            overflow: visible; /* Allow page breaks to show */
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Page container for multi-page display */
+        .resume-page {
+            width: 210mm;
+            min-height: 297mm;
+            max-height: 297mm;
+            background: white;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 0.5cm;
+            box-sizing: border-box;
+            overflow: hidden;
+            page-break-after: always;
+            break-after: page;
+        }
+        
+        .resume-page:last-child {
+            margin-bottom: 0;
+            page-break-after: auto;
+        }
+        
+        /* Page break indicator */
+        .page-break-indicator {
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #cbd5e0 20%, #cbd5e0 80%, transparent);
+            margin: 0;
+            position: absolute;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .page-break-indicator::before {
+            content: '━━ Page Break ━━';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2px 12px;
+            color: #718096;
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
         }
         /* For Modern template, ensure proper centering */
         .resume-wrapper .page {
@@ -183,7 +233,7 @@
             margin: 0 !important;
             padding: 0 !important;
             background: white !important;
-            width: 210mm !important;
+            width: 100% !important;
             height: auto !important;
         }
         /* Ensure all resume templates display correctly */
@@ -203,8 +253,8 @@
             max-width: 100% !important;
             margin: 0 auto !important;
             position: relative !important;
-            min-height: 297mm !important; /* Ensure full A4 height */
-            height: 297mm !important; /* Force full height */
+            min-height: auto !important; /* Let content determine height */
+            height: auto !important; /* Natural height */
         }
         .resume-wrapper .page::after {
             content: "";
@@ -217,16 +267,16 @@
             display: block !important;
             width: 35% !important;
             box-sizing: border-box !important;
-            min-height: 297mm !important; /* Full A4 height */
-            height: 297mm !important; /* Force full height */
+            min-height: auto !important; /* Natural height */
+            height: auto !important; /* Natural height */
         }
         .resume-wrapper .content {
             float: left !important;
             display: block !important;
             width: 65% !important;
             box-sizing: border-box !important;
-            min-height: 297mm !important; /* Full A4 height */
-            height: 297mm !important; /* Force full height */
+            min-height: auto !important; /* Natural height */
+            height: auto !important; /* Natural height */
         }
         /* Prevent horizontal overflow */
         .resume-wrapper {
@@ -276,9 +326,8 @@
             }
             .resume-wrapper {
                 box-shadow: none !important;
-                width: 210mm !important;
+                width: 210mm !important; /* A4 width for print only */
                 min-height: auto !important;
-                max-height: 297mm !important;
                 height: auto !important;
                 margin: 0 auto !important;
                 padding: 0 !important;
@@ -294,7 +343,6 @@
                 width: 100% !important;
                 height: auto !important;
                 min-height: auto !important;
-                max-height: 297mm !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 page-break-inside: avoid !important;
@@ -313,12 +361,12 @@
             }
         }
         @media screen {
-            /* Scale down for screen viewing while maintaining aspect ratio - less congested */
+            /* A4 sizing for screen viewing - exact match to PDF */
             .resume-wrapper {
-                transform: scale(0.85);
+                transform: scale(0.8); /* Scale down to 80% for better screen viewing while maintaining accuracy */
                 transform-origin: top center;
                 transition: transform 0.3s ease, box-shadow 0.3s ease;
-                /* Ensure centering is maintained after scaling */
+                /* Ensure centering is maintained */
                 margin-left: auto !important;
                 margin-right: auto !important;
                 margin-top: 0.5rem !important;
@@ -342,7 +390,7 @@
             /* Hover effect for better UX */
             .resume-wrapper:hover {
                 box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-                transform: scale(0.87) translateY(-4px);
+                transform: translateY(-4px);
             }
             
             /* Enhanced resume wrapper styling */
@@ -532,7 +580,7 @@
                             <span class="text-sm font-semibold text-gray-700">Live Preview</span>
                         </div>
                         <div class="h-4 w-px bg-gray-300"></div>
-                        <span class="text-xs text-gray-500">A4 Size • Print Ready</span>
+                        <span class="text-xs text-gray-500">Print Ready</span>
                     </div>
                 </div>
             </div>
@@ -577,8 +625,8 @@
             .resume-wrapper {
                 position: relative !important;
                 overflow-x: hidden !important;
-                max-width: 210mm !important;
-                width: 210mm !important;
+                max-width: 900px !important; /* Comfortable reading width */
+                width: 100% !important;
                 margin-left: auto !important;
                 margin-right: auto !important;
                 margin-top: 0 !important;
@@ -593,8 +641,8 @@
                 max-width: 100% !important;
                 overflow: hidden !important;
                 position: relative !important;
-                min-height: 297mm !important;
-                height: 297mm !important;
+                min-height: auto !important;
+                height: auto !important;
                 /* Clear floats properly */
                 clear: both !important;
             }
@@ -608,8 +656,8 @@
                 float: left !important;
                 width: 35% !important;
                 box-sizing: border-box !important;
-                min-height: 297mm !important; /* Full A4 height */
-                height: 297mm !important; /* Force full height */
+                min-height: auto !important; /* Natural height */
+                height: auto !important; /* Natural height */
                 margin: 0 !important;
                 padding: 0 !important;
             }
@@ -617,8 +665,8 @@
                 float: left !important;
                 width: 65% !important;
                 box-sizing: border-box !important;
-                min-height: 297mm !important; /* Full A4 height */
-                height: 297mm !important; /* Force full height */
+                min-height: auto !important; /* Natural height */
+                height: auto !important; /* Natural height */
                 margin: 0 !important;
                 padding: 0 !important;
             }
@@ -643,7 +691,7 @@
             }
         </style>
         {% endif %}
-            <div class="resume-wrapper" id="resume-preview" style="position: relative; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+            <div id="resume-preview-container" style="position: relative;">
                 <!-- Loading overlay -->
                 <div id="loading-overlay" class="absolute inset-0 bg-white/90 backdrop-blur-md rounded-lg flex items-center justify-center z-50 hidden transition-opacity duration-300">
                     <div class="text-center">
@@ -652,7 +700,10 @@
                         <p class="text-xs text-gray-500 mt-1">Please wait</p>
                     </div>
                 </div>
-                {{ resume_html|safe }}
+                <!-- Resume content will be split into pages here -->
+                <div id="resume-content-wrapper" style="display: none;">
+                    {{ resume_html|safe }}
+                </div>
             </div>
         </div>
     </div>
@@ -812,24 +863,24 @@
                     page.style.maxWidth = '100%';
                     page.style.overflow = 'hidden';
                     page.style.margin = '0 auto';
-                    page.style.minHeight = '297mm';
-                    page.style.height = '297mm';
+                    page.style.minHeight = 'auto';
+                    page.style.height = 'auto';
                     
-                    // Ensure sidebar and content are properly sized and extend to full height
+                    // Ensure sidebar and content are properly sized with natural height
                     sidebar.style.width = '35%';
                     sidebar.style.boxSizing = 'border-box';
-                    sidebar.style.minHeight = '297mm';
-                    sidebar.style.height = '297mm';
+                    sidebar.style.minHeight = 'auto';
+                    sidebar.style.height = 'auto';
                     
                     content.style.width = '65%';
                     content.style.boxSizing = 'border-box';
-                    content.style.minHeight = '297mm';
-                    content.style.height = '297mm';
+                    content.style.minHeight = 'auto';
+                    content.style.height = 'auto';
                     
                     // Prevent horizontal overflow and ensure centering
                     wrapper.style.overflowX = 'hidden';
-                    wrapper.style.maxWidth = '210mm';
-                    wrapper.style.width = '210mm';
+                    wrapper.style.maxWidth = '900px';
+                    wrapper.style.width = '100%';
                     wrapper.style.marginLeft = 'auto';
                     wrapper.style.marginRight = 'auto';
                     wrapper.style.marginTop = '0';
@@ -882,6 +933,14 @@
         templateSelect.addEventListener('change', () => {
             setTimeout(() => {
                 fixModernTemplateLayout();
+                splitIntoPages();
+            }, 100);
+        });
+        
+        // Re-split pages when color changes
+        colorSelect.addEventListener('change', () => {
+            setTimeout(() => {
+                splitIntoPages();
             }, 100);
         });
         
@@ -922,9 +981,194 @@
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(fixModernTemplateLayout, 100);
+                setTimeout(splitIntoPages, 200);
             });
         } else {
             setTimeout(fixModernTemplateLayout, 100);
+            setTimeout(splitIntoPages, 200);
+        }
+        
+        // Function to split resume into pages based on A4 dimensions
+        function splitIntoPages() {
+            const contentWrapper = document.getElementById('resume-content-wrapper');
+            const previewContainer = document.getElementById('resume-preview-container');
+            
+            if (!contentWrapper || !previewContainer) return;
+            
+            // Get the original content
+            const originalContent = contentWrapper.innerHTML;
+            if (!originalContent) return;
+            
+            // Get template name from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const templateName = urlParams.get('template') || 'professional';
+            
+            // Modern and Creative should be single page
+            const isSinglePageTemplate = templateName === 'modern' || templateName === 'creative';
+            
+            // Classic and Professional can have multiple pages - no restrictions
+            const isMultiPageTemplate = templateName === 'classic' || templateName === 'professional';
+            
+            // Create a temporary container to measure content with exact A4 dimensions
+            const tempContainer = document.createElement('div');
+            tempContainer.style.position = 'absolute';
+            tempContainer.style.visibility = 'hidden';
+            tempContainer.style.width = '210mm';
+            
+            // Set padding based on template
+            if (templateName === 'modern') {
+                tempContainer.style.padding = '0';
+            } else if (templateName === 'classic' || templateName === 'professional') {
+                tempContainer.style.padding = '1.5cm'; // Match PDF margin
+            } else {
+                tempContainer.style.padding = '0.5cm'; // Creative and others
+            }
+            
+            tempContainer.style.boxSizing = 'border-box';
+            tempContainer.style.background = 'white';
+            
+            // Copy all styles from resume_styles
+            if (document.getElementById('resume-styles')) {
+                const styles = document.getElementById('resume-styles').textContent;
+                // Apply styles to temp container
+                const styleSheet = document.createElement('style');
+                styleSheet.textContent = styles.replace(/\.resume-wrapper/g, '#temp-resume-container');
+                styleSheet.id = 'temp-styles';
+                document.head.appendChild(styleSheet);
+            }
+            tempContainer.id = 'temp-resume-container';
+            tempContainer.innerHTML = originalContent;
+            document.body.appendChild(tempContainer);
+            
+            // Force layout calculation
+            void tempContainer.offsetHeight;
+            
+            // A4 dimensions
+            const A4_HEIGHT_MM = 297;
+            let MARGIN_MM = 0;
+            if (templateName === 'modern') {
+                MARGIN_MM = 0;
+            } else if (templateName === 'classic' || templateName === 'professional') {
+                MARGIN_MM = 15; // 1.5cm = 15mm
+            } else {
+                MARGIN_MM = 5; // 0.5cm = 5mm
+            }
+            
+            const PAGE_HEIGHT_MM = A4_HEIGHT_MM - (MARGIN_MM * 2);
+            const MM_TO_PX = 3.779527559; // 1mm = 3.779527559px at 96 DPI
+            const PAGE_HEIGHT_PX = PAGE_HEIGHT_MM * MM_TO_PX;
+            
+            // Get total height - ensure we measure ALL content
+            const totalHeight = Math.max(tempContainer.scrollHeight, tempContainer.offsetHeight);
+            let numberOfPages = Math.ceil(totalHeight / PAGE_HEIGHT_PX);
+            
+            // Ensure at least 1 page
+            if (numberOfPages < 1) {
+                numberOfPages = 1;
+            }
+            
+            // Force single page for Modern and Creative only
+            if (isSinglePageTemplate) {
+                numberOfPages = 1;
+            }
+            
+            // For Classic and Professional, ensure we show ALL content (no restrictions)
+            // numberOfPages is already calculated correctly above
+            // Add one extra page if there's any remaining content to ensure nothing is cut off
+            if (!isSinglePageTemplate && totalHeight % PAGE_HEIGHT_PX > 0) {
+                // Already handled by Math.ceil, but ensure we account for all content
+                const actualPagesNeeded = Math.ceil(totalHeight / PAGE_HEIGHT_PX);
+                if (actualPagesNeeded > numberOfPages) {
+                    numberOfPages = actualPagesNeeded;
+                }
+            }
+            
+            // Clean up temp container and styles
+            document.body.removeChild(tempContainer);
+            const tempStyles = document.getElementById('temp-styles');
+            if (tempStyles) {
+                document.head.removeChild(tempStyles);
+            }
+            
+            // Create separate page containers that look like actual pages
+            previewContainer.innerHTML = '';
+            
+            // Create a wrapper for all pages
+            const pagesWrapper = document.createElement('div');
+            pagesWrapper.style.display = 'flex';
+            pagesWrapper.style.flexDirection = 'column';
+            pagesWrapper.style.alignItems = 'center';
+            pagesWrapper.style.gap = '20px';
+            pagesWrapper.style.width = '100%';
+            
+            // Create pages
+            for (let pageNum = 0; pageNum < numberOfPages; pageNum++) {
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'resume-wrapper';
+                pageDiv.style.width = '210mm';
+                pageDiv.style.maxWidth = '210mm';
+                pageDiv.style.height = '297mm';
+                pageDiv.style.minHeight = '297mm';
+                pageDiv.style.maxHeight = '297mm';
+                
+                // Set padding based on template
+                if (templateName === 'modern') {
+                    pageDiv.style.padding = '0';
+                } else if (templateName === 'classic' || templateName === 'professional') {
+                    pageDiv.style.padding = '1.5cm'; // Match PDF margin
+                } else {
+                    pageDiv.style.padding = '0.5cm'; // Creative and others
+                }
+                
+                pageDiv.style.boxSizing = 'border-box';
+                pageDiv.style.background = 'white';
+                pageDiv.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                pageDiv.style.position = 'relative';
+                pageDiv.style.overflow = 'hidden';
+                pageDiv.style.marginBottom = pageNum < numberOfPages - 1 ? '20px' : '0';
+                
+                // Create content container that shows the appropriate portion
+                const contentDiv = document.createElement('div');
+                contentDiv.style.width = '100%';
+                contentDiv.style.position = 'relative';
+                contentDiv.innerHTML = originalContent;
+                
+                // For single page templates, show all content constrained to one page
+                if (isSinglePageTemplate) {
+                    contentDiv.style.height = templateName === 'modern' ? '297mm' : '287mm';
+                    contentDiv.style.overflow = 'hidden';
+                    contentDiv.style.maxHeight = templateName === 'modern' ? '297mm' : '287mm';
+                    // Ensure all content is visible - don't clip
+                    contentDiv.style.minHeight = templateName === 'modern' ? '297mm' : '287mm';
+                } else {
+                    // For Classic and Professional (multi-page), show ALL content across pages
+                    // Position content to show the correct page portion
+                    if (pageNum > 0) {
+                        const offset = -pageNum * PAGE_HEIGHT_PX;
+                        contentDiv.style.transform = `translateY(${offset}px)`;
+                    }
+                    
+                    // Clip to show only this page's content - but ensure we show everything
+                    contentDiv.style.height = `${PAGE_HEIGHT_PX}px`;
+                    contentDiv.style.overflow = 'hidden';
+                    // Ensure we don't miss any content at the bottom
+                    if (pageNum === numberOfPages - 1) {
+                        // Last page - show all remaining content
+                        const remainingHeight = totalHeight - (pageNum * PAGE_HEIGHT_PX);
+                        if (remainingHeight > 0 && remainingHeight < PAGE_HEIGHT_PX) {
+                            contentDiv.style.height = `${remainingHeight}px`;
+                        }
+                    }
+                }
+                
+                pageDiv.appendChild(contentDiv);
+                pagesWrapper.appendChild(pageDiv);
+            }
+            
+            previewContainer.appendChild(pagesWrapper);
+            
+            // Hide original content wrapper
+            contentWrapper.style.display = 'none';
         }
         
         // Additional fix: Force centering immediately for all templates
@@ -934,8 +1178,8 @@
                 // Force centering regardless of template
                 wrapper.style.marginLeft = 'auto';
                 wrapper.style.marginRight = 'auto';
-                wrapper.style.width = '210mm';
-                wrapper.style.maxWidth = '210mm';
+                wrapper.style.width = '100%';
+                wrapper.style.maxWidth = '900px';
                 
                 // Ensure parent container is centered
                 const container = wrapper.closest('.preview-container');

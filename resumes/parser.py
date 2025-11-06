@@ -185,6 +185,7 @@ def parse_text_with_gemini(text: str) -> Dict[str, Any]:
 def enhance_text_with_gemini(text_to_enhance: str, context: str) -> str:
     """
     Uses Gemini to rewrite and improve a piece of text from a resume, with more specific contextual instructions.
+    Strictly enforces character limits to prevent validation errors.
     """
     model = _get_gemini_model()
     if not model or not text_to_enhance:
@@ -192,15 +193,23 @@ def enhance_text_with_gemini(text_to_enhance: str, context: str) -> str:
 
     # Sanitize user input to prevent prompt injection
     sanitized_text = sanitize_prompt_input(text_to_enhance)
+    
+    # Define character limits for each context
+    char_limits = {
+        'experience_description': 500,
+        'professional_summary': 600,
+        'project_description': 400,
+    }
+    max_chars = char_limits.get(context, 500)
         
     context_instructions = ""
     # --- THE FIX IS HERE: Updated character limits ---
     if context == 'experience_description':
-        context_instructions = "Focus on using strong action verbs and quantifying achievements. The entire response must be under 500 characters."
+        context_instructions = f"Focus on using strong action verbs and quantifying achievements. The entire response MUST be under {max_chars} characters. This is a hard limit - do not exceed it."
     elif context == 'professional_summary':
-        context_instructions = "Keep it a concise and powerful introduction (2-3 sentences). The entire response must be under 600 characters."
+        context_instructions = f"Keep it a concise and powerful introduction (2-3 sentences). The entire response MUST be under {max_chars} characters. This is a hard limit - do not exceed it."
     elif context == 'project_description':
-        context_instructions = "Clearly explain the project's purpose and your role. The entire response must be under 400 characters."
+        context_instructions = f"Clearly explain the project's purpose and your role. The entire response MUST be under {max_chars} characters. This is a hard limit - do not exceed it."
 
 
     prompt = f"""
@@ -214,7 +223,7 @@ def enhance_text_with_gemini(text_to_enhance: str, context: str) -> str:
     {sanitized_text}
     ---
     
-    CRITICAL: You MUST return ONLY the enhanced plain text. Do not include any markdown, JSON, or other formatting.
+    CRITICAL: You MUST return ONLY the enhanced plain text. Do not include any markdown, JSON, or other formatting. The response MUST be under {max_chars} characters.
     
     ENHANCED TEXT:
     """
@@ -226,6 +235,12 @@ def enhance_text_with_gemini(text_to_enhance: str, context: str) -> str:
         enhanced_text = response.text.strip()
         # Clean up any residual markdown that might slip through
         cleaned_text = enhanced_text.replace('**', '').replace('*', '').strip()
+        
+        # Strictly enforce character limit - truncate if necessary
+        if len(cleaned_text) > max_chars:
+            logger.warning(f"AI enhancement exceeded {max_chars} character limit for {context}. Truncating from {len(cleaned_text)} to {max_chars}.")
+            cleaned_text = cleaned_text[:max_chars].rsplit(' ', 1)[0]  # Truncate at word boundary
+        
         return cleaned_text
     except Exception as e:
         logger.error(f"Error enhancing text with Gemini: {e}")

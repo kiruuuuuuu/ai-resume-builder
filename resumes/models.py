@@ -120,4 +120,33 @@ class Hobby(models.Model):
     def __str__(self):
         return self.name
 
+class ResumePDFGeneration(models.Model):
+    """Tracks async PDF generation tasks for resumes."""
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ]
+    
+    resume = models.ForeignKey(Resume, on_delete=models.CASCADE, related_name='pdf_generations')
+    template_name = models.CharField(max_length=50)
+    accent_color = models.CharField(max_length=50, default='blue')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    task_id = models.CharField(max_length=255, null=True, blank=True, help_text="Celery task ID")
+    pdf_file = models.FileField(upload_to='generated_pdfs/', null=True, blank=True)
+    error_message = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['resume', 'status']),
+            models.Index(fields=['task_id']),
+        ]
+    
+    def __str__(self):
+        return f"PDF Generation for {self.resume.title} - {self.status}"
+
 

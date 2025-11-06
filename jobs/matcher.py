@@ -185,10 +185,10 @@ def calculate_match_score(resume_text, job_description_text):
 
 # --- AI Job Description Generator ---
 
-def generate_job_description(job_title: str, keywords: str = "") -> dict:
+def generate_job_description(job_title: str, keywords: str = "", responsibilities: str = "", experience_level: str = "Mid-level", company_tone: str = "Professional") -> dict:
     """
     Uses Gemini to generate a professional job description and requirements
-    based on job title and optional keywords.
+    based on job title, keywords, responsibilities, experience level, and company tone.
     Returns a dict with 'description' and 'requirements' keys.
     """
     model = _get_gemini_model()
@@ -198,17 +198,26 @@ def generate_job_description(job_title: str, keywords: str = "") -> dict:
     # Sanitize inputs
     sanitized_title = sanitize_prompt_input(job_title)
     sanitized_keywords = sanitize_prompt_input(keywords) if keywords else ""
+    sanitized_responsibilities = sanitize_prompt_input(responsibilities) if responsibilities else ""
+    sanitized_experience_level = sanitize_prompt_input(experience_level) if experience_level else "Mid-level"
+    sanitized_company_tone = sanitize_prompt_input(company_tone) if company_tone else "Professional"
 
+    # Build context for the prompt
+    responsibilities_context = f"\n**Key Responsibilities:**\n{sanitized_responsibilities}\n" if sanitized_responsibilities else ""
+    
     prompt = f"""
-    You are an expert HR professional and job description writer. Generate a professional, comprehensive job posting.
+    You are an expert HR professional and job description writer. Generate a professional, comprehensive job posting tailored to the specific requirements provided.
 
     **Job Title:** {sanitized_title}
+    **Experience Level:** {sanitized_experience_level}
+    **Company Tone:** {sanitized_company_tone}
+    {responsibilities_context}
     **Keywords/Skills:** {sanitized_keywords if sanitized_keywords else "General skills relevant to the role"}
 
     Create:
-    1. **Job Description** (3-5 paragraphs): A compelling overview of the role, company expectations, day-to-day responsibilities, and what makes this position exciting. Be specific and engaging. Aim for 200-400 words.
+    1. **Job Description** (3-5 paragraphs): A compelling overview of the role that matches the company tone ({sanitized_company_tone}). Include company expectations, day-to-day responsibilities, and what makes this position exciting. Be specific and engaging. Aim for 200-400 words. The tone should be {sanitized_company_tone.lower()}.
 
-    2. **Requirements** (bullet points or numbered list): List essential qualifications, technical skills, experience level, and any nice-to-have attributes. Be realistic and specific. Include 5-8 key requirements.
+    2. **Requirements** (bullet points or numbered list): List essential qualifications, technical skills, experience level ({sanitized_experience_level}), and any nice-to-have attributes. Be realistic and specific. Include 5-8 key requirements appropriate for {sanitized_experience_level} level.
 
     CRITICAL: You MUST return ONLY a single raw JSON object with two keys: "description" (string) and "requirements" (string). Do not include any other text, markdown formatting, or explanatory comments.
 

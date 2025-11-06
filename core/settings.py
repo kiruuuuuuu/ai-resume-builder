@@ -249,6 +249,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 LOGIN_URL = 'account_login'  # django-allauth login URL
 LOGIN_REDIRECT_URL = 'home'
 
+# Age Validation Settings
+MIN_AGE = int(os.getenv('MIN_AGE', '18'))
+MAX_AGE = int(os.getenv('MAX_AGE', '100'))
+
 # AWS S3 Configuration for Media Files (Production)
 USE_S3 = os.getenv('USE_S3', 'False').lower() in ('true', '1', 't')
 
@@ -267,9 +271,9 @@ if USE_S3:
 
 
 # Celery Configuration
-# --- THE FIX IS HERE: Use the IP address instead of 'localhost' ---
-CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
-CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0'
+# Read from environment variables, with fallback for backward compatibility
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/0')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
