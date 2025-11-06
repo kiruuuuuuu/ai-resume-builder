@@ -27,7 +27,8 @@ def register_view(request):
             if user_type == 'employer':
                 return redirect('users:employer-onboarding')
             
-            return redirect('home')
+            # Redirect job seekers to resume builder
+            return redirect('resumes:resume-builder')
     else:
         form = CustomUserCreationForm()
     return render(request, 'users/register.html', {'form': form})
@@ -45,7 +46,13 @@ def login_view(request):
             if next_url:
                 return redirect(next_url)
             else:
-                return redirect('home')
+                # Redirect based on user type
+                if user.user_type == 'job_seeker':
+                    return redirect('resumes:resume-builder')
+                elif user.user_type == 'employer':
+                    return redirect('jobs:my-jobs')
+                else:
+                    return redirect('home')
     else:
         form = AuthenticationForm()
     return render(request, 'users/login.html', {'form': form})
@@ -69,14 +76,14 @@ def employer_onboarding_view(request):
     
     # Check if already completed
     if employer_profile.company_name and employer_profile.company_website and employer_profile.company_description:
-        return redirect('home')
+        return redirect('jobs:my-jobs')
     
     if request.method == 'POST':
         form = EmployerOnboardingForm(request.POST, instance=employer_profile)
         if form.is_valid():
             form.save()
             messages.success(request, "Company profile completed! You can now post jobs.")
-            return redirect('home')
+            return redirect('jobs:my-jobs')
     else:
         form = EmployerOnboardingForm(instance=employer_profile)
     

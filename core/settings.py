@@ -222,11 +222,12 @@ AUTHENTICATION_BACKENDS = [
 SITE_ID = 1
 
 # Allauth settings (using new format to avoid deprecation warnings)
+ACCOUNT_ADAPTER = 'users.adapters.CustomAccountAdapter'  # Custom adapter for user-type based redirects
 ACCOUNT_LOGIN_METHODS = {'username', 'email'}  # Can login with username or email
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']  # Required fields for signup
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # Set to 'mandatory' if you want email verification
 ACCOUNT_SESSION_REMEMBER = True
-ACCOUNT_SIGNUP_REDIRECT_URL = 'home'
+ACCOUNT_SIGNUP_REDIRECT_URL = 'home'  # Fallback, but adapter will override
 
 # Social account settings
 SOCIALACCOUNT_AUTO_SIGNUP = True
