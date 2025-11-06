@@ -18,7 +18,10 @@ def register_view(request):
             elif user_type == 'employer':
                 EmployerProfile.objects.create(user=user)
 
-            login(request, user)
+            # Specify backend since we have multiple authentication backends
+            from django.contrib.auth import get_backends
+            backend = 'django.contrib.auth.backends.ModelBackend'
+            login(request, user, backend=backend)
             messages.success(request, "Welcome! Your account has been created successfully.")
             
             # Redirect employers to onboarding
@@ -35,7 +38,8 @@ def login_view(request):
         form = AuthenticationForm(data=request.POST)
         if form.is_valid():
             user = form.get_user()
-            login(request, user)
+            # AuthenticationForm.get_user() already handles backend, but we'll be explicit
+            login(request, user, backend=user.backend if hasattr(user, 'backend') else 'django.contrib.auth.backends.ModelBackend')
             messages.success(request, f"Welcome back, {user.username}!")
             
             next_url = request.GET.get('next')
