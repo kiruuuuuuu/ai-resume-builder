@@ -4,8 +4,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.2.5-green.svg)](https://www.djangoproject.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/kiruuuuuuu/ai-resume-builder-v2?style=social)](https://github.com/kiruuuuuuu/ai-resume-builder-v2)
+[![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/kiruuuuuuu/ai-resume-builder?style=social)](https://github.com/kiruuuuuuu/ai-resume-builder)
 
 **An intelligent resume creation platform powered by AI** that helps job seekers build professional resumes with real-time feedback, scoring, and job matching. Built with Django, Celery, Redis, and Google Gemini AI.
 
@@ -38,8 +38,8 @@
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/kiruuuuuuu/ai-resume-builder-v2.git
-   cd ai-resume-builder-v2
+   git clone https://github.com/kiruuuuuuu/ai-resume-builder.git
+   cd ai-resume-builder
    ```
 
 2. **Set up environment**:
@@ -302,7 +302,22 @@ _Coming soon - Add screenshots of your application here!_
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is **Proprietary - All Rights Reserved**. 
+
+**Copyright (c) 2025 Kiran**
+
+This software is protected by copyright laws. Unauthorized copying, modification, distribution, or use of this software, via any medium is strictly prohibited without the express written permission of the copyright owner.
+
+**Key Restrictions:**
+- ❌ No copying or cloning
+- ❌ No modification or derivative works
+- ❌ No distribution or sublicensing
+- ❌ No reverse engineering
+- ❌ No commercial use without permission
+
+For licensing inquiries, please contact: **kiruk421@gmail.com**
+
+See the [LICENSE](LICENSE) file for full terms and conditions.
 
 ## 👨‍💻 Author
 
