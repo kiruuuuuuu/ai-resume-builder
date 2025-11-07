@@ -151,17 +151,7 @@ Open your browser and navigate to:
 
 ## 🚀 Deployment
 
-For production deployment instructions, see the comprehensive [**Deployment Guide**](DEPLOYMENT.md).
-
-The guide includes:
-- Step-by-step server setup
-- Database and Redis configuration
-- Gunicorn and Nginx setup
-- SSL certificate configuration
-- Celery worker setup
-- Docker deployment option
-- Platform-specific guides (Heroku, DigitalOcean, AWS)
-- Security checklist and troubleshooting
+For production deployment instructions, see the [**Complete Documentation**](docs/DOCUMENTATION.md#deployment-guide).
 
 ## 📚 Documentation
 
