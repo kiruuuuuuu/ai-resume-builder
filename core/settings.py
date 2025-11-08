@@ -294,9 +294,9 @@ else:
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # WhiteNoise additional configuration
-# Allow WhiteNoise to serve files from STATICFILES_DIRS if collectstatic fails
-WHITENOISE_USE_FINDERS = True  # Fallback to finding files in STATICFILES_DIRS
-WHITENOISE_AUTOREFRESH = False  # Disable auto-refresh in production (use collected files)
+# Note: WhiteNoise serves files from STATIC_ROOT by default
+# If collectstatic fails, files in STATICFILES_DIRS won't be served automatically
+# We ensure collectstatic runs at container startup as a fallback
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
