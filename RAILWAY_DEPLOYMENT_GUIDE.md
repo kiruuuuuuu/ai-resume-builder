@@ -421,12 +421,28 @@ railway up
 
 ### 7. Create Superuser
 
-**Using Railway CLI**:
+**Recommended: Use Railway Web Terminal** (Easiest Method):
+
+1. **Go to Railway Dashboard**
+2. **Click on your Django app service**
+3. **Open Web Terminal**:
+   - Go to **"Deployments"** tab
+   - Click on latest deployment
+   - Look for **"Terminal"** or **"Console"** option
+   - OR: Go to **"Settings"** → **"Console"**
+4. **Run createsuperuser**:
+   ```bash
+   python manage.py createsuperuser
+   ```
+5. **Follow prompts**: Enter username, email, and password
+
+**Alternative: Railway CLI** (if properly configured):
 ```powershell
+railway link  # Make sure linked to Django service
 railway run python manage.py createsuperuser
 ```
 
-Or use Railway's web terminal in the dashboard.
+**Note**: Railway's internal hostnames (`postgres.railway.internal`) are only accessible from within Railway's network. Using the web terminal ensures you're in the correct environment.
 
 ---
 
