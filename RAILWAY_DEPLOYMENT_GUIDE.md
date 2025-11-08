@@ -386,6 +386,14 @@ Your app uses Celery for async tasks like:
 - Resume parsing
 - Resume scoring
 
+### ✅ Celery is FREE on Railway!
+
+**Important**: 
+- Celery is **FREE** (open-source library)
+- Redis is **FREE** (included in Railway free tier)
+- Running Celery worker is **FREE** (uses Railway's $5/month free credit)
+- **No additional payment required!** ✅
+
 ### Option 1: Separate Service (Recommended for Production) ✅
 
 **In Railway Dashboard**:
@@ -579,12 +587,35 @@ railway run python manage.py check
 ### Estimated Monthly Cost: **$0** (Free Tier)
 
 **Configuration**:
-- Web service: ~$0-5/month (within free credit)
-- PostgreSQL: FREE (included)
-- Redis: FREE (included)
-- Celery worker: ~$0-5/month (within free credit)
+- Web service (Django app): ~$2-3/month (within free credit)
+- PostgreSQL: **FREE** (included, no charge)
+- Redis: **FREE** (included, no charge)
+- Celery worker: ~$2-3/month (within free credit)
+- **Total usage**: ~$4-6/month → **FREE** (within $5/month credit)
 
 **Total**: **$0/month** if you stay within free tier limits!
+
+### ✅ Celery is FREE on Railway!
+
+**Important Points**:
+- ✅ **Celery is FREE** - It's an open-source Python library (no cost)
+- ✅ **Redis is FREE** - Railway includes Redis in free tier
+- ✅ **Worker service is FREE** - Runs on Railway's free credit
+- ✅ **No additional payment** - Everything runs on $5/month free credit
+
+**Why it's free**:
+- Celery is just Python code running as a background process
+- Railway charges based on resource usage (CPU, RAM, time)
+- A small Celery worker uses minimal resources
+- Stays well within the $5/month free credit
+
+**What uses Railway credit**:
+- Web service (Django app) - ~$2-3/month
+- Celery worker service - ~$2-3/month
+- PostgreSQL - FREE (included)
+- Redis - FREE (included)
+
+**Total**: ~$4-6/month → **FREE** (within $5/month credit) ✅
 
 ---
 
