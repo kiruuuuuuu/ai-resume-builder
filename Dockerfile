@@ -26,8 +26,16 @@ RUN pip install --no-cache-dir gunicorn || true
 # Copy project
 COPY . .
 
+# Set Django settings module (needed for collectstatic)
+ENV DJANGO_SETTINGS_MODULE=core.settings
+
+# Create staticfiles directory
+RUN mkdir -p /app/staticfiles
+
 # Collect static files
-RUN python manage.py collectstatic --noinput || true
+# Set a dummy SECRET_KEY for collectstatic (required by Django, will be overridden at runtime)
+ENV DJANGO_SECRET_KEY=dummy-key-for-build-only
+RUN python manage.py collectstatic --noinput --clear || echo "Warning: collectstatic had issues, but continuing. WhiteNoise will serve from STATICFILES_DIRS as fallback."
 
 # Expose port
 EXPOSE 8000
@@ -36,6 +44,6 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD curl -f http://localhost:8000/ || exit 1
 
-# Run migrations, create superuser (if env vars set), and start server
-CMD python manage.py migrate && (python manage.py create_superuser_from_env || echo "Superuser creation skipped or failed, continuing...") && gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
+# Run migrations, collect static files (if needed), create superuser (if env vars set), and start server
+CMD python manage.py migrate && (python manage.py collectstatic --noinput || echo "Collectstatic warning, but continuing...") && (python manage.py create_superuser_from_env || echo "Superuser creation skipped or failed, continuing...") && gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
 

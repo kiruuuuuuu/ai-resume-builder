@@ -284,7 +284,19 @@ STATICFILES_DIRS = [
 ]
 
 # WhiteNoise configuration for serving static files
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Using CompressedStaticFilesStorage instead of Manifest version for better compatibility
+# The Manifest version requires collectstatic to run successfully, which can fail in some environments
+if DEBUG:
+    # In development, use default storage
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+else:
+    # In production, use WhiteNoise with compression (no manifest required)
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+
+# WhiteNoise additional configuration
+# Allow WhiteNoise to serve files from STATICFILES_DIRS if collectstatic fails
+WHITENOISE_USE_FINDERS = True  # Fallback to finding files in STATICFILES_DIRS
+WHITENOISE_AUTOREFRESH = False  # Disable auto-refresh in production (use collected files)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
