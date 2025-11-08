@@ -42,15 +42,19 @@ GOOGLE_AI_API_KEY = os.getenv("GOOGLE_AI_API_KEY")
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 't')
 
 # ALLOWED_HOSTS can be set as comma-separated list in environment variable
-# If not set, automatically allow Railway domains in production
+# If not set, automatically allow Railway domains
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else []
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
 
-# If ALLOWED_HOSTS is empty and we're in production (not DEBUG), allow Railway domains
-if not ALLOWED_HOSTS and not DEBUG:
+# If ALLOWED_HOSTS is empty, automatically allow Railway domains
+# This works in both development and production for Railway deployments
+if not ALLOWED_HOSTS:
     # Allow all Railway domains automatically
     # Django supports leading dots to match subdomains
+    # This will match: *.railway.app, *.up.railway.app, etc.
     ALLOWED_HOSTS = ['.railway.app', '.up.railway.app']
+    # Also add specific common Railway patterns
+    ALLOWED_HOSTS.extend(['railway.app', 'up.railway.app'])
 
 # Production Security Settings (only enabled when DEBUG=False)
 if not DEBUG:
