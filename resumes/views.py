@@ -318,8 +318,26 @@ def validate_resume_data_view(request):
         
         formsets = {key: fs_class(request.POST, prefix=key) for key, fs_class in formset_classes.items()}
 
+        # Validate profile form
         is_profile_valid = profile_form.is_valid()
-        are_formsets_valid = all(fs.is_valid() for fs in formsets.values())
+        
+        # Validate all formsets - need to call is_valid() to trigger validation
+        # This will validate all forms in each formset and populate errors
+        are_formsets_valid = True
+        for fs in formsets.values():
+            fs_valid = fs.is_valid()
+            if not fs_valid:
+                are_formsets_valid = False
+            else:
+                # Even if formset is valid, check individual forms for errors
+                # (in case formset validation passed but individual forms have errors)
+                for form in fs:
+                    # Skip deleted forms
+                    if form.cleaned_data and form.cleaned_data.get('DELETE', False):
+                        continue
+                    if form.errors:
+                        are_formsets_valid = False
+                        break
 
         if is_profile_valid and are_formsets_valid:
             profile = profile_form.save()
@@ -342,16 +360,47 @@ def validate_resume_data_view(request):
         else:
             messages.error(request, "Please correct the errors highlighted in red below.")
             
+            # Determine first error section - check both formset-level and individual form errors
             first_error_section = 'personal'
+            has_any_errors = False
+            
             if profile_form.errors:
                 first_error_section = 'personal'
+                has_any_errors = True
             else:
                 for key, fs in formsets.items():
-                    if fs.errors or fs.non_form_errors():
+                    # Check for formset-level errors
+                    if fs.non_form_errors():
                         first_error_section = key
+                        has_any_errors = True
+                        break
+                    # Check for individual form errors
+                    if any(form.errors for form in fs):
+                        first_error_section = key
+                        has_any_errors = True
                         break
             
-            context = { 'profile_form': profile_form, 'first_error_section': first_error_section }
+            # Count total errors for display - count actual error messages
+            total_errors = 0
+            # Count profile form errors (each field can have multiple error messages)
+            for field_errors in profile_form.errors.values():
+                total_errors += len(field_errors)
+            
+            # Count formset errors
+            for fs in formsets.values():
+                # Count formset-level errors
+                total_errors += len(fs.non_form_errors())
+                # Count individual form errors (each field can have multiple error messages)
+                for form in fs:
+                    for field_errors in form.errors.values():
+                        total_errors += len(field_errors)
+            
+            context = { 
+                'profile_form': profile_form, 
+                'first_error_section': first_error_section,
+                'has_any_errors': has_any_errors,
+                'total_errors': total_errors,
+            }
             context.update({f'{key}_formset': fs for key, fs in formsets.items()})
             return render(request, 'resumes/validate_resume.html', context)
 
@@ -375,7 +424,12 @@ def validate_resume_data_view(request):
         
         formsets = {key: fs_class(initial=initial_data.get(key, []), prefix=key) for key, fs_class in formset_classes.items()}
 
-        context = { 'profile_form': profile_form, 'first_error_section': 'personal' }
+        context = { 
+            'profile_form': profile_form, 
+            'first_error_section': 'personal',
+            'has_any_errors': False,
+            'total_errors': 0,
+        }
         context.update({f'{key}_formset': fs for key, fs in formsets.items()})
         return render(request, 'resumes/validate_resume.html', context)
 

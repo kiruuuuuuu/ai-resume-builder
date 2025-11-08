@@ -150,7 +150,7 @@
     </nav>
 
     <!-- Enhanced Error Summary (shown when form has errors) -->
-    {% if profile_form.errors or experience_formset.errors or education_formset.errors or skill_formset.errors or project_formset.errors or certification_formset.errors or achievement_formset.errors or language_formset.errors or hobby_formset.errors %}
+    {% if has_any_errors %}
     <div id="error-summary" class="mb-8 relative overflow-hidden rounded-2xl shadow-2xl border-2 border-red-300 bg-gradient-to-br from-red-50 via-red-50/95 to-orange-50/50 animate-scale-in">
         <!-- Animated background pattern -->
         <div class="absolute inset-0 opacity-5">
@@ -178,13 +178,14 @@
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h3 class="text-2xl font-bold text-red-900 mb-1 flex items-center gap-2">
-                                <span>Validation Errors Detected</span>
+                                <span>⚠️ Validation Errors Detected</span>
+                                {% if total_errors > 0 %}
                                 <span class="px-3 py-1 bg-red-600 text-white text-sm font-bold rounded-full shadow-lg">
-                                    {% if profile_form.errors %}{{ profile_form.errors|length }}{% endif %}
-                                    {% if skill_formset.errors %}{{ skill_formset.errors|length }}{% endif %}
+                                    {{ total_errors }} error{{ total_errors|pluralize }}
                                 </span>
+                                {% endif %}
                             </h3>
-                            <p class="text-red-700 text-sm">Please review and correct the following issues before proceeding:</p>
+                            <p class="text-red-700 text-sm font-medium">Please review and correct <strong>ALL {{ total_errors }} error{{ total_errors|pluralize }}</strong> below before you can proceed. You cannot submit the form until all errors are fixed.</p>
                         </div>
                         <button onclick="document.getElementById('error-summary').scrollIntoView({behavior: 'smooth'})" class="flex-shrink-0 p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors" aria-label="Scroll to top">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -193,8 +194,8 @@
                         </button>
                     </div>
                     
-                    <div class="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-red-200/50 shadow-inner">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white/90 backdrop-blur-sm rounded-xl p-5 border border-red-200/50 shadow-inner max-h-96 overflow-y-auto">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {% if profile_form.errors %}
                                 <div class="space-y-2">
                                     <div class="flex items-center gap-2 mb-2">
@@ -203,14 +204,14 @@
                                     </div>
                                     {% for field, errors in profile_form.errors.items %}
                                         {% for error in errors %}
-                                            <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors cursor-pointer" onclick="scrollToField('{{ field }}')">
+                                            <div class="ml-3 p-2.5 bg-red-50 border-l-4 border-red-500 rounded-r-md hover:bg-red-100 transition-colors cursor-pointer text-sm" onclick="scrollToField('profile-{{ field }}')">
                                                 <div class="flex items-start gap-2">
-                                                    <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <svg class="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                                                     </svg>
-                                                    <div>
-                                                        <span class="font-semibold text-red-900">{{ field|title|underscore_to_space }}:</span>
-                                                        <span class="text-red-700 ml-1">{{ error }}</span>
+                                                    <div class="flex-1 min-w-0">
+                                                        <span class="font-semibold text-red-900 text-xs">{{ field|title|underscore_to_space }}:</span>
+                                                        <span class="text-red-700 ml-1 text-xs block mt-0.5">{{ error }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -219,24 +220,39 @@
                                 </div>
                             {% endif %}
                             
-                            {% if experience_formset.errors %}
+                            {% if experience_formset.errors or experience_formset.non_form_errors %}
                                 <div class="space-y-2">
                                     <div class="flex items-center gap-2 mb-2">
                                         <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                                         <span class="font-bold text-red-900 text-sm uppercase tracking-wide">Experience</span>
                                     </div>
+                                    {% if experience_formset.non_form_errors %}
+                                        {% for error in experience_formset.non_form_errors %}
+                                            <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors cursor-pointer" onclick="scrollToSection('experience')">
+                                                <div class="flex items-start gap-2">
+                                                    <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                    </svg>
+                                                    <div>
+                                                        <span class="font-semibold text-red-900">Experience Form Error:</span>
+                                                        <span class="text-red-700 ml-1">{{ error }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
                                     {% for form in experience_formset %}
                                         {% if form.errors %}
                                             {% for field, errors in form.errors.items %}
                                                 {% for error in errors %}
-                                                    <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors">
+                                                    <div class="ml-3 p-2.5 bg-red-50 border-l-4 border-red-500 rounded-r-md hover:bg-red-100 transition-colors cursor-pointer text-sm" onclick="scrollToSection('experience')">
                                                         <div class="flex items-start gap-2">
-                                                            <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                            <svg class="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                                                             </svg>
-                                                            <div>
-                                                                <span class="font-semibold text-red-900">Experience {{ forloop.parentloop.counter }} - {{ field|title|underscore_to_space }}:</span>
-                                                                <span class="text-red-700 ml-1">{{ error }}</span>
+                                                            <div class="flex-1 min-w-0">
+                                                                <span class="font-semibold text-red-900 text-xs">Exp {{ forloop.parentloop.counter }} - {{ field|title|underscore_to_space }}:</span>
+                                                                <span class="text-red-700 ml-1 text-xs block mt-0.5">{{ error }}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -247,17 +263,32 @@
                                 </div>
                             {% endif %}
                             
-                            {% if education_formset.errors %}
+                            {% if education_formset.errors or education_formset.non_form_errors %}
                                 <div class="space-y-2">
                                     <div class="flex items-center gap-2 mb-2">
                                         <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                                         <span class="font-bold text-red-900 text-sm uppercase tracking-wide">Education</span>
                                     </div>
+                                    {% if education_formset.non_form_errors %}
+                                        {% for error in education_formset.non_form_errors %}
+                                            <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors cursor-pointer" onclick="scrollToSection('education')">
+                                                <div class="flex items-start gap-2">
+                                                    <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                    </svg>
+                                                    <div>
+                                                        <span class="font-semibold text-red-900">Education Form Error:</span>
+                                                        <span class="text-red-700 ml-1">{{ error }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
                                     {% for form in education_formset %}
                                         {% if form.errors %}
                                             {% for field, errors in form.errors.items %}
                                                 {% for error in errors %}
-                                                    <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors">
+                                                    <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors cursor-pointer" onclick="scrollToSection('education')">
                                                         <div class="flex items-start gap-2">
                                                             <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -275,12 +306,27 @@
                                 </div>
                             {% endif %}
                             
-                            {% if skill_formset.errors %}
+                            {% if skill_formset.errors or skill_formset.non_form_errors %}
                                 <div class="space-y-2">
                                     <div class="flex items-center gap-2 mb-2">
                                         <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                                         <span class="font-bold text-red-900 text-sm uppercase tracking-wide">Skills</span>
                                     </div>
+                                    {% if skill_formset.non_form_errors %}
+                                        {% for error in skill_formset.non_form_errors %}
+                                            <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors cursor-pointer" onclick="scrollToSection('skill')">
+                                                <div class="flex items-start gap-2">
+                                                    <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                    </svg>
+                                                    <div>
+                                                        <span class="font-semibold text-red-900">Skills Form Error:</span>
+                                                        <span class="text-red-700 ml-1">{{ error }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
                                     {% for form in skill_formset %}
                                         {% if form.errors %}
                                             {% for field, errors in form.errors.items %}
@@ -303,17 +349,32 @@
                                 </div>
                             {% endif %}
                             
-                            {% if project_formset.errors %}
+                            {% if project_formset.errors or project_formset.non_form_errors %}
                                 <div class="space-y-2">
                                     <div class="flex items-center gap-2 mb-2">
                                         <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                                         <span class="font-bold text-red-900 text-sm uppercase tracking-wide">Projects</span>
                                     </div>
+                                    {% if project_formset.non_form_errors %}
+                                        {% for error in project_formset.non_form_errors %}
+                                            <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors cursor-pointer" onclick="scrollToSection('project')">
+                                                <div class="flex items-start gap-2">
+                                                    <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                    </svg>
+                                                    <div>
+                                                        <span class="font-semibold text-red-900">Projects Form Error:</span>
+                                                        <span class="text-red-700 ml-1">{{ error }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
                                     {% for form in project_formset %}
                                         {% if form.errors %}
                                             {% for field, errors in form.errors.items %}
                                                 {% for error in errors %}
-                                                    <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors">
+                                                    <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors cursor-pointer" onclick="scrollToSection('project')">
                                                         <div class="flex items-start gap-2">
                                                             <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -331,18 +392,33 @@
                                 </div>
                             {% endif %}
                             
-                            {% if certification_formset.errors or achievement_formset.errors or language_formset.errors or hobby_formset.errors %}
+                            {% if certification_formset.errors or certification_formset.non_form_errors or achievement_formset.errors or achievement_formset.non_form_errors or language_formset.errors or language_formset.non_form_errors or hobby_formset.errors or hobby_formset.non_form_errors %}
                                 <div class="space-y-2">
-                                    {% if certification_formset.errors %}
+                                    {% if certification_formset.errors or certification_formset.non_form_errors %}
                                         <div class="flex items-center gap-2 mb-2">
                                             <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                                             <span class="font-bold text-red-900 text-sm uppercase tracking-wide">Certifications</span>
                                         </div>
+                                        {% if certification_formset.non_form_errors %}
+                                            {% for error in certification_formset.non_form_errors %}
+                                                <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors cursor-pointer" onclick="scrollToSection('certification')">
+                                                    <div class="flex items-start gap-2">
+                                                        <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                        </svg>
+                                                        <div>
+                                                            <span class="font-semibold text-red-900">Certifications Form Error:</span>
+                                                            <span class="text-red-700 ml-1">{{ error }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
                                         {% for form in certification_formset %}
                                             {% if form.errors %}
                                                 {% for field, errors in form.errors.items %}
                                                     {% for error in errors %}
-                                                        <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors">
+                                                        <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors cursor-pointer" onclick="scrollToSection('certification')">
                                                             <div class="flex items-start gap-2">
                                                                 <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                                                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -359,16 +435,31 @@
                                         {% endfor %}
                                     {% endif %}
                                     
-                                    {% if achievement_formset.errors %}
+                                    {% if achievement_formset.errors or achievement_formset.non_form_errors %}
                                         <div class="flex items-center gap-2 mb-2 mt-4">
                                             <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                                             <span class="font-bold text-red-900 text-sm uppercase tracking-wide">Achievements</span>
                                         </div>
+                                        {% if achievement_formset.non_form_errors %}
+                                            {% for error in achievement_formset.non_form_errors %}
+                                                <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors cursor-pointer" onclick="scrollToSection('achievement')">
+                                                    <div class="flex items-start gap-2">
+                                                        <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                        </svg>
+                                                        <div>
+                                                            <span class="font-semibold text-red-900">Achievements Form Error:</span>
+                                                            <span class="text-red-700 ml-1">{{ error }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
                                         {% for form in achievement_formset %}
                                             {% if form.errors %}
                                                 {% for field, errors in form.errors.items %}
                                                     {% for error in errors %}
-                                                        <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors">
+                                                        <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors cursor-pointer" onclick="scrollToSection('achievement')">
                                                             <div class="flex items-start gap-2">
                                                                 <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                                                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -385,16 +476,31 @@
                                         {% endfor %}
                                     {% endif %}
                                     
-                                    {% if language_formset.errors %}
+                                    {% if language_formset.errors or language_formset.non_form_errors %}
                                         <div class="flex items-center gap-2 mb-2 mt-4">
                                             <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                                             <span class="font-bold text-red-900 text-sm uppercase tracking-wide">Languages</span>
                                         </div>
+                                        {% if language_formset.non_form_errors %}
+                                            {% for error in language_formset.non_form_errors %}
+                                                <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors cursor-pointer" onclick="scrollToSection('language')">
+                                                    <div class="flex items-start gap-2">
+                                                        <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                        </svg>
+                                                        <div>
+                                                            <span class="font-semibold text-red-900">Languages Form Error:</span>
+                                                            <span class="text-red-700 ml-1">{{ error }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
                                         {% for form in language_formset %}
                                             {% if form.errors %}
                                                 {% for field, errors in form.errors.items %}
                                                     {% for error in errors %}
-                                                        <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors">
+                                                        <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors cursor-pointer" onclick="scrollToSection('language')">
                                                             <div class="flex items-start gap-2">
                                                                 <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                                                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -411,16 +517,31 @@
                                         {% endfor %}
                                     {% endif %}
                                     
-                                    {% if hobby_formset.errors %}
+                                    {% if hobby_formset.errors or hobby_formset.non_form_errors %}
                                         <div class="flex items-center gap-2 mb-2 mt-4">
                                             <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                                             <span class="font-bold text-red-900 text-sm uppercase tracking-wide">Hobbies</span>
                                         </div>
+                                        {% if hobby_formset.non_form_errors %}
+                                            {% for error in hobby_formset.non_form_errors %}
+                                                <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors cursor-pointer" onclick="scrollToSection('hobby')">
+                                                    <div class="flex items-start gap-2">
+                                                        <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                        </svg>
+                                                        <div>
+                                                            <span class="font-semibold text-red-900">Hobbies Form Error:</span>
+                                                            <span class="text-red-700 ml-1">{{ error }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
                                         {% for form in hobby_formset %}
                                             {% if form.errors %}
                                                 {% for field, errors in form.errors.items %}
                                                     {% for error in errors %}
-                                                        <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors">
+                                                        <div class="ml-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg hover:bg-red-100 transition-colors cursor-pointer" onclick="scrollToSection('hobby')">
                                                             <div class="flex items-start gap-2">
                                                                 <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                                                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -442,6 +563,16 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Success message when no errors -->
+    <div class="mb-6 p-4 bg-green-50 border-2 border-green-300 rounded-xl">
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-green-800 font-medium">All fields look good! Review your information and click "Confirm & Build My Resume" when ready.</p>
         </div>
     </div>
     {% endif %}
@@ -517,11 +648,50 @@
                         </div>
                     </div>
                     {% if field.name == 'professional_summary' %}
-                        <div class="flex justify-end -mt-2 mb-4">
+                        <div class="flex justify-between items-center -mt-2 mb-4">
+                            <div class="text-sm text-gray-600">
+                                <span id="char-count-{{ field.id_for_label }}" class="font-medium">0</span> / 600 characters
+                            </div>
                             <button type="button" class="enhance-btn text-sm font-medium text-purple-600 hover:text-purple-800" 
                                     data-enhance-target="{{ field.id_for_label }}" 
                                     data-enhance-context="professional_summary">✨ Enhance with AI</button>
                         </div>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const textarea = document.getElementById('{{ field.id_for_label }}');
+                                const charCount = document.getElementById('char-count-{{ field.id_for_label }}');
+                                if (textarea && charCount) {
+                                    function updateCharCount() {
+                                        const length = textarea.value.length;
+                                        charCount.textContent = length;
+                                        if (length > 600) {
+                                            charCount.classList.add('text-red-600', 'font-bold');
+                                            charCount.classList.remove('text-gray-600', 'text-orange-600', 'font-semibold');
+                                            // Add error class to textarea
+                                            textarea.classList.add('border-red-500');
+                                        } else if (length > 550) {
+                                            charCount.classList.add('text-orange-600', 'font-semibold');
+                                            charCount.classList.remove('text-red-600', 'text-gray-600', 'font-bold');
+                                            textarea.classList.remove('border-red-500');
+                                        } else {
+                                            charCount.classList.remove('text-red-600', 'text-orange-600', 'font-bold', 'font-semibold');
+                                            charCount.classList.add('text-gray-600');
+                                            textarea.classList.remove('border-red-500');
+                                        }
+                                        // Update submit button state when character count changes
+                                        if (typeof updateSubmitButtonState === 'function') {
+                                            setTimeout(updateSubmitButtonState, 50);
+                                        }
+                                    }
+                                    updateCharCount();
+                                    textarea.addEventListener('input', updateCharCount);
+                                    textarea.addEventListener('keyup', updateCharCount);
+                                    textarea.addEventListener('paste', function() {
+                                        setTimeout(updateCharCount, 10);
+                                    });
+                                }
+                            });
+                        </script>
                     {% endif %}
                 {% endfor %}
                 {% for field in profile_form.hidden_fields %}{{ field }}{% endfor %}
@@ -846,12 +1016,24 @@
             </div>
         </div>
         
-        <div class="pt-5">
-            <button type="submit" form="validate-resume-form" onclick="handleFormSubmit(event)" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white font-bold py-4 px-6 rounded-xl hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 transition-all duration-300 text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="pt-8 pb-6" id="submit-section">
+            {% if has_any_errors %}
+            <div id="error-warning" class="mb-6 p-5 bg-red-50 border-2 border-red-400 rounded-xl shadow-lg">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <p class="text-red-800 font-semibold">
+                        ⚠️ Please fix all <strong>{{ total_errors }} error{{ total_errors|pluralize }}</strong> shown above before you can proceed. The form cannot be submitted until all validation errors are resolved.
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+            <button type="submit" id="submit-btn" form="validate-resume-form" onclick="handleFormSubmit(event)" class="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white font-bold py-5 px-8 rounded-xl hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 transition-all duration-300 text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="submit-icon">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Confirm & Build My Resume
+                <span id="submit-btn-text">Confirm & Build My Resume</span>
             </button>
         </div>
     </form>
@@ -946,20 +1128,38 @@
 
     // Scroll to specific field
     function scrollToField(fieldName) {
-        const field = document.querySelector(`[name*="${fieldName}"]`);
-        if (field) {
-            const section = field.closest('[id^="formset-"]');
-            if (section) {
-                const sectionId = section.id.replace('formset-', '');
+        // Handle profile fields (they don't have formset- prefix)
+        if (fieldName.startsWith('profile-')) {
+            const actualFieldName = fieldName.replace('profile-', '');
+            const field = document.querySelector(`[name="profile-${actualFieldName}"]`);
+            if (field) {
                 const manager = Alpine.$data(document.querySelector('[x-data="formsetManager()"]'));
                 if (manager) {
-                    manager.openSection = sectionId;
+                    manager.openSection = 'personal';
                     manager.$nextTick(() => {
                         setTimeout(() => {
                             field.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             field.focus();
                         }, 300);
                     });
+                }
+            }
+        } else {
+            const field = document.querySelector(`[name*="${fieldName}"]`);
+            if (field) {
+                const section = field.closest('[id^="formset-"]');
+                if (section) {
+                    const sectionId = section.id.replace('formset-', '');
+                    const manager = Alpine.$data(document.querySelector('[x-data="formsetManager()"]'));
+                    if (manager) {
+                        manager.openSection = sectionId;
+                        manager.$nextTick(() => {
+                            setTimeout(() => {
+                                field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                field.focus();
+                            }, 300);
+                        });
+                    }
                 }
             }
         }
@@ -970,99 +1170,73 @@
         const form = document.getElementById('validate-resume-form');
         event.preventDefault();
         
-        // Collect all errors from the form
-        const errors = [];
+        // Check if error summary exists - if it does, there are server-side errors
+        const errorSummary = document.getElementById('error-summary');
+        if (errorSummary && errorSummary.offsetParent !== null) {
+            // Errors exist, prevent submission
+            errorSummary.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            if (window.toast) {
+                window.toast.error('Please fix ALL errors shown above before submitting. You cannot proceed until all errors are resolved.', 10000);
+            } else {
+                alert('Please fix ALL errors shown above before submitting. You cannot proceed until all errors are resolved.');
+            }
+            return false;
+        }
+        
+        // Client-side validation
+        let hasErrors = false;
         const errorFields = [];
         
-        // Check for Django form errors (server-side validation) - look for error text elements
-        const errorTextElements = form.querySelectorAll('.text-red-600, .text-red-700, [class*="error"]');
-        errorTextElements.forEach(errorEl => {
-            const errorText = errorEl.textContent.trim();
-            if (errorText && errorText.length > 0 && !errors.includes(errorText)) {
-                // Skip if it's just an icon or empty
-                if (!errorText.match(/^[\s\S]*<svg[\s\S]*$/)) {
-                    errors.push(errorText);
+        // Check professional summary character limit
+        const professionalSummaryField = form.querySelector('textarea[name*="professional_summary"]');
+        if (professionalSummaryField) {
+            const value = professionalSummaryField.value.trim();
+            if (value.length > 600) {
+                hasErrors = true;
+                errorFields.push(professionalSummaryField);
+                if (window.toast) {
+                    window.toast.error('Professional summary cannot exceed 600 characters.', 5000);
                 }
             }
-            // Find the associated input field
-            const input = errorEl.closest('.mb-4')?.querySelector('input, textarea, select') || 
-                         errorEl.previousElementSibling || 
-                         errorEl.parentElement?.querySelector('input, textarea, select') ||
-                         form.querySelector(`input[name="${errorEl.closest('[class*="field"]')?.querySelector('input, textarea, select')?.name}"]`);
-            if (input && !errorFields.includes(input)) {
-                errorFields.push(input);
-            }
-        });
+        }
         
-        // Also check for fields with error classes
-        const invalidInputs = form.querySelectorAll('input.is-invalid, textarea.is-invalid, select.is-invalid, .border-red-500');
-        invalidInputs.forEach(input => {
-            if (!errorFields.includes(input)) {
-                errorFields.push(input);
-            }
-        });
-        
-        // Check for HTML5 validation errors (if any fields have required or pattern attributes)
-        const requiredFields = form.querySelectorAll('input[required], textarea[required], select[required]');
+        // Check required fields
+        const requiredFields = form.querySelectorAll('input[required]:not([type="hidden"]), textarea[required], select[required]');
         requiredFields.forEach(field => {
             if (!field.value || field.value.trim() === '') {
-                const label = form.querySelector(`label[for="${field.id}"]`)?.textContent?.replace('*', '').trim() || field.name;
-                const errorMsg = `${label} is required.`;
-                if (!errors.includes(errorMsg)) {
-                    errors.push(errorMsg);
-                }
+                hasErrors = true;
                 if (!errorFields.includes(field)) {
                     errorFields.push(field);
                 }
             }
         });
         
-        // If there are errors, display them and scroll to first one
-        if (errors.length > 0 || errorFields.length > 0) {
-            // Scroll error summary into view if it exists
-            const errorSummary = document.getElementById('error-summary');
+        // Check for fields with visible error messages
+        const visibleErrorMessages = form.querySelectorAll('.text-red-600:not([style*="display: none"]), .text-red-700:not([style*="display: none"])');
+        if (visibleErrorMessages.length > 0) {
+            hasErrors = true;
+        }
+        
+        // If errors exist, prevent submission
+        if (hasErrors || errorFields.length > 0) {
             if (errorSummary) {
                 errorSummary.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
             
-            // Show detailed error message using toast
-            if (window.toast && errors.length > 0) {
-                const errorMessage = `Please fix ${errors.length} error${errors.length > 1 ? 's' : ''}. See the error summary above for details.`;
-                window.toast.error(errorMessage, 8000);
-            } else if (window.toast) {
-                window.toast.error('Please fix the errors highlighted in red before submitting.', 8000);
+            if (window.toast) {
+                window.toast.error('Please fix all validation errors before submitting.', 8000);
+            } else {
+                alert('Please fix all validation errors before submitting.');
             }
             
-            // Open sections with errors and scroll to first error field
+            // Scroll to first error field
             if (errorFields.length > 0) {
                 const firstErrorField = errorFields[0];
-                let section = firstErrorField.closest('[id^="formset-"]');
-                
-                if (!section) {
-                    // Try to find parent section
-                    section = firstErrorField.closest('[x-show]')?.parentElement ||
-                             firstErrorField.closest('.bg-white');
-                }
-                
-                if (section && section.id) {
-                    const sectionId = section.id.replace('formset-', '');
-                    const manager = Alpine.$data(document.querySelector('[x-data="formsetManager()"]'));
-                    if (manager) {
-                        manager.openSection = sectionId;
-                        manager.$nextTick(() => {
-                            setTimeout(() => {
-                                firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                firstErrorField.focus();
-                            }, 300);
-                        });
-                    }
-                } else {
-                    // Fallback: just scroll to the field
-                    setTimeout(() => {
-                        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        firstErrorField.focus();
-                    }, 100);
-                }
+                setTimeout(() => {
+                    firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstErrorField.focus();
+                }, 100);
             }
             
             return false;
@@ -1072,7 +1246,72 @@
         form.submit();
     }
 
+    // Function to check if form has errors and update submit button
+    function updateSubmitButtonState() {
+        const errorSummary = document.getElementById('error-summary');
+        const submitBtn = document.getElementById('submit-btn');
+        const submitBtnText = document.getElementById('submit-btn-text');
+        const errorWarning = document.getElementById('error-warning');
+        
+        // Check if error summary exists and is visible
+        const hasErrors = errorSummary && errorSummary.offsetParent !== null;
+        
+        // Also check for visible error messages in the form
+        const form = document.getElementById('validate-resume-form');
+        const visibleErrors = form.querySelectorAll('.text-red-600:not([style*="display: none"]), .text-red-700:not([style*="display: none"]), .border-red-500 input, .border-red-500 textarea, .border-red-500 select');
+        const hasVisibleErrors = visibleErrors.length > 0;
+        
+        // Check professional summary character limit
+        const professionalSummaryField = form.querySelector('textarea[name*="professional_summary"]');
+        let summaryOverLimit = false;
+        if (professionalSummaryField && professionalSummaryField.value.trim().length > 600) {
+            summaryOverLimit = true;
+        }
+        
+        if (hasErrors || hasVisibleErrors || summaryOverLimit) {
+            // Disable button and show error state
+            submitBtn.disabled = true;
+            submitBtn.classList.remove('hover:shadow-2xl', 'hover:-translate-y-0.5');
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            submitBtnText.innerHTML = '⚠️ Fix Errors to Continue';
+            const submitIcon = document.getElementById('submit-icon');
+            if (submitIcon) {
+                submitIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />';
+            }
+            if (errorWarning) {
+                errorWarning.classList.remove('hidden');
+            }
+        } else {
+            // Enable button and show success state
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            submitBtn.classList.add('hover:shadow-2xl', 'hover:-translate-y-0.5');
+            submitBtnText.innerHTML = 'Confirm & Build My Resume';
+            const submitIcon = document.getElementById('submit-icon');
+            if (submitIcon) {
+                submitIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />';
+            }
+            if (errorWarning) {
+                errorWarning.classList.add('hidden');
+            }
+        }
+    }
+    
+    // Update submit button state on page load and whenever form changes
     document.addEventListener('DOMContentLoaded', function () {
+        updateSubmitButtonState();
+        
+        // Update button state when any form field changes
+        const form = document.getElementById('validate-resume-form');
+        if (form) {
+            form.addEventListener('input', function() {
+                setTimeout(updateSubmitButtonState, 100);
+            });
+            form.addEventListener('change', function() {
+                setTimeout(updateSubmitButtonState, 100);
+            });
+        }
+        
         document.body.addEventListener('click', function(event) {
             if (event.target.classList.contains('enhance-btn')) {
                 const button = event.target;
@@ -1130,10 +1369,13 @@
                 .finally(() => {
                     button.innerHTML = originalButtonText;
                     button.disabled = false;
+                    // Update submit button state after enhancement
+                    updateSubmitButtonState();
                 });
             }
         });
     });
 </script>
 {% endblock %}
+
 
