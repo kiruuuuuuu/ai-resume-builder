@@ -137,7 +137,8 @@ cd path/to/your/AI_Resume_Builder
 celery -A core worker -l info -P solo
 
 # For Linux/Mac (Production):
-celery -A core worker -l info -P eventlet --concurrency=50
+celery -A core worker -l info --concurrency=4
+# Alternative (higher concurrency): celery -A core worker -l info -P threads --concurrency=10
 ```
 
 **Terminal 3: Start the Django Server**
@@ -245,17 +246,19 @@ celery -A core worker -l info -P solo
 **Why**: Avoids eventlet blocking I/O issues on Windows. Simple, reliable, and sufficient for development.
 
 #### Linux/Mac (Production)
-**Recommended**: Use `eventlet` pool
+**Recommended**: Use `prefork` pool (default) - **Most stable with Redis**
 ```bash
-celery -A core worker -l info -P eventlet --concurrency=50
+celery -A core worker -l info --concurrency=4
 ```
 
-**Why**: Handles multiple I/O-bound tasks efficiently. Can process 50-100+ tasks simultaneously, providing better user experience and faster response times.
+**Why**: Most stable with Redis, no monkey patching conflicts, production-ready. Handles multiple tasks efficiently using multiple processes.
 
-**Installation**:
+**Alternative (Higher Concurrency)**: Use `threads` pool if you need more concurrent workers
 ```bash
-pip install eventlet
+celery -A core worker -l info -P threads --concurrency=10
 ```
+
+**Note**: Eventlet pool is **NOT recommended** for production as it causes Redis connection errors (`RuntimeError: do not call blocking functions from the mainloop`).
 
 ---
 
@@ -285,26 +288,33 @@ This project is configured to work optimally on both Windows (development) and L
 ### For Linux/Mac Production
 
 #### Configuration:
-- **Pool Type**: `eventlet` (green threads, concurrent)
-- **Command**: `celery -A core worker -l info -P eventlet --concurrency=50`
-- **Why**: Handles multiple I/O-bound tasks efficiently
-- **Performance**: Can process 50-100+ tasks simultaneously
+- **Pool Type**: `prefork` (default, process-based)
+- **Command**: `celery -A core worker -l info --concurrency=4`
+- **Why**: Most stable with Redis, no monkey patching conflicts, production-ready
+- **Performance**: Handles multiple tasks efficiently using multiple processes
 
-#### Installation:
-```bash
-# Make sure eventlet is installed
-pip install eventlet
-```
+#### Alternative (Higher Concurrency):
+- **Pool Type**: `threads` (thread-based)
+- **Command**: `celery -A core worker -l info -P threads --concurrency=10`
+- **Why**: Higher concurrency with lower memory usage than prefork
+- **Performance**: Can process 10+ tasks simultaneously
 
 #### Pros:
-✅ High concurrency (50-100+ tasks)
-✅ Efficient for I/O-bound operations (API calls)
-✅ Better user experience (faster response times)
-✅ Production-ready performance
+✅ Most stable with Redis (no connection errors)
+✅ No monkey patching needed (simpler, more reliable)
+✅ Production-ready and widely used
+✅ Good performance for I/O-bound tasks
+✅ Better Django compatibility
 
 #### Cons:
-⚠️ Requires eventlet package
-⚠️ More complex (but handled automatically by the code)
+⚠️ Slightly lower concurrency than eventlet (but more stable)
+⚠️ Higher memory usage than eventlet (each process has its own memory)
+
+#### Why NOT Eventlet:
+❌ Causes `RuntimeError: do not call blocking functions from the mainloop` with Redis
+❌ Requires monkey patching (adds complexity)
+❌ Unstable in production environments
+❌ Not recommended for Railway/deployment platforms
 
 ### Production Deployment Checklist
 

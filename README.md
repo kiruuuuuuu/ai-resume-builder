@@ -134,8 +134,8 @@ celery -A core worker -l info -P solo
 
 **Linux/Mac (Production)**:
 ```bash
-pip install eventlet
-celery -A core worker -l info -P eventlet --concurrency=50
+celery -A core worker -l info --concurrency=4
+# Alternative (higher concurrency): celery -A core worker -l info -P threads --concurrency=10
 ```
 
 ### Terminal 3: Django Server
