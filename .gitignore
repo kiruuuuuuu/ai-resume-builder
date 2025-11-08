@@ -26,3 +26,4 @@ db.sqlite3
 *.log
 .vscode/
 .idea/
+test_output.txt
