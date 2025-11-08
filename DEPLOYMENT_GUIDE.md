@@ -1,6 +1,8 @@
 # Fly.io Deployment Guide
 
-Complete step-by-step guide to deploy AI Resume Builder on Fly.io (free tier available).
+Complete step-by-step guide to deploy AI Resume Builder on Fly.io.
+
+⚠️ **Note**: Fly.io now requires a payment method (even for free tier). If you want a truly free deployment without payment method, see **[RAILWAY_DEPLOYMENT_GUIDE.md](RAILWAY_DEPLOYMENT_GUIDE.md)** instead.
 
 ## Table of Contents
 
@@ -24,8 +26,11 @@ Complete step-by-step guide to deploy AI Resume Builder on Fly.io (free tier ava
 
 ### Required Accounts
 - [ ] Fly.io account (sign up at https://fly.io in browser)
+- [ ] **Payment Method** (required even for free tier - you get $5 free credit)
 - [ ] Google Cloud account (for Gemini API key)
 - [ ] AWS account (optional, for S3 media storage)
+
+⚠️ **Important**: Fly.io requires a payment method to create apps, even for free tier usage. You won't be charged if you stay within free limits, but a payment method is required for verification.
 
 ### Required Tools (On Your Computer)
 - [ ] Fly CLI installed (`flyctl` or `fly`) - **Installed on YOUR computer**

@@ -152,9 +152,20 @@ Open your browser and navigate to:
 ## 🚀 Deployment
 
 For production deployment instructions, see:
-- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Complete step-by-step Fly.io deployment guide
+- **[RAILWAY_DEPLOYMENT_GUIDE.md](RAILWAY_DEPLOYMENT_GUIDE.md)** - ⭐ **Recommended: FREE tier, no payment method required**
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Fly.io deployment guide (requires payment method)
 - **[PRE_DEPLOYMENT_CHECKLIST.md](PRE_DEPLOYMENT_CHECKLIST.md)** - Pre-deployment checklist
 - **[SECURITY_FIXES_GUIDE.md](SECURITY_FIXES_GUIDE.md)** - Security fixes and improvements
+
+### 🎯 Quick Recommendation
+
+**For Free Deployment (No Payment Method)**:
+- Use **[Railway.app](RAILWAY_DEPLOYMENT_GUIDE.md)** - FREE tier, no credit card required, includes PostgreSQL and Redis
+
+**For Fly.io**:
+- Requires payment method (even for free tier)
+- You get $5 free credit
+- Won't be charged if you stay within limits
 
 ## 📚 Documentation
 
