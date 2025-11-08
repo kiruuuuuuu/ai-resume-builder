@@ -19,3 +19,7 @@ icalendar
 django-allauth
 cryptography
 beautifulsoup4
+gunicorn
+dj-database-url
+django-ratelimit>=4.0.0
+bleach>=6.0.0

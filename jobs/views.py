@@ -39,7 +39,11 @@ from resumes.templatetags.resume_extras import get_resume_completeness_errors
 # Forms
 from .forms import JobPostingForm, InterviewSlotForm
 
+# Decorators
+from .decorators import job_feature_disabled
 
+
+@job_feature_disabled
 @login_required
 def post_job_view(request):
     if request.user.user_type != 'employer':
@@ -68,6 +72,7 @@ def post_job_view(request):
         form = JobPostingForm()
     return render(request, 'jobs/post_job.html', {'form': form, 'is_editing': False})
 
+@job_feature_disabled
 @login_required
 def generate_job_description_api(request):
     """AJAX endpoint to generate job description using AI."""
@@ -112,6 +117,7 @@ def generate_job_description_api(request):
     
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
+@job_feature_disabled
 @login_required
 def generate_applicant_summary_api(request):
     """AJAX endpoint to generate AI summary for an applicant."""
@@ -165,6 +171,7 @@ def generate_applicant_summary_api(request):
     
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
+@job_feature_disabled
 @login_required
 def generate_interview_prep_api(request):
     """AJAX endpoint to generate AI interview preparation questions."""
@@ -214,6 +221,7 @@ def generate_interview_prep_api(request):
     
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
+@job_feature_disabled
 @login_required
 def interview_prep_view(request, application_id):
     """Dedicated page to display AI-generated interview preparation questions."""
@@ -286,6 +294,7 @@ def interview_prep_view(request, application_id):
     
     return render(request, 'jobs/interview_prep.html', context)
 
+@job_feature_disabled
 def company_profile_view(request, employer_id):
     """Public company profile page."""
     employer_profile = get_object_or_404(EmployerProfile, user_id=employer_id)
@@ -304,6 +313,7 @@ def company_profile_view(request, employer_id):
     
     return render(request, 'jobs/company_profile.html', context)
 
+@job_feature_disabled
 @login_required
 def edit_job_view(request, job_id):
     job = get_object_or_404(JobPosting, id=job_id, employer=request.user.employerprofile)
@@ -318,6 +328,7 @@ def edit_job_view(request, job_id):
     context = {'form': form, 'is_editing': True}
     return render(request, 'jobs/post_job.html', context)
 
+@job_feature_disabled
 def job_list_view(request):
     jobs = JobPosting.objects.filter(
         Q(application_deadline__gte=timezone.now()) | Q(application_deadline__isnull=True)
@@ -419,6 +430,7 @@ def job_list_view(request):
     })
 
 
+@job_feature_disabled
 def job_detail_view(request, job_id):
     job = get_object_or_404(JobPosting, id=job_id)
     has_applied = False
@@ -432,6 +444,7 @@ def job_detail_view(request, job_id):
     }
     return render(request, 'jobs/job_detail.html', context)
 
+@job_feature_disabled
 @login_required
 def apply_for_job_view(request, job_id):
     job = get_object_or_404(JobPosting, id=job_id)
@@ -491,6 +504,7 @@ def apply_for_job_view(request, job_id):
     return redirect('jobs:job-detail', job_id=job.id)
 
 
+@job_feature_disabled
 @login_required
 def employer_jobs_view(request):
     if request.user.user_type != 'employer':
@@ -503,6 +517,7 @@ def employer_jobs_view(request):
     jobs = JobPosting.objects.filter(employer=employer_profile).order_by('-created_at')
     return render(request, 'jobs/employer_jobs.html', {'jobs': jobs})
 
+@job_feature_disabled
 @login_required
 def view_applicants_view(request, job_id):
     if request.user.user_type != 'employer':
@@ -569,6 +584,7 @@ def view_applicants_view(request, job_id):
     return render(request, 'jobs/view_applicants.html', context)
 
 
+@job_feature_disabled
 @login_required
 def view_applicant_resume(request, application_id):
     application = get_object_or_404(Application, id=application_id)
@@ -628,6 +644,7 @@ def view_applicant_resume(request, application_id):
     return response
 
 
+@job_feature_disabled
 @login_required
 def update_application_status(request, application_id):
     application = get_object_or_404(Application, id=application_id, job_posting__employer=request.user.employerprofile)
@@ -655,6 +672,7 @@ def update_application_status(request, application_id):
         
     return redirect('jobs:view-applicants', job_id=application.job_posting.id)
 
+@job_feature_disabled
 @login_required
 def schedule_interview_view(request, application_id):
     application = get_object_or_404(Application, id=application_id, job_posting__employer=request.user.employerprofile)
@@ -693,6 +711,7 @@ def schedule_interview_view(request, application_id):
     context = {'application': application, 'formset': formset, 'interview': interview}
     return render(request, 'jobs/schedule_interview.html', context)
 
+@job_feature_disabled
 @login_required
 def download_interview_calendar(request, interview_id):
     """Generate and download .ics calendar file for interview."""
@@ -737,6 +756,7 @@ def download_interview_calendar(request, interview_id):
     response['Content-Disposition'] = f'attachment; filename="interview_{interview.id}.ics"'
     return response
 
+@job_feature_disabled
 @login_required
 def job_stats_view(request, job_id):
     """Job statistics dashboard with charts."""
@@ -806,6 +826,7 @@ def job_stats_view(request, job_id):
     
     return render(request, 'jobs/job_stats.html', context)
 
+@job_feature_disabled
 @login_required
 def respond_to_interview_view(request, interview_id):
     interview = get_object_or_404(Interview, id=interview_id, application__applicant=request.user.jobseekerprofile)
@@ -835,6 +856,7 @@ def respond_to_interview_view(request, interview_id):
     return render(request, 'jobs/respond_to_interview.html', context)
 
 
+@job_feature_disabled
 @login_required
 def mark_notification_as_read_view(request, notification_id):
     notification = get_object_or_404(Notification, id=notification_id, recipient=request.user)
@@ -843,6 +865,7 @@ def mark_notification_as_read_view(request, notification_id):
         notification.save()
     return redirect(notification.link)
 
+@job_feature_disabled
 @login_required
 def my_applications_view(request):
     if request.user.user_type != 'job_seeker':

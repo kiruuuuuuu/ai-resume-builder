@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Coming Soon - Job Features{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-4 py-12">
+    <div class="max-w-2xl w-full text-center animate-fade-in-up">
+        <!-- Main Icon/Illustration -->
+        <div class="mb-8 animate-bounce">
+            <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-2xl">
+                <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- Heading -->
+        <h1 class="text-5xl font-bold text-gray-900 mb-4 animate-fade-in-up delay-100">
+            Coming Soon
+        </h1>
+        
+        <!-- Subheading -->
+        <h2 class="text-2xl font-semibold text-indigo-600 mb-6 animate-fade-in-up delay-200">
+            Job Features Are Under Development
+        </h2>
+
+        <!-- Description -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-8 animate-fade-in-up delay-300">
+            <p class="text-lg text-gray-700 mb-4 leading-relaxed">
+                We're working hard to bring you an amazing job matching and application experience! 
+                Our team is currently developing features that will help you:
+            </p>
+            
+            <ul class="text-left max-w-md mx-auto space-y-3 mb-6">
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700">Browse and search job postings</span>
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700">Apply to jobs with your AI-optimized resume</span>
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700">Track your applications and interviews</span>
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700">Get AI-powered interview preparation</span>
+                </li>
+            </ul>
+
+            <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-lg">
+                <p class="text-sm text-indigo-800">
+                    <strong>In the meantime,</strong> you can continue using our resume builder to create professional resumes 
+                    with AI-powered feedback and scoring. Build the perfect resume now, so you're ready when job features launch!
+                </p>
+            </div>
+        </div>
+
+        <!-- Call to Action -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up delay-400">
+            <a href="{% url 'resumes:resume-builder' %}" 
+               class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Build Your Resume
+            </a>
+            
+            <a href="{% url 'home' %}" 
+               class="inline-flex items-center px-8 py-4 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-300 hover:border-indigo-500 hover:text-indigo-600 transition-all duration-200">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Go to Home
+            </a>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div class="mt-12 animate-fade-in-up delay-500">
+            <p class="text-sm text-gray-500 mb-2">We're making great progress!</p>
+            <div class="w-full max-w-md mx-auto bg-gray-200 rounded-full h-2.5">
+                <div class="bg-gradient-to-r from-indigo-500 to-purple-600 h-2.5 rounded-full animate-pulse-custom" style="width: 75%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

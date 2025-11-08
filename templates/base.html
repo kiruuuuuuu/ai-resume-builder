@@ -442,12 +442,34 @@
                     <div class="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-2">
                         {% if user.is_authenticated %}
                             {% if user.user_type == 'job_seeker' %}
-                                <a href="{% url 'jobs:job-list' %}" class="nav-link-enhanced text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-indigo-50/50">Job Listings</a>
-                                <a href="{% url 'jobs:my-applications' %}" class="nav-link-enhanced text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-indigo-50/50">My Applications</a>
+                                {% if not JOBS_FEATURE_ENABLED %}
+                                    <span class="nav-link-enhanced text-gray-400 px-3 py-2 rounded-lg text-sm font-semibold cursor-not-allowed inline-flex items-center gap-2 relative" title="Coming Soon - Job features are under development">
+                                        Job Listings
+                                        <span class="px-2 py-0.5 text-xs font-bold bg-yellow-100 text-yellow-800 rounded-full">Coming Soon</span>
+                                    </span>
+                                    <span class="nav-link-enhanced text-gray-400 px-3 py-2 rounded-lg text-sm font-semibold cursor-not-allowed inline-flex items-center gap-2 relative" title="Coming Soon - Job features are under development">
+                                        My Applications
+                                        <span class="px-2 py-0.5 text-xs font-bold bg-yellow-100 text-yellow-800 rounded-full">Coming Soon</span>
+                                    </span>
+                                {% else %}
+                                    <a href="{% url 'jobs:job-list' %}" class="nav-link-enhanced text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-indigo-50/50">Job Listings</a>
+                                    <a href="{% url 'jobs:my-applications' %}" class="nav-link-enhanced text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-indigo-50/50">My Applications</a>
+                                {% endif %}
                                 <a href="{% url 'resumes:resume-dashboard' %}" class="nav-link-enhanced text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-indigo-50/50">My Resume</a>
                             {% else %}
-                                <a href="{% url 'jobs:my-jobs' %}" class="nav-link-enhanced text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-indigo-50/50">My Jobs</a>
-                                <a href="{% url 'jobs:post-job' %}" class="nav-link-enhanced text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-indigo-50/50">Post Job</a>
+                                {% if not JOBS_FEATURE_ENABLED %}
+                                    <span class="nav-link-enhanced text-gray-400 px-3 py-2 rounded-lg text-sm font-semibold cursor-not-allowed inline-flex items-center gap-2 relative" title="Coming Soon - Job features are under development">
+                                        My Jobs
+                                        <span class="px-2 py-0.5 text-xs font-bold bg-yellow-100 text-yellow-800 rounded-full">Coming Soon</span>
+                                    </span>
+                                    <span class="nav-link-enhanced text-gray-400 px-3 py-2 rounded-lg text-sm font-semibold cursor-not-allowed inline-flex items-center gap-2 relative" title="Coming Soon - Job features are under development">
+                                        Post Job
+                                        <span class="px-2 py-0.5 text-xs font-bold bg-yellow-100 text-yellow-800 rounded-full">Coming Soon</span>
+                                    </span>
+                                {% else %}
+                                    <a href="{% url 'jobs:my-jobs' %}" class="nav-link-enhanced text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-indigo-50/50">My Jobs</a>
+                                    <a href="{% url 'jobs:post-job' %}" class="nav-link-enhanced text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-indigo-50/50">Post Job</a>
+                                {% endif %}
                             {% endif %}
                             <a href="{% url 'users:edit-profile' %}" class="nav-link-enhanced text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-indigo-50/50 inline-flex items-center gap-1">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -455,6 +477,14 @@
                                 </svg>
                                 Edit Profile
                             </a>
+                            {% if user.is_staff or user.is_superuser %}
+                            <a href="{% url 'users:admin-dashboard' %}" class="nav-link-enhanced text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-indigo-50/50 inline-flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                Admin
+                            </a>
+                            {% endif %}
                             <div class="w-px h-6 bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-2"></div>
                             <form action="{% url 'users:logout' %}" method="post">
                                 {% csrf_token %}
@@ -505,12 +535,34 @@
                 <div class="pt-2 pb-3 space-y-1">
                         {% if user.is_authenticated %}
                         {% if user.user_type == 'job_seeker' %}
-                            <a href="{% url 'jobs:job-list' %}" role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-indigo-500 hover:text-indigo-600 transition-all duration-200">Job Listings</a>
-                            <a href="{% url 'jobs:my-applications' %}" role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-indigo-500 hover:text-indigo-600 transition-all duration-200">My Applications</a>
+                            {% if not JOBS_FEATURE_ENABLED %}
+                                <span role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-400 cursor-not-allowed inline-flex items-center justify-between" title="Coming Soon - Job features are under development">
+                                    <span>Job Listings</span>
+                                    <span class="px-2 py-0.5 text-xs font-bold bg-yellow-100 text-yellow-800 rounded-full">Coming Soon</span>
+                                </span>
+                                <span role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-400 cursor-not-allowed inline-flex items-center justify-between" title="Coming Soon - Job features are under development">
+                                    <span>My Applications</span>
+                                    <span class="px-2 py-0.5 text-xs font-bold bg-yellow-100 text-yellow-800 rounded-full">Coming Soon</span>
+                                </span>
+                            {% else %}
+                                <a href="{% url 'jobs:job-list' %}" role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-indigo-500 hover:text-indigo-600 transition-all duration-200">Job Listings</a>
+                                <a href="{% url 'jobs:my-applications' %}" role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-indigo-500 hover:text-indigo-600 transition-all duration-200">My Applications</a>
+                            {% endif %}
                             <a href="{% url 'resumes:resume-dashboard' %}" role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-indigo-500 hover:text-indigo-600 transition-all duration-200">My Resume</a>
                         {% else %}
-                             <a href="{% url 'jobs:my-jobs' %}" role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-indigo-500 hover:text-indigo-600 transition-all duration-200">My Jobs</a>
-                            <a href="{% url 'jobs:post-job' %}" role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-indigo-500 hover:text-indigo-600 transition-all duration-200">Post Job</a>
+                            {% if not JOBS_FEATURE_ENABLED %}
+                                <span role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-400 cursor-not-allowed inline-flex items-center justify-between" title="Coming Soon - Job features are under development">
+                                    <span>My Jobs</span>
+                                    <span class="px-2 py-0.5 text-xs font-bold bg-yellow-100 text-yellow-800 rounded-full">Coming Soon</span>
+                                </span>
+                                <span role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-400 cursor-not-allowed inline-flex items-center justify-between" title="Coming Soon - Job features are under development">
+                                    <span>Post Job</span>
+                                    <span class="px-2 py-0.5 text-xs font-bold bg-yellow-100 text-yellow-800 rounded-full">Coming Soon</span>
+                                </span>
+                            {% else %}
+                                <a href="{% url 'jobs:my-jobs' %}" role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-indigo-500 hover:text-indigo-600 transition-all duration-200">My Jobs</a>
+                                <a href="{% url 'jobs:post-job' %}" role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-indigo-500 hover:text-indigo-600 transition-all duration-200">Post Job</a>
+                            {% endif %}
                         {% endif %}
                         <a href="{% url 'users:edit-profile' %}" role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-indigo-500 hover:text-indigo-600 transition-all duration-200 inline-flex items-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -518,6 +570,14 @@
                             </svg>
                             Edit Profile
                         </a>
+                        {% if user.is_staff or user.is_superuser %}
+                        <a href="{% url 'users:admin-dashboard' %}" role="menuitem" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-indigo-500 hover:text-indigo-600 transition-all duration-200 inline-flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            Admin Dashboard
+                        </a>
+                        {% endif %}
                         <div class="border-t border-gray-200 pt-4 pb-3">
                            <div class="px-2">
                                 <form action="{% url 'users:logout' %}" method="post">
@@ -770,12 +830,21 @@
                         </a></li>
                         {% if user.is_authenticated %}
                             {% if user.user_type == 'job_seeker' %}
-                                <li><a href="{% url 'jobs:job-list' %}" class="text-gray-600 hover:text-indigo-600 text-sm font-medium transition-all duration-300 hover:translate-x-1 inline-flex items-center gap-2 group">
-                                    <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                    </svg>
-                                    Job Listings
-                                </a></li>
+                                {% if not JOBS_FEATURE_ENABLED %}
+                                    <li><span class="text-gray-400 text-sm font-medium inline-flex items-center gap-2 cursor-not-allowed">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                        Job Listings <span class="px-2 py-0.5 text-xs font-bold bg-yellow-100 text-yellow-800 rounded-full">Coming Soon</span>
+                                    </span></li>
+                                {% else %}
+                                    <li><a href="{% url 'jobs:job-list' %}" class="text-gray-600 hover:text-indigo-600 text-sm font-medium transition-all duration-300 hover:translate-x-1 inline-flex items-center gap-2 group">
+                                        <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                        Job Listings
+                                    </a></li>
+                                {% endif %}
                                 <li><a href="{% url 'resumes:resume-dashboard' %}" class="text-gray-600 hover:text-indigo-600 text-sm font-medium transition-all duration-300 hover:translate-x-1 inline-flex items-center gap-2 group">
                                     <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -783,18 +852,33 @@
                                     My Resume
                                 </a></li>
                             {% else %}
-                                <li><a href="{% url 'jobs:post-job' %}" class="text-gray-600 hover:text-indigo-600 text-sm font-medium transition-all duration-300 hover:translate-x-1 inline-flex items-center gap-2 group">
-                                    <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                    </svg>
-                                    Post a Job
-                                </a></li>
-                                <li><a href="{% url 'jobs:my-jobs' %}" class="text-gray-600 hover:text-indigo-600 text-sm font-medium transition-all duration-300 hover:translate-x-1 inline-flex items-center gap-2 group">
-                                    <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                    </svg>
-                                    My Jobs
-                                </a></li>
+                                {% if not JOBS_FEATURE_ENABLED %}
+                                    <li><span class="text-gray-400 text-sm font-medium inline-flex items-center gap-2 cursor-not-allowed">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                        Post a Job <span class="px-2 py-0.5 text-xs font-bold bg-yellow-100 text-yellow-800 rounded-full">Coming Soon</span>
+                                    </span></li>
+                                    <li><span class="text-gray-400 text-sm font-medium inline-flex items-center gap-2 cursor-not-allowed">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                        My Jobs <span class="px-2 py-0.5 text-xs font-bold bg-yellow-100 text-yellow-800 rounded-full">Coming Soon</span>
+                                    </span></li>
+                                {% else %}
+                                    <li><a href="{% url 'jobs:post-job' %}" class="text-gray-600 hover:text-indigo-600 text-sm font-medium transition-all duration-300 hover:translate-x-1 inline-flex items-center gap-2 group">
+                                        <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                        Post a Job
+                                    </a></li>
+                                    <li><a href="{% url 'jobs:my-jobs' %}" class="text-gray-600 hover:text-indigo-600 text-sm font-medium transition-all duration-300 hover:translate-x-1 inline-flex items-center gap-2 group">
+                                        <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                        My Jobs
+                                    </a></li>
+                                {% endif %}
                             {% endif %}
                         {% else %}
                             <li><a href="{% url 'users:login' %}" class="text-gray-600 hover:text-indigo-600 text-sm font-medium transition-all duration-300 hover:translate-x-1 inline-flex items-center gap-2 group">

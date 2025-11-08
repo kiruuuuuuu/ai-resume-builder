@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
+from django.utils import timezone
 from .forms import CustomUserCreationForm, EmployerOnboardingForm, UserCredentialsForm, CustomPasswordChangeForm
 from .models import JobSeekerProfile, EmployerProfile
 
@@ -173,4 +175,99 @@ def edit_profile_view(request):
     }
     
     return render(request, 'users/edit_profile.html', context)
+
+
+def admin_login_view(request):
+    """Custom admin login page - only accessible to staff/superusers."""
+    if request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+        return redirect('users:admin-dashboard')
+    
+    if request.method == 'POST':
+        form = AuthenticationForm(data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            # Check if user is staff or superuser
+            if not (user.is_staff or user.is_superuser):
+                messages.error(request, "Access denied. This page is for administrators only.")
+                return redirect('users:admin-login')
+            
+            login(request, user, backend=user.backend if hasattr(user, 'backend') else 'django.contrib.auth.backends.ModelBackend')
+            messages.success(request, f"Welcome, {user.username}!")
+            return redirect('users:admin-dashboard')
+    else:
+        form = AuthenticationForm()
+    
+    return render(request, 'users/admin_login.html', {'form': form})
+
+
+@staff_member_required
+def admin_dashboard_view(request):
+    """Main admin dashboard with bug reports, user stats, and system health."""
+    from pages.models import BugReport
+    from resumes.models import Resume
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    # Bug Reports Statistics
+    total_bugs = BugReport.objects.count()
+    unresolved_bugs = BugReport.objects.filter(is_resolved=False).count()
+    recent_bugs = BugReport.objects.filter(created_at__gte=timezone.now() - timedelta(days=7)).count()
+    bug_reports = BugReport.objects.all().order_by('-created_at')[:10]
+    
+    # User Statistics
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    total_users = User.objects.count()
+    active_users = User.objects.filter(last_login__gte=timezone.now() - timedelta(days=30)).count()
+    job_seekers = User.objects.filter(user_type='job_seeker').count()
+    employers = User.objects.filter(user_type='employer').count()
+    
+    # Resume Statistics
+    total_resumes = Resume.objects.count()
+    recent_resumes = Resume.objects.filter(created_at__gte=timezone.now() - timedelta(days=7)).count()
+    
+    # System Health (basic checks)
+    try:
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        db_status = "Connected"
+    except Exception as e:
+        db_status = f"Error: {str(e)}"
+    
+    context = {
+        'total_bugs': total_bugs,
+        'unresolved_bugs': unresolved_bugs,
+        'recent_bugs': recent_bugs,
+        'bug_reports': bug_reports,
+        'total_users': total_users,
+        'active_users': active_users,
+        'job_seekers': job_seekers,
+        'employers': employers,
+        'total_resumes': total_resumes,
+        'recent_resumes': recent_resumes,
+        'db_status': db_status,
+    }
+    
+    return render(request, 'users/admin_dashboard.html', context)
+
+
+@staff_member_required
+def admin_bug_detail_view(request, bug_id):
+    """View detailed bug report."""
+    from pages.models import BugReport
+    bug = get_object_or_404(BugReport, id=bug_id)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'resolve':
+            bug.is_resolved = True
+            bug.resolved_at = timezone.now()
+            bug.resolved_by = request.user
+            bug.resolution_notes = request.POST.get('resolution_notes', '')
+            bug.save()
+            messages.success(request, f"Bug #{bug.id} marked as resolved.")
+            return redirect('users:admin-dashboard')
+    
+    return render(request, 'users/admin_bug_detail.html', {'bug': bug})
 

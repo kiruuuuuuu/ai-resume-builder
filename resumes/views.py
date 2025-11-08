@@ -44,7 +44,8 @@ from .parser import enhance_text_with_gemini
 def resume_dashboard_view(request):
     try:
         profile = request.user.jobseekerprofile
-        resume = Resume.objects.filter(profile=profile).latest('created_at')
+        # Optimize query with select_related
+        resume = Resume.objects.filter(profile=profile).select_related('profile').latest('created_at')
         
         from .templatetags.resume_extras import get_resume_completeness_errors
         if not get_resume_completeness_errors(resume):
@@ -73,8 +74,8 @@ def resume_builder_view(request):
 
         # Prepare context for the initial page load
         resume_sections = [
-            {'name': 'experience', 'title': 'Experience', 'form': ExperienceForm(), 'items': Experience.objects.filter(resume=resume).order_by('-start_date')},
-            {'name': 'education', 'title': 'Education', 'form': EducationForm(), 'items': Education.objects.filter(resume=resume).order_by('-start_date')},
+            {'name': 'experience', 'title': 'Experience', 'form': ExperienceForm(), 'items': Experience.objects.filter(resume=resume).select_related('resume').order_by('-start_date')},
+            {'name': 'education', 'title': 'Education', 'form': EducationForm(), 'items': Education.objects.filter(resume=resume).select_related('resume').order_by('-start_date')},
             {'name': 'skill', 'title': 'Skills', 'form': SkillForm(), 'items': Skill.objects.filter(resume=resume)},
             {'name': 'project', 'title': 'Projects', 'form': ProjectForm(), 'items': Project.objects.filter(resume=resume)},
             {'name': 'certification', 'title': 'Certifications', 'form': CertificationForm(), 'items': Certification.objects.filter(resume=resume)},
@@ -249,6 +250,12 @@ def upload_resume_view(request):
             if not resume_file.name.lower().endswith(('.pdf', '.docx')):
                 messages.error(request, "Invalid file type. Please upload a PDF or DOCX file.")
                 return redirect('resumes:resume-dashboard')
+            
+            # Validate file size (max 10MB for resume files)
+            max_size = 10 * 1024 * 1024  # 10MB
+            if resume_file.size > max_size:
+                messages.error(request, "File size exceeds 10MB limit. Please upload a smaller file.")
+                return redirect('resumes:resume-dashboard')
 
             fs = FileSystemStorage()
             filename = fs.save(resume_file.name, resume_file)
@@ -370,6 +377,20 @@ def validate_resume_data_view(request):
 
 
 # --- Other Views ---
+# Rate limiting (optional - install django-ratelimit for rate limiting)
+try:
+    from django_ratelimit.decorators import ratelimit
+    from django_ratelimit.exceptions import Ratelimited
+    RATELIMIT_AVAILABLE = True
+except ImportError:
+    # Fallback decorator if django-ratelimit is not installed
+    def ratelimit(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
+    RATELIMIT_AVAILABLE = False
+
+@ratelimit(key='ip', rate='20/m', method='POST', block=True)
 @login_required
 def enhance_description_api(request):
     if request.method == 'POST':
@@ -377,6 +398,12 @@ def enhance_description_api(request):
             data = json.loads(request.body)
             text_to_enhance = data.get('text')
             context = data.get('context')
+            
+            # Sanitize input
+            from core.utils import sanitize_text
+            if text_to_enhance:
+                text_to_enhance = sanitize_text(text_to_enhance)
+            
             if not text_to_enhance:
                 return JsonResponse({'error': 'No text provided.'}, status=400)
 
@@ -525,9 +552,19 @@ def _generate_pdf_sync(request, resume, template_name, accent_color):
 
     try:
         html_obj = HTML(string=html, base_url=request.build_absolute_uri('/'))
-        # Set a standard A4 page margin for all templates
-        pdf_bytes = html_obj.write_pdf(stylesheets=[CSS(string='@page { size: A4; margin: 1.5cm }')])
+        # Set template-specific margins to match the template's @page rules
+        if template_name == 'modern':
+            page_css = '@page { size: A4; margin: 0 }'
+        elif template_name == 'creative':
+            page_css = '@page { size: A4; margin: 0.5cm }'
+        else:  # classic and professional
+            page_css = '@page { size: A4; margin: 1.5cm }'
+        pdf_bytes = html_obj.write_pdf(stylesheets=[CSS(string=page_css)])
     except Exception as e:
+        # Log the full error for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'PDF generation error for template {template_name}: {e}', exc_info=True)
         # Provide a more user-friendly error
         messages.error(request, f'An error occurred during PDF generation: {e}')
         return redirect('resumes:resume-builder')
@@ -591,7 +628,7 @@ def _get_resume_context(resume):
             processed_items.append(item)
         return processed_items
 
-    experiences = Experience.objects.filter(resume=resume).order_by('-start_date')
+    experiences = Experience.objects.filter(resume=resume).select_related('resume').order_by('-start_date')
     projects = Project.objects.filter(resume=resume)
 
     # Group skills by category for better presentation
@@ -607,7 +644,7 @@ def _get_resume_context(resume):
         'resume': resume,
         'experiences': process_description(experiences),
         'projects': process_description(projects),
-        'educations': Education.objects.filter(resume=resume).order_by('-start_date'),
+        'educations': Education.objects.filter(resume=resume).select_related('resume').order_by('-start_date'),
         'skills_by_category': skills_by_category,
         'certifications': Certification.objects.filter(resume=resume),
         'achievements': Achievement.objects.filter(resume=resume),
@@ -731,25 +768,69 @@ def preview_resume_view(request, resume_id):
         for style_tag in style_tags:
             if style_tag.string:
                 style_text = style_tag.string
-                # Critical fix: Scope html/body styles to .resume-wrapper to prevent page shift
-                # But preserve all other styles exactly as they are
-                # Replace html, body selectors with .resume-wrapper html, .resume-wrapper body
-                style_text = re.sub(r'html\s*,', '.resume-wrapper html,', style_text)
-                style_text = re.sub(r',\s*html\s*{', ', .resume-wrapper html {', style_text)
-                style_text = re.sub(r'body\s*,', '.resume-wrapper body,', style_text)
-                style_text = re.sub(r',\s*body\s*{', ', .resume-wrapper body {', style_text)
-                # Handle standalone html and body rules
-                style_text = re.sub(r'^html\s*{', '.resume-wrapper html {', style_text, flags=re.MULTILINE)
-                style_text = re.sub(r'^body\s*{', '.resume-wrapper body {', style_text, flags=re.MULTILINE)
-                # Also scope @page rules to prevent page layout issues
-                style_text = re.sub(r'@page\s*{', '@media print { .resume-wrapper {', style_text)
+                # Scope html/body styles to .resume-wrapper .resume-content for higher specificity
+                # This ensures template styles override Tailwind and other CSS
+                style_text = re.sub(r'html\s*,', '.resume-wrapper .resume-content,', style_text)
+                style_text = re.sub(r',\s*html\s*{', ', .resume-wrapper .resume-content {', style_text)
+                style_text = re.sub(r'body\s*,', '.resume-wrapper .resume-content,', style_text)
+                style_text = re.sub(r',\s*body\s*{', ', .resume-wrapper .resume-content {', style_text)
+                # Handle standalone html and body rules - replace with higher specificity
+                style_text = re.sub(r'^html\s*{', '.resume-wrapper .resume-content {', style_text, flags=re.MULTILINE)
+                style_text = re.sub(r'^body\s*{', '.resume-wrapper .resume-content {', style_text, flags=re.MULTILINE)
+                # Convert @page rules - @page doesn't work in regular CSS, so we'll remove it for screen
+                # But keep the margin/size info for reference (we handle margins in PDF generation)
+                # Remove @page rules entirely for screen preview - they don't apply
+                style_text = re.sub(r'@page\s*\{[^}]*\}', '', style_text, flags=re.DOTALL)
+                # Scope ALL class selectors to .resume-wrapper .resume-content for maximum specificity
+                # This ensures template styles override Tailwind CSS
+                def scope_class_selector(match):
+                    before = match.group(1)  # Everything before the class selector
+                    class_name = match.group(2)  # The class name (e.g., .name, .section-title)
+                    after = match.group(3)  # Everything after (usually { or whitespace)
+                    
+                    # Don't scope if already scoped
+                    if '.resume-wrapper .resume-content' in before:
+                        return match.group(0)
+                    
+                    # Don't scope if inside @media print (we handle @page separately)
+                    # Check if we're inside a @media block
+                    check_text = before[-200:] if len(before) > 200 else before
+                    # Count opening and closing braces to see if we're inside @media
+                    open_braces = check_text.count('{')
+                    close_braces = check_text.count('}')
+                    if '@media' in check_text and (open_braces > close_braces):
+                        # Inside @media, don't scope - let it apply naturally
+                        return match.group(0)
+                    
+                    # Don't scope if it's part of a compound selector (e.g., ".contact-info .separator")
+                    # Check if there's another selector before it on the same line
+                    lines = before.split('\n')
+                    if lines:
+                        last_line = lines[-1].strip()
+                        # If last line has a selector pattern before this class, it's compound
+                        if re.search(r'[.#\w-]+\s+$', last_line):
+                            return match.group(0)
+                    
+                    return f'{before}.resume-wrapper .resume-content {class_name}{after}'
+                
+                # Match class selectors that start a new rule (after whitespace, comma, closing brace, or start of line)
+                style_text = re.sub(r'([\s,}]*)(\.[a-zA-Z_][a-zA-Z0-9_-]+)(\s*{)', scope_class_selector, style_text, flags=re.MULTILINE)
+                
+                # Clean up any double-scoping
+                style_text = re.sub(r'\.resume-wrapper \.resume-content (\.resume-wrapper \.resume-content )+', '.resume-wrapper .resume-content ', style_text)
                 styles_content += style_text + '\n'
         
         # Extract body content - preserve ALL HTML structure exactly
         body_tag = soup.find('body')
-        if body_tag:
+        if body_tag and hasattr(body_tag, 'children'):
             # Get all content inside body, preserving all tags and structure
-            body_content = ''.join(str(child) for child in body_tag.children)
+            # Filter out None values that BeautifulSoup might return
+            try:
+                body_content = ''.join(str(child) for child in body_tag.children if child is not None)
+            except (AttributeError, TypeError) as e:
+                # Fallback if children iteration fails
+                logger.warning(f"Error iterating body children: {e}, using innerHTML fallback")
+                body_content = str(body_tag.decode_contents())
         else:
             # Fallback: get all content if no body tag - preserve everything
             body_content = str(soup.decode_contents())
@@ -757,6 +838,14 @@ def preview_resume_view(request, resume_id):
         # Ensure we have all content - no truncation
         resume_html = body_content
         context['resume_styles'] = styles_content
+        
+        # Debug: Log if styles were extracted
+        import logging
+        logger = logging.getLogger(__name__)
+        if styles_content:
+            logger.info(f"Extracted {len(styles_content)} characters of styles for template {template_name}")
+        else:
+            logger.warning(f"No styles extracted for template {template_name}!")
         
     except (ImportError, Exception) as e:
         # Fallback to regex if BeautifulSoup is not available or fails
@@ -775,17 +864,46 @@ def preview_resume_view(request, resume_id):
             html = re.sub(r'<html[^>]*>', '', html, flags=re.IGNORECASE)
             html = re.sub(r'</html>', '', html, flags=re.IGNORECASE)
             
-            # Critical fix: Scope html/body styles to .resume-wrapper to prevent page shift
-            # Replace html, body selectors with .resume-wrapper html, .resume-wrapper body
-            all_styles = re.sub(r'html\s*,', '.resume-wrapper html,', all_styles)
-            all_styles = re.sub(r',\s*html\s*{', ', .resume-wrapper html {', all_styles)
-            all_styles = re.sub(r'body\s*,', '.resume-wrapper body,', all_styles)
-            all_styles = re.sub(r',\s*body\s*{', ', .resume-wrapper body {', all_styles)
-            # Handle standalone html and body rules
-            all_styles = re.sub(r'^html\s*{', '.resume-wrapper html {', all_styles, flags=re.MULTILINE)
-            all_styles = re.sub(r'^body\s*{', '.resume-wrapper body {', all_styles, flags=re.MULTILINE)
-            # Also scope @page rules
-            all_styles = re.sub(r'@page\s*{', '@media print { .resume-wrapper {', all_styles)
+            # Scope html/body styles to .resume-wrapper .resume-content for higher specificity
+            # Replace html, body selectors with higher specificity to override Tailwind
+            all_styles = re.sub(r'html\s*,', '.resume-wrapper .resume-content,', all_styles)
+            all_styles = re.sub(r',\s*html\s*{', ', .resume-wrapper .resume-content {', all_styles)
+            all_styles = re.sub(r'body\s*,', '.resume-wrapper .resume-content,', all_styles)
+            all_styles = re.sub(r',\s*body\s*{', ', .resume-wrapper .resume-content {', all_styles)
+            # Handle standalone html and body rules - replace with higher specificity
+            all_styles = re.sub(r'^html\s*{', '.resume-wrapper .resume-content {', all_styles, flags=re.MULTILINE)
+            all_styles = re.sub(r'^body\s*{', '.resume-wrapper .resume-content {', all_styles, flags=re.MULTILINE)
+            # Remove @page rules - they don't work in regular CSS for screen display
+            all_styles = re.sub(r'@page\s*\{[^}]*\}', '', all_styles, flags=re.DOTALL)
+            # Scope ALL class selectors to .resume-wrapper .resume-content for maximum specificity
+            def scope_class_selector_fallback(match):
+                before = match.group(1)
+                class_name = match.group(2)
+                after = match.group(3)
+                
+                # Don't scope if already scoped
+                if '.resume-wrapper .resume-content' in before:
+                    return match.group(0)
+                
+                # Don't scope if inside @media print
+                check_text = before[-200:] if len(before) > 200 else before
+                open_braces = check_text.count('{')
+                close_braces = check_text.count('}')
+                if '@media' in check_text and (open_braces > close_braces):
+                    return match.group(0)
+                
+                # Don't scope if part of compound selector
+                lines = before.split('\n')
+                if lines:
+                    last_line = lines[-1].strip()
+                    if re.search(r'[.#\w-]+\s+$', last_line):
+                        return match.group(0)
+                
+                return f'{before}.resume-wrapper .resume-content {class_name}{after}'
+            
+            all_styles = re.sub(r'([\s,}]*)(\.[a-zA-Z_][a-zA-Z0-9_-]+)(\s*{)', scope_class_selector_fallback, all_styles, flags=re.MULTILINE)
+            # Clean up any double-scoping
+            all_styles = re.sub(r'\.resume-wrapper \.resume-content (\.resume-wrapper \.resume-content )+', '.resume-wrapper .resume-content ', all_styles)
             
             # Remove head section but preserve styles
             html = re.sub(r'<head>.*?</head>', '', html, flags=re.DOTALL | re.IGNORECASE)

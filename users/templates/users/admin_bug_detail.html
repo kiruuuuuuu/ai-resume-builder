@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Bug Report #{{ bug.id }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-6">
+            <a href="{% url 'users:admin-dashboard' %}" class="inline-flex items-center text-sm text-gray-600 hover:text-indigo-600 mb-4">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Dashboard
+            </a>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Bug Report #{{ bug.id }}</h1>
+                    <p class="text-gray-600 mt-1">Submitted on {{ bug.created_at|date:"F d, Y \a\t g:i A" }}</p>
+                </div>
+                <div>
+                    {% if bug.is_resolved %}
+                        <span class="px-4 py-2 text-sm font-semibold bg-green-100 text-green-800 rounded-lg">Resolved</span>
+                    {% else %}
+                        <span class="px-4 py-2 text-sm font-semibold bg-red-100 text-red-800 rounded-lg">Open</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Content -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Bug Description -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">Description</h2>
+                    <div class="prose max-w-none">
+                        <p class="text-gray-700 whitespace-pre-wrap">{{ bug.description }}</p>
+                    </div>
+                </div>
+
+                <!-- Screenshot -->
+                {% if bug.screenshot %}
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">Screenshot</h2>
+                    <div class="border border-gray-200 rounded-lg overflow-hidden">
+                        <img src="{{ bug.screenshot.url }}" alt="Bug screenshot" class="w-full h-auto">
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Resolution Notes -->
+                {% if bug.is_resolved and bug.resolution_notes %}
+                <div class="bg-green-50 border-l-4 border-green-500 rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">Resolution Notes</h2>
+                    <p class="text-gray-700 whitespace-pre-wrap">{{ bug.resolution_notes }}</p>
+                    <p class="text-sm text-gray-500 mt-4">
+                        Resolved by {{ bug.resolved_by.username }} on {{ bug.resolved_at|date:"F d, Y \a\t g:i A" }}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Bug Information -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">Information</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Reported By</p>
+                            <p class="text-sm text-gray-900 mt-1">{{ bug.user.username|default:"Anonymous" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">URL</p>
+                            <a href="{{ bug.url }}" target="_blank" class="text-sm text-indigo-600 hover:text-indigo-800 mt-1 break-all">{{ bug.url }}</a>
+                        </div>
+                        {% if bug.browser_info %}
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Browser</p>
+                            <p class="text-sm text-gray-900 mt-1">{{ bug.browser_info }}</p>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Created</p>
+                            <p class="text-sm text-gray-900 mt-1">{{ bug.created_at|date:"F d, Y g:i A" }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                {% if not bug.is_resolved %}
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">Actions</h2>
+                    <form method="POST" class="space-y-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="resolve">
+                        <div>
+                            <label for="resolution_notes" class="block text-sm font-medium text-gray-700 mb-2">
+                                Resolution Notes
+                            </label>
+                            <textarea name="resolution_notes" id="resolution_notes" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Add notes about how this bug was resolved..."></textarea>
+                        </div>
+                        <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-all">
+                            Mark as Resolved
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

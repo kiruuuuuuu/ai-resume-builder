@@ -13,7 +13,7 @@
         html, body {
             font-family: 'Inter', Arial, sans-serif;
             color: #3a3a3a;
-            font-size: 8.5pt; /* Reduced for single page fit */
+            font-size: 9.5pt; /* Increased for better readability */
             line-height: 1.3; /* Tighter line height */
             margin: 0;
             padding: 0;
@@ -84,7 +84,7 @@
             border: 2px solid rgba(255, 255, 255, 0.3);
         }
         .sidebar h2 {
-            font-size: 10pt; /* Reduced */
+            font-size: 11pt; /* Increased */
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #ffffff;
@@ -97,7 +97,7 @@
             display: flex;
             align-items: flex-start;
             margin-bottom: 4px; /* Reduced */
-            font-size: 8.5pt; /* Reduced */
+            font-size: 9.5pt; /* Increased */
         }
         .contact-item svg {
             width: 12px;
@@ -114,30 +114,30 @@
             display: block;
             color: #ffffff;
             margin-bottom: 2px;
-            font-size: 8.5pt; /* Reduced */
+            font-size: 9.5pt; /* Increased */
             font-weight: 500;
         }
         .skill-category span {
-            font-size: 8pt; /* Reduced */
+            font-size: 9pt; /* Increased */
             color: #bdc3c7;
         }
 
         /* --- Main Content Styling --- */
         .name {
-            font-size: 24pt; /* Reduced */
+            font-size: 26pt; /* Increased */
             font-weight: bold;
             color: #2c3e50;
             line-height: 1.1;
             margin-bottom: 2px;
         }
         .job-title-header {
-            font-size: 12pt; /* Reduced */
+            font-size: 13pt; /* Increased */
             color: {{ accent_color|default:'#3498db' }};
             font-weight: 500;
             margin-bottom: 12px; /* Reduced */
         }
         .content h2 {
-            font-size: 11pt; /* Reduced */
+            font-size: 12pt; /* Increased */
             color: #2c3e50;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -156,12 +156,12 @@
             align-items: baseline;
         }
         .title {
-            font-size: 10pt; /* Reduced */
+            font-size: 11pt; /* Increased */
             font-weight: 700;
             color: #000;
         }
         .subtitle, .project-aim {
-            font-size: 9pt; /* Reduced */
+            font-size: 10pt; /* Increased */
             color: #555;
             font-style: italic;
         }
@@ -169,7 +169,7 @@
             font-style: normal;
         }
         .date {
-            font-size: 8.5pt; /* Reduced */
+            font-size: 9.5pt; /* Increased */
             color: #333;
             font-weight: 500;
             flex-shrink: 0;
@@ -188,7 +188,7 @@
             line-height: 1.25; /* Tighter */
         }
         .tech-details {
-            font-size: 8.5pt; /* Reduced */
+            font-size: 9.5pt; /* Increased */
             color: #444;
             margin-top: 3px; /* Reduced */
         }
@@ -219,17 +219,17 @@
 
             {% if educations %}
             <h2>Education</h2>
-            {% for edu in educations %}<div class="sidebar-item"><div><strong>{{ edu.degree }}</strong><br><span style="font-size: 9pt;">{{ edu.institution }}</span><br><span style="font-size: 8.5pt; color: #bdc3c7;">{{ edu.start_date|date:"Y" }} - {{ edu.end_date|date:"Y"|default:"Present" }}</span></div></div>{% endfor %}
+            {% for edu in educations %}<div class="sidebar-item"><div><strong>{{ edu.degree }}</strong><br><span style="font-size: 10pt;">{{ edu.institution }}</span><br><span style="font-size: 9.5pt; color: #bdc3c7;">{{ edu.start_date|date:"Y" }} - {{ edu.end_date|date:"Y"|default:"Present" }}</span></div></div>{% endfor %}
             {% endif %}
 
             {% if languages %}
             <h2>Languages</h2>
-            {% for lang in languages %}<div class="sidebar-item" style="font-size: 9pt;">{{ lang.name }} ({{ lang.get_proficiency_display }})</div>{% endfor %}
+            {% for lang in languages %}<div class="sidebar-item" style="font-size: 10pt;">{{ lang.name }} ({{ lang.get_proficiency_display }})</div>{% endfor %}
             {% endif %}
             
             {% if hobbies %}
             <h2>Hobbies</h2>
-            <div class="sidebar-item" style="font-size: 8.5pt; color: #bdc3c7;">{{ hobbies|join:", " }}</div>
+            <div class="sidebar-item" style="font-size: 9.5pt; color: #bdc3c7;">{{ hobbies|join:", " }}</div>
             {% endif %}
         </div>
 

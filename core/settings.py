@@ -28,6 +28,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # The application will not run without this key being set.
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
+# Validate SECRET_KEY is set (critical security check)
+if not SECRET_KEY:
+    raise ValueError(
+        "DJANGO_SECRET_KEY environment variable is not set! "
+        "This is required for security. Please set it in your .env file or environment variables."
+    )
+
 # GOOGLE_AI_API_KEY is also loaded from the .env file.
 GOOGLE_AI_API_KEY = os.getenv("GOOGLE_AI_API_KEY")
 
@@ -38,12 +45,54 @@ DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 't')
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else []
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
 
+# Production Security Settings (only enabled when DEBUG=False)
+if not DEBUG:
+    # HTTPS Settings
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    
+    # HSTS (HTTP Strict Transport Security)
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # Cookie Security
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_HTTPONLY = True
+    
+    # Session Timeout Settings
+    SESSION_COOKIE_AGE = 3600  # 1 hour (in seconds)
+    SESSION_SAVE_EVERY_REQUEST = True  # Extend session on each request
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Expire session when browser closes
+    
+    # Content Security
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = 'DENY'
+    
+    # CSRF Trusted Origins (set via environment variable)
+    CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if os.getenv('CSRF_TRUSTED_ORIGINS') else []
+    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS if origin.strip()]
+else:
+    # Development settings (less strict for local development)
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+
 # --- Gemini API Settings ---
 # A central switch to enable or disable all Gemini features.
 USE_GEMINI = os.getenv('USE_GEMINI', 'True').lower() in ('true', '1', 't')
 
 # The specific model to use for Gemini API calls.
 GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'models/gemini-2.5-flash')
+
+# --- Job Features Settings ---
+# A central switch to enable or disable job-related features.
+# When False (default): Shows "Coming Soon" banner and blocks all job feature access
+# When True: Removes "Coming Soon" banner and enables full job feature access
+JOBS_FEATURE_ENABLED = os.getenv('JOBS_FEATURE_ENABLED', 'False').lower() in ('true', '1', 't')
 
 
 # --- LOGGING CONFIGURATION ---
@@ -129,6 +178,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'core.context_processors.notifications',
+                'core.context_processors.jobs_feature_enabled',
             ],
         },
     },
@@ -201,6 +251,11 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+# Static files directories for development
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
 # WhiteNoise configuration for serving static files
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
@@ -246,6 +301,13 @@ SOCIALACCOUNT_STORE_TOKENS = False
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# File upload settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB
+MAX_PROFILE_PHOTO_SIZE = 5 * 1024 * 1024  # 5MB
+MAX_SCREENSHOT_SIZE = 10 * 1024 * 1024  # 10MB
+
 LOGIN_URL = 'account_login'  # django-allauth login URL
 LOGIN_REDIRECT_URL = 'home'
 

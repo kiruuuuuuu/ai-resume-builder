@@ -42,7 +42,7 @@ def home_view(request):
             ).order_by('-created_at')[:20]
             
             try:
-                applicant_resume = Resume.objects.filter(profile=request.user.jobseekerprofile).latest('created_at')
+                applicant_resume = Resume.objects.filter(profile=request.user.jobseekerprofile).select_related('profile').latest('created_at')
                 
                 # --- START CACHING LOGIC ---
                 jobs_with_scores = []
@@ -101,6 +101,13 @@ def report_bug_view(request):
         screenshot_data = data.get('screenshot', None)  # Base64 encoded image
         browser_info = data.get('browser_info', None)
         
+        # Sanitize user input
+        from core.utils import sanitize_text
+        description = sanitize_text(description)
+        url = sanitize_text(url)
+        if browser_info:
+            browser_info = sanitize_text(browser_info)
+        
         if not description or len(description.strip()) < 10:
             return JsonResponse({'status': 'error', 'message': 'Please provide a detailed description (at least 10 characters).'}, status=400)
         
@@ -122,12 +129,21 @@ def report_bug_view(request):
                 # Decode base64 image
                 image_data = base64.b64decode(screenshot_data)
                 
-                # Generate filename
-                import uuid
-                filename = f"bug_{bug_report.id}_{uuid.uuid4().hex[:8]}.png"
-                
-                # Save screenshot
-                bug_report.screenshot.save(filename, ContentFile(image_data), save=True)
+                # Validate file size (max 10MB for screenshots)
+                from django.conf import settings
+                max_size = getattr(settings, 'MAX_SCREENSHOT_SIZE', 10 * 1024 * 1024)
+                if len(image_data) > max_size:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Screenshot for bug report {bug_report.id} exceeds size limit")
+                    # Continue without screenshot rather than failing the request
+                else:
+                    # Generate filename
+                    import uuid
+                    filename = f"bug_{bug_report.id}_{uuid.uuid4().hex[:8]}.png"
+                    
+                    # Save screenshot
+                    bug_report.screenshot.save(filename, ContentFile(image_data), save=True)
             except Exception as e:
                 # If screenshot processing fails, log but don't fail the entire request
                 import logging

@@ -163,9 +163,16 @@ def generate_resume_pdf_task(pdf_generation_id, base_url):
         template = get_template(template_path)
         html = template.render(context)
         
-        # Generate PDF
+        # Generate PDF with template-specific margins
         html_obj = HTML(string=html, base_url=base_url)
-        pdf_bytes = html_obj.write_pdf(stylesheets=[CSS(string='@page { size: A4; margin: 1.5cm }')])
+        # Set template-specific margins to match the template's @page rules
+        if pdf_gen.template_name == 'modern':
+            page_css = '@page { size: A4; margin: 0 }'
+        elif pdf_gen.template_name == 'creative':
+            page_css = '@page { size: A4; margin: 0.5cm }'
+        else:  # classic and professional
+            page_css = '@page { size: A4; margin: 1.5cm }'
+        pdf_bytes = html_obj.write_pdf(stylesheets=[CSS(string=page_css)])
         
         # Save PDF file
         filename = f"resume_{resume.id}_{pdf_gen.template_name}_{timezone.now().strftime('%Y%m%d_%H%M%S')}.pdf"

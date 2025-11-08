@@ -12,6 +12,13 @@ class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = CustomUser
         fields = UserCreationForm.Meta.fields + ('user_type', 'email',)
+    
+    def clean_password1(self):
+        """Validate password strength using Django's built-in validators."""
+        password1 = self.cleaned_data.get("password1")
+        if password1:
+            password_validation.validate_password(password1, self.instance)
+        return password1
 
 class ProfileUpdateForm(forms.ModelForm):
     email = forms.EmailField(required=True)

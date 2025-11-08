@@ -4,74 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resume Preview - {{ resume.profile.full_name }}</title>
+    <!-- Load Tailwind - we'll override its resets for resume content -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Isolate resume content from Tailwind CSS -->
+    <style>
+        /* Create isolation boundary - prevent Tailwind from affecting resume content */
+        .resume-wrapper {
+            isolation: isolate;
+        }
+        
+        /* Ensure resume content container is properly set up */
+        .resume-wrapper .resume-content {
+            display: block;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        /* Ensure all children use border-box */
+        .resume-wrapper .resume-content * {
+            box-sizing: border-box;
+        }
+    </style>
+    
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
-        * {
+        /* Apply Inter font to page controls, but NOT to resume content */
+        body, .controls, .controls * {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
+        
+        /* Don't apply Inter font to resume content - template styles will handle it */
+        /* Template styles load after this, so they'll override */
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: #f0f2f5;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
             min-height: 100vh;
+            margin: 0;
+            padding: 0;
         }
         
-        @keyframes blob {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(30px, -50px) scale(1.1); }
-            66% { transform: translate(-20px, 20px) scale(0.9); }
+        /* Controls Header */
+        .controls {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         
-        .animate-blob {
-            animation: blob 7s infinite;
-        }
-        
-        .animation-delay-2000 {
-            animation-delay: 2s;
-        }
-        
-        .animation-delay-4000 {
-            animation-delay: 4s;
-        }
-        
-        /* Professional loading animation */
-        @keyframes shimmer {
-            0% { background-position: -1000px 0; }
-            100% { background-position: 1000px 0; }
-        }
-        
-        .loading-shimmer {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 1000px 100%;
-            animation: shimmer 2s infinite;
-        }
-        
-        /* Smooth fade-in animation */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .fade-in-up {
-            animation: fadeInUp 0.6s ease-out;
-        }
-        
-        /* Template card hover effect */
+        /* Template and Color Selection */
         .template-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
         
         .template-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         
         .template-card.active {
@@ -80,15 +82,13 @@
             color: white;
         }
         
-        /* Color swatch hover effect */
         .color-swatch {
             transition: all 0.2s ease;
-            position: relative;
+            cursor: pointer;
         }
         
         .color-swatch:hover {
-            transform: scale(1.15);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transform: scale(1.1);
         }
         
         .color-swatch.active::after {
@@ -100,342 +100,202 @@
             color: white;
             font-weight: bold;
             font-size: 14px;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
         
-        /* Glass morphism effect */
-        .glass {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        /* Professional button styles */
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .btn-primary::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
+        /* Preview Container */
+        .preview-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
             width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.5s;
+            padding: 2rem;
+            min-height: calc(100vh - 200px);
         }
         
-        .btn-primary:hover::before {
-            left: 100%;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-        }
-        
-        /* Professional card styles */
-        .preview-card {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-        
-        /* Smooth transitions */
-        .transition-smooth {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        /* Resume Wrapper - Exact A4 dimensions */
         .resume-wrapper {
             background: white;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.05);
-            width: 210mm; /* A4 width */
-            max-width: 210mm;
-            min-height: 297mm; /* A4 height */
-            position: relative;
-            margin-left: auto !important; /* Force center with auto margins */
-            margin-right: auto !important;
-            margin-top: 0;
-            margin-bottom: 0;
-            flex-shrink: 0; /* Prevent flex from shrinking */
-            border-radius: 12px;
-            overflow: visible; /* Allow page breaks to show */
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            flex-direction: column;
-        }
-        
-        /* Page container for multi-page display */
-        .resume-page {
             width: 210mm;
+            max-width: 210mm;
             min-height: 297mm;
-            max-height: 297mm;
-            background: white;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            padding: 0.5cm;
-            box-sizing: border-box;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
             overflow: hidden;
-            page-break-after: always;
-            break-after: page;
-        }
-        
-        .resume-page:last-child {
-            margin-bottom: 0;
-            page-break-after: auto;
-        }
-        
-        /* Page break indicator */
-        .page-break-indicator {
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, #cbd5e0 20%, #cbd5e0 80%, transparent);
-            margin: 0;
-            position: absolute;
-            left: 0;
-            right: 0;
-            z-index: 10;
-            pointer-events: none;
-        }
-        
-        .page-break-indicator::before {
-            content: '━━ Page Break ━━';
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 2px 12px;
-            color: #718096;
-            font-size: 9px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-        }
-        /* For Modern template, ensure proper centering */
-        .resume-wrapper .page {
             margin: 0 auto;
+            position: relative;
+            border: 1px solid rgba(0, 0, 0, 0.08);
         }
-        /* Ensure resume content is properly displayed - exactly as it will print */
+        
+        /* For multi-page templates, allow natural page breaks */
+        .resume-wrapper.multi-page {
+            min-height: auto;
+            height: auto;
+        }
+        
+        /* Single page templates - constrain height */
+        .resume-wrapper.single-page {
+            height: 297mm;
+            max-height: 297mm;
+            overflow: hidden;
+        }
+        
+        /* Isolate resume content from Tailwind CSS - prevent Tailwind from overriding template styles */
+        .resume-wrapper {
+            /* Create a new stacking context to isolate from Tailwind */
+            isolation: isolate;
+        }
+        
+        /* Ensure template content displays correctly */
+        .resume-content {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            margin: 0;
+            padding: 0;
+            /* Reset Tailwind's potential interference */
+            font-family: inherit;
+            font-size: inherit;
+            line-height: inherit;
+            color: inherit;
+        }
+        
+        /* Prevent Tailwind from affecting resume content - but don't reset everything */
+        .resume-content * {
+            box-sizing: border-box;
+        }
+        
+        /* Override Tailwind's potential resets for resume content */
+        .resume-content p,
+        .resume-content h1,
+        .resume-content h2,
+        .resume-content h3,
+        .resume-content ul,
+        .resume-content li {
+            /* Let template styles handle these */
+            margin: revert;
+            padding: revert;
+        }
+        
+        /* Scope all template styles to resume-wrapper */
         .resume-wrapper * {
             box-sizing: border-box;
         }
-        /* Override any conflicting styles from parent page */
-        .resume-wrapper html,
-        .resume-wrapper body {
-            margin: 0 !important;
-            padding: 0 !important;
-            background: white !important;
-            width: 100% !important;
-            height: auto !important;
-        }
-        /* Ensure all resume templates display correctly */
-        .resume-wrapper .page,
-        .resume-wrapper .resume-container {
-            width: 100% !important;
-            height: auto !important;
-            margin: 0 auto !important;
-            padding: 0 !important;
-            position: relative !important;
-        }
-        /* Special handling for Modern template - ensure floats are contained and centered */
-        .resume-wrapper .page {
-            display: block !important;
-            overflow: hidden !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 0 auto !important;
-            position: relative !important;
-            min-height: auto !important; /* Let content determine height */
-            height: auto !important; /* Natural height */
-        }
-        .resume-wrapper .page::after {
-            content: "";
-            display: table;
-            clear: both;
-        }
-        /* Ensure sidebar and content floats work correctly within centered container */
-        .resume-wrapper .sidebar {
-            float: left !important;
-            display: block !important;
-            width: 35% !important;
-            box-sizing: border-box !important;
-            min-height: auto !important; /* Natural height */
-            height: auto !important; /* Natural height */
-        }
-        .resume-wrapper .content {
-            float: left !important;
-            display: block !important;
-            width: 65% !important;
-            box-sizing: border-box !important;
-            min-height: auto !important; /* Natural height */
-            height: auto !important; /* Natural height */
-        }
-        /* Prevent horizontal overflow */
-        .resume-wrapper {
-            overflow-x: hidden !important;
-            max-width: 100% !important;
-        }
+        
+        /* Print styles */
         @media print {
-            @page {
-                size: A4;
+            body {
+                background: white;
+                padding: 0;
                 margin: 0;
             }
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            html, body {
-                background: white !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 210mm !important;
-                height: auto !important;
-                min-height: auto !important;
-                overflow: visible !important;
-            }
-            /* Remove any margins from resume template body/html */
-            .resume-wrapper body,
-            .resume-wrapper html {
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 100% !important;
-                height: auto !important;
-            }
+            
             .controls {
                 display: none !important;
             }
-            /* Remove scaling and centering for print */
+            
             .preview-container {
-                padding: 0 !important;
-                margin: 0 !important;
-                display: block !important;
-                transform: none !important;
-                overflow: visible !important;
-                background: white !important;
-                min-height: auto !important;
-                height: auto !important;
+                padding: 0;
+                margin: 0;
             }
+            
             .resume-wrapper {
-                box-shadow: none !important;
-                width: 210mm !important; /* A4 width for print only */
-                min-height: auto !important;
-                height: auto !important;
-                margin: 0 auto !important;
-                padding: 0 !important;
-                transform: none !important;
-                page-break-after: avoid !important;
-                page-break-inside: avoid !important;
-                overflow: visible !important;
-                position: relative !important;
+                box-shadow: none;
+                border: none;
+                border-radius: 0;
+                margin: 0;
+                page-break-after: always;
             }
-            /* Ensure resume content fits on one page */
-            .resume-wrapper .page,
-            .resume-wrapper .resume-container {
-                width: 100% !important;
-                height: auto !important;
-                min-height: auto !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                page-break-inside: avoid !important;
-                overflow: visible !important;
-            }
-            /* Override any @page margins from resume templates */
-            .resume-wrapper * {
-                page-break-inside: avoid !important;
-            }
-            /* Prevent page breaks within sections */
-            .section,
-            .section-title,
-            .item {
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
+            
+            .resume-wrapper:last-child {
+                page-break-after: auto;
             }
         }
+        
+        /* Screen view - scale down for better viewing */
         @media screen {
-            /* A4 sizing for screen viewing - exact match to PDF */
             .resume-wrapper {
-                transform: scale(0.8); /* Scale down to 80% for better screen viewing while maintaining accuracy */
+                transform: scale(0.85);
                 transform-origin: top center;
-                transition: transform 0.3s ease, box-shadow 0.3s ease;
-                /* Ensure centering is maintained */
-                margin-left: auto !important;
-                margin-right: auto !important;
-                margin-top: 0.5rem !important;
-                margin-bottom: 2rem !important;
-            }
-            /* Ensure parent container doesn't overflow - prevent horizontal scroll */
-            .preview-container {
-                overflow-x: hidden !important;
-                max-width: 100vw !important;
-                display: flex !important;
-                justify-content: center !important;
-                align-items: flex-start !important;
-                width: 100% !important;
-                padding-top: 0.5rem !important;
-                padding-bottom: 2rem !important;
-            }
-            body {
-                overflow-x: hidden !important;
-                max-width: 100% !important;
-            }
-            /* Hover effect for better UX */
-            .resume-wrapper:hover {
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-                transform: translateY(-4px);
+                margin-bottom: 2rem;
             }
             
-            /* Enhanced resume wrapper styling */
-            .resume-wrapper {
-                border-radius: 12px;
-                overflow: hidden;
-            }
-            
-            /* Improve spacing within resume content for screen viewing */
-            .resume-wrapper .section,
-            .resume-wrapper .item {
-                margin-bottom: 1.2em !important;
-            }
-            .resume-wrapper .section-title,
-            .resume-wrapper h2 {
-                margin-top: 1.5em !important;
-                margin-bottom: 0.8em !important;
-            }
-            .resume-wrapper .description,
-            .resume-wrapper .summary-text,
-            .resume-wrapper p {
-                margin-bottom: 0.8em !important;
-                line-height: 1.6 !important;
-            }
-            .resume-wrapper li {
-                margin-bottom: 0.4em !important;
+            .resume-wrapper.multi-page {
+                transform: scale(0.85);
+                transform-origin: top center;
             }
         }
     </style>
+    
+    <!-- Template styles - MUST load LAST at end of head to override everything -->
+    {% if resume_styles %}
+    <style data-resume-styles="true">
+        /* Template-specific styles extracted from PDF template */
+        /* All 'body' and 'html' selectors are replaced with '.resume-wrapper .resume-content' */
+        /* All class selectors are scoped to '.resume-wrapper .resume-content' for maximum specificity */
+        /* These styles load LAST to ensure they override Tailwind CSS and all other styles */
+        
+        /* Apply all template styles with maximum specificity */
+        {{ resume_styles|safe }}
+    </style>
+    
+    <!-- Debug script to verify styles are applying -->
+    <script>
+        window.addEventListener('load', () => {
+            const resumeContent = document.querySelector('.resume-content');
+            if (resumeContent) {
+                const testElement = resumeContent.querySelector('.name, .resume-container, .header');
+                if (testElement) {
+                    const computed = window.getComputedStyle(testElement);
+                    console.log('Template element computed styles:', {
+                        fontFamily: computed.fontFamily,
+                        fontSize: computed.fontSize,
+                        color: computed.color,
+                        backgroundColor: computed.backgroundColor
+                    });
+                    
+                    const styleSheet = document.querySelector('style[data-resume-styles]');
+                    if (styleSheet && computed.fontFamily.includes('Inter') && !computed.fontFamily.includes('Helvetica') && !computed.fontFamily.includes('Arial') && !computed.fontFamily.includes('Segoe')) {
+                        console.warn('⚠️ Template styles may not be applying - seeing default Inter font instead of template fonts');
+                    }
+                }
+            }
+        });
+    </script>
+    {% else %}
+    <style data-resume-styles="true">
+        /* ERROR: No resume styles found! */
+        .resume-wrapper .resume-content {
+            color: red !important;
+            font-weight: bold !important;
+            padding: 20px !important;
+        }
+        .resume-wrapper .resume-content::before {
+            content: "ERROR: Template styles not loaded! Styles may not be extracted from template." !important;
+            display: block !important;
+            padding: 20px !important;
+            background: #fee !important;
+            border: 2px solid red !important;
+            margin-bottom: 20px !important;
+            font-size: 16px !important;
+        }
+    </style>
+    {% endif %}
 </head>
-<body class="min-h-screen bg-gray-100">
-    <!-- Enhanced Professional Header with Glass Morphism -->
-    <div class="controls glass sticky top-0 z-50 shadow-xl border-b border-white/20">
+<body>
+    <!-- Controls Header -->
+    <div class="controls">
         <div class="max-w-7xl mx-auto px-6 py-5">
             <!-- Top Row: Navigation -->
             <div class="flex items-center justify-between mb-6">
                 <div class="flex items-center gap-4">
                     <a href="{% url 'resumes:resume-builder' %}" 
-                       class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl hover:bg-white hover:border-indigo-400 hover:shadow-lg transition-all duration-300 group">
-                        <svg class="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-indigo-400 transition-all duration-300">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
                         Back to Editor
                     </a>
-                    <div class="h-8 w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
+                    <div class="h-8 w-px bg-gray-300"></div>
                     <div class="flex items-center gap-3">
                         <div class="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -445,24 +305,22 @@
                         </div>
                         <div>
                             <h1 class="text-lg font-bold text-gray-900">Resume Preview</h1>
-                            <p class="text-xs text-gray-500">View your resume exactly as it will print</p>
+                            <p class="text-xs text-gray-500">Exact preview of your resume as it will be printed</p>
                         </div>
                     </div>
                 </div>
                 
                 <div class="flex items-center gap-3">
-                    <!-- Print Button -->
                     <button onclick="window.print()" 
-                            class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl hover:bg-white hover:border-indigo-400 hover:shadow-lg transition-all duration-300 group">
-                        <svg class="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-indigo-400 transition-all duration-300">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                         </svg>
                         Print
                     </button>
                     
-                    <!-- Download Button -->
                     <a href="{% url 'resumes:download-resume-pdf' resume_id=resume.id template_name=template_name %}?accent_color={{ selected_color }}" 
-                       class="btn-primary inline-flex items-center px-6 py-2.5 text-sm font-bold text-white rounded-xl shadow-xl hover:shadow-2xl">
+                       class="inline-flex items-center px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
@@ -471,20 +329,17 @@
                 </div>
             </div>
             
-            <!-- Bottom Row: Template & Color Selection Cards -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-                <!-- Template Selection Card -->
-                <div class="preview-card rounded-2xl p-5 fade-in-up">
+            <!-- Bottom Row: Template & Color Selection -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <!-- Template Selection -->
+                <div class="bg-white rounded-xl p-5 border border-gray-200">
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-                        <svg class="w-4 h-4 inline mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
-                        </svg>
                         Choose Template
                     </label>
                     <div class="grid grid-cols-4 gap-3">
                         {% for template in template_options %}
                         <button onclick="selectTemplate('{{ template }}')" 
-                                class="template-card p-4 rounded-xl border-2 font-semibold text-sm transition-smooth {% if template == template_name %}active border-indigo-500{% else %}border-gray-200 hover:border-indigo-300 bg-white{% endif %}"
+                                class="template-card p-4 rounded-xl border-2 font-semibold text-sm {% if template == template_name %}active border-indigo-500{% else %}border-gray-200 hover:border-indigo-300 bg-white{% endif %}"
                                 id="template-{{ template }}">
                             <div class="text-center">
                                 <div class="mb-2 text-lg">{{ template|title|slice:":1" }}</div>
@@ -493,62 +348,53 @@
                         </button>
                         {% endfor %}
                     </div>
-                    <!-- Hidden select for form compatibility -->
-                    <select id="template-select" class="hidden">
-                        {% for template in template_options %}
-                        <option value="{{ template }}" {% if template == template_name %}selected{% endif %}>{{ template|title }}</option>
-                        {% endfor %}
-                    </select>
                 </div>
                 
-                <!-- Color Selection Card -->
-                <div class="preview-card rounded-2xl p-5 fade-in-up">
+                <!-- Color Selection -->
+                <div class="bg-white rounded-xl p-5 border border-gray-200">
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-                        <svg class="w-4 h-4 inline mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                        </svg>
                         Accent Color
                     </label>
                     <div class="flex items-center gap-3 flex-wrap">
                         {% for color in color_options %}
                         {% if color == 'blue' %}
                         <button onclick="selectColor('{{ color }}')" 
-                                class="color-swatch w-12 h-12 rounded-xl border-3 shadow-md {% if color == selected_color %}active ring-4 ring-indigo-300 ring-offset-2{% else %}border-gray-200{% endif %}"
+                                class="color-swatch w-12 h-12 rounded-xl border-3 shadow-md relative {% if color == selected_color %}active ring-4 ring-indigo-300 ring-offset-2{% else %}border-gray-200{% endif %}"
                                 style="background-color: #3498db;"
                                 id="color-{{ color }}"
                                 title="{{ color|title }}">
                         </button>
                         {% elif color == 'teal' %}
                         <button onclick="selectColor('{{ color }}')" 
-                                class="color-swatch w-12 h-12 rounded-xl border-3 shadow-md {% if color == selected_color %}active ring-4 ring-indigo-300 ring-offset-2{% else %}border-gray-200{% endif %}"
+                                class="color-swatch w-12 h-12 rounded-xl border-3 shadow-md relative {% if color == selected_color %}active ring-4 ring-indigo-300 ring-offset-2{% else %}border-gray-200{% endif %}"
                                 style="background-color: #14b8a6;"
                                 id="color-{{ color }}"
                                 title="{{ color|title }}">
                         </button>
                         {% elif color == 'indigo' %}
                         <button onclick="selectColor('{{ color }}')" 
-                                class="color-swatch w-12 h-12 rounded-xl border-3 shadow-md {% if color == selected_color %}active ring-4 ring-indigo-300 ring-offset-2{% else %}border-gray-200{% endif %}"
+                                class="color-swatch w-12 h-12 rounded-xl border-3 shadow-md relative {% if color == selected_color %}active ring-4 ring-indigo-300 ring-offset-2{% else %}border-gray-200{% endif %}"
                                 style="background-color: #6366f1;"
                                 id="color-{{ color }}"
                                 title="{{ color|title }}">
                         </button>
                         {% elif color == 'purple' %}
                         <button onclick="selectColor('{{ color }}')" 
-                                class="color-swatch w-12 h-12 rounded-xl border-3 shadow-md {% if color == selected_color %}active ring-4 ring-indigo-300 ring-offset-2{% else %}border-gray-200{% endif %}"
+                                class="color-swatch w-12 h-12 rounded-xl border-3 shadow-md relative {% if color == selected_color %}active ring-4 ring-indigo-300 ring-offset-2{% else %}border-gray-200{% endif %}"
                                 style="background-color: #a855f7;"
                                 id="color-{{ color }}"
                                 title="{{ color|title }}">
                         </button>
                         {% elif color == 'red' %}
                         <button onclick="selectColor('{{ color }}')" 
-                                class="color-swatch w-12 h-12 rounded-xl border-3 shadow-md {% if color == selected_color %}active ring-4 ring-indigo-300 ring-offset-2{% else %}border-gray-200{% endif %}"
+                                class="color-swatch w-12 h-12 rounded-xl border-3 shadow-md relative {% if color == selected_color %}active ring-4 ring-indigo-300 ring-offset-2{% else %}border-gray-200{% endif %}"
                                 style="background-color: #ef4444;"
                                 id="color-{{ color }}"
                                 title="{{ color|title }}">
                         </button>
                         {% else %}
                         <button onclick="selectColor('{{ color }}')" 
-                                class="color-swatch w-12 h-12 rounded-xl border-3 shadow-md {% if color == selected_color %}active ring-4 ring-indigo-300 ring-offset-2{% else %}border-gray-200{% endif %}"
+                                class="color-swatch w-12 h-12 rounded-xl border-3 shadow-md relative {% if color == selected_color %}active ring-4 ring-indigo-300 ring-offset-2{% else %}border-gray-200{% endif %}"
                                 style="background-color: #475569;"
                                 id="color-{{ color }}"
                                 title="{{ color|title }}">
@@ -556,246 +402,97 @@
                         {% endif %}
                         {% endfor %}
                     </div>
-                    <!-- Hidden select for form compatibility -->
-                    <select id="color-select" class="hidden">
-                        {% for color in color_options %}
-                        <option value="{{ color }}" {% if color == selected_color %}selected{% endif %}>{{ color|title }}</option>
-                        {% endfor %}
-                    </select>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Resume Preview Container - Enhanced with Professional Design -->
-    <div class="preview-container py-4 px-8 min-h-[calc(100vh-200px)]" style="overflow-x: hidden; max-width: 100vw; display: flex; justify-content: center; align-items: flex-start; width: 100%; position: relative;">
-        <!-- Preview wrapper with professional styling -->
-        <div class="relative z-10 fade-in-up w-full max-w-6xl mx-auto" style="animation-delay: 0.2s;">
-            <!-- Preview info badge -->
-            <div class="mb-3 flex items-center justify-center gap-3">
-                <div class="glass px-5 py-2.5 rounded-full shadow-lg border border-white/30">
-                    <div class="flex items-center gap-3">
-                        <div class="flex items-center gap-2">
-                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                            <span class="text-sm font-semibold text-gray-700">Live Preview</span>
-                        </div>
-                        <div class="h-4 w-px bg-gray-300"></div>
-                        <span class="text-xs text-gray-500">Print Ready</span>
-                    </div>
-                </div>
-            </div>
-        {% if resume_styles %}
-        <style>
-            /* Resume template styles - apply to content within .resume-wrapper */
-            {{ resume_styles|safe }}
-            
-            /* Additional fixes for Modern template centering and preventing shift */
-            /* CRITICAL: Prevent Modern template's html/body styles from affecting the main page */
-            /* Modern template has html, body { width: 210mm } which shifts the entire page */
-            html:not(.resume-wrapper),
-            body:not(.resume-wrapper) {
-                width: 100% !important;
-                max-width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            /* Override any html/body styles inside resume wrapper */
-            .resume-wrapper html,
-            .resume-wrapper body,
-            .resume-wrapper > html,
-            .resume-wrapper > body {
-                width: 100% !important;
-                max-width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            /* Ensure main page html/body are not affected */
-            html {
-                width: 100% !important;
-                max-width: 100vw !important;
-                overflow-x: hidden !important;
-            }
-            body {
-                width: 100% !important;
-                max-width: 100vw !important;
-                overflow-x: hidden !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            .resume-wrapper {
-                position: relative !important;
-                overflow-x: hidden !important;
-                max-width: 900px !important; /* Comfortable reading width */
-                width: 100% !important;
-                margin-left: auto !important;
-                margin-right: auto !important;
-                margin-top: 0 !important;
-                margin-bottom: 0 !important;
-                display: block !important;
-                flex-shrink: 0 !important;
-            }
-            .resume-wrapper .page {
-                margin: 0 auto !important;
-                display: block !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                overflow: hidden !important;
-                position: relative !important;
-                min-height: auto !important;
-                height: auto !important;
-                /* Clear floats properly */
-                clear: both !important;
-            }
-            /* Ensure clearfix works */
-            .resume-wrapper .page::after {
-                content: "" !important;
-                display: table !important;
-                clear: both !important;
-            }
-            .resume-wrapper .sidebar {
-                float: left !important;
-                width: 35% !important;
-                box-sizing: border-box !important;
-                min-height: auto !important; /* Natural height */
-                height: auto !important; /* Natural height */
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            .resume-wrapper .content {
-                float: left !important;
-                width: 65% !important;
-                box-sizing: border-box !important;
-                min-height: auto !important; /* Natural height */
-                height: auto !important; /* Natural height */
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            /* Ensure no horizontal scroll */
-            html, body {
-                overflow-x: hidden !important;
-                max-width: 100% !important;
-            }
-            /* Force preview container to center properly */
-            .preview-container {
-                display: flex !important;
-                justify-content: center !important;
-                align-items: flex-start !important;
-                width: 100% !important;
-                padding-left: 2rem !important;
-                padding-right: 2rem !important;
-                box-sizing: border-box !important;
-            }
-            /* Override any conflicting styles */
-            .preview-container > * {
-                flex-shrink: 0;
-            }
-        </style>
-        {% endif %}
-            <div id="resume-preview-container" style="position: relative;">
-                <!-- Loading overlay -->
-                <div id="loading-overlay" class="absolute inset-0 bg-white/90 backdrop-blur-md rounded-lg flex items-center justify-center z-50 hidden transition-opacity duration-300">
-                    <div class="text-center">
-                        <div class="inline-block animate-spin rounded-full h-14 w-14 border-4 border-indigo-500 border-t-transparent mb-4"></div>
-                        <p class="text-sm font-semibold text-gray-700">Loading preview...</p>
-                        <p class="text-xs text-gray-500 mt-1">Please wait</p>
-                    </div>
-                </div>
-                <!-- Resume content will be split into pages here -->
-                <div id="resume-content-wrapper" style="display: none;">
-                    {{ resume_html|safe }}
-                </div>
+    <!-- Preview Container -->
+    <div class="preview-container">
+        <div class="resume-wrapper {% if template_name == 'modern' or template_name == 'creative' %}single-page{% else %}multi-page{% endif %}">
+            <div class="resume-content">
+                <!-- Resume template content - exactly as rendered for PDF -->
+                {{ resume_html|safe }}
             </div>
         </div>
     </div>
+    
+    <!-- Debug: Check if styles are loaded and log for debugging -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const resumeStylesTag = document.querySelector('style[data-resume-styles]');
+            if (resumeStylesTag) {
+                const styleText = resumeStylesTag.textContent;
+                console.log('✓ Resume styles tag found');
+                console.log('Style length:', styleText.length, 'characters');
+                console.log('First 500 chars:', styleText.substring(0, 500));
+                
+                // Check for common template classes (check both scoped and unscoped versions)
+                const hasResumeContainer = styleText.includes('.resume-container') || styleText.includes('resume-container');
+                const hasNameClass = styleText.includes('.name') || styleText.match(/\.name\s*{/);
+                const hasSectionTitle = styleText.includes('.section-title') || styleText.includes('section-title');
+                const hasHeader = styleText.includes('.header');
+                const scopedResumeContainer = styleText.includes('.resume-wrapper .resume-content .resume-container');
+                console.log('Template classes found:', {
+                    'resume-container': hasResumeContainer,
+                    'name': hasNameClass,
+                    'section-title': hasSectionTitle,
+                    'header': hasHeader,
+                    'scoped-resume-container': scopedResumeContainer
+                });
+                
+                // Check if styles are properly scoped
+                const scopedCount = (styleText.match(/\.resume-wrapper \.resume-content \./g) || []).length;
+                console.log('Number of scoped selectors:', scopedCount);
+            } else {
+                console.error('✗ Resume styles tag NOT found! Check if resume_styles is being passed to template.');
+            }
+            
+            // Check if styles are actually applied
+            const resumeContent = document.querySelector('.resume-content');
+            if (resumeContent) {
+                const computedStyle = window.getComputedStyle(resumeContent);
+                console.log('Resume content computed styles:', {
+                    fontFamily: computedStyle.fontFamily,
+                    fontSize: computedStyle.fontSize,
+                    color: computedStyle.color,
+                    backgroundColor: computedStyle.backgroundColor
+                });
+                
+                // Check first child element
+                const firstChild = resumeContent.firstElementChild;
+                if (firstChild) {
+                    const childStyle = window.getComputedStyle(firstChild);
+                    console.log('First child element:', firstChild.className, {
+                        fontFamily: childStyle.fontFamily,
+                        fontSize: childStyle.fontSize,
+                        color: childStyle.color
+                    });
+                }
+            }
+        });
+    </script>
     
     <script>
-        // Handle template and color changes with visual feedback
-        const templateSelect = document.getElementById('template-select');
-        const colorSelect = document.getElementById('color-select');
-        const resumePreview = document.getElementById('resume-preview');
-        const loadingOverlay = document.getElementById('loading-overlay');
-        
-        // Set visual state without triggering reload (for initialization)
-        function setTemplateVisualState(template) {
-            document.querySelectorAll('.template-card').forEach(card => {
-                card.classList.remove('active', 'border-indigo-500');
-                card.classList.add('border-gray-200', 'bg-white');
-            });
-            const selectedCard = document.getElementById('template-' + template);
-            if (selectedCard) {
-                selectedCard.classList.add('active', 'border-indigo-500');
-                selectedCard.classList.remove('border-gray-200', 'bg-white');
-            }
-            templateSelect.value = template;
-        }
-        
-        function setColorVisualState(color) {
-            document.querySelectorAll('.color-swatch').forEach(swatch => {
-                swatch.classList.remove('active', 'ring-4', 'ring-indigo-300', 'ring-offset-2');
-                swatch.classList.add('border-gray-200');
-            });
-            const selectedSwatch = document.getElementById('color-' + color);
-            if (selectedSwatch) {
-                selectedSwatch.classList.add('active', 'ring-4', 'ring-indigo-300', 'ring-offset-2');
-                selectedSwatch.classList.remove('border-gray-200');
-            }
-            colorSelect.value = color;
-        }
-        
-        // Template selection function (triggers reload)
+        // Template selection
         function selectTemplate(template) {
-            setTemplateVisualState(template);
-            
-            // Show loading
-            if (loadingOverlay) {
-                loadingOverlay.classList.remove('hidden');
-            }
-            
-            // Update preview (triggers reload)
-            updatePreview();
-        }
-        
-        // Color selection function (triggers reload)
-        function selectColor(color) {
-            setColorVisualState(color);
-            
-            // Show loading
-            if (loadingOverlay) {
-                loadingOverlay.classList.remove('hidden');
-            }
-            
-            // Update preview (triggers reload)
-            updatePreview();
-        }
-        
-        function updatePreview() {
-            const template = templateSelect.value;
-            const color = colorSelect.value;
             const url = new URL(window.location.href);
             url.searchParams.set('template', template);
+            window.location.href = url.toString();
+        }
+        
+        // Color selection
+        function selectColor(color) {
+            const url = new URL(window.location.href);
             url.searchParams.set('accent_color', color);
             window.location.href = url.toString();
         }
         
-        // Initialize visual states on load (without triggering reload)
-        document.addEventListener('DOMContentLoaded', () => {
-            const currentTemplate = '{{ template_name|escapejs }}';
-            const currentColor = '{{ selected_color|escapejs }}';
-            
-            // Set visual state without triggering reload
-            if (document.getElementById('template-' + currentTemplate)) {
-                setTemplateVisualState(currentTemplate);
-            }
-            
-            if (document.getElementById('color-' + currentColor)) {
-                setColorVisualState(currentColor);
-            }
-        });
-        
         // Update download link when selections change
         function updateDownloadLink() {
-            const template = templateSelect.value;
-            const color = colorSelect.value;
+            const url = new URL(window.location.href);
+            const template = url.searchParams.get('template') || '{{ template_name }}';
+            const color = url.searchParams.get('accent_color') || '{{ selected_color }}';
             const downloadLink = document.querySelector('a[href*="download"]');
             if (downloadLink) {
                 const baseUrl = downloadLink.href.split('?')[0].split('/');
@@ -804,401 +501,21 @@
             }
         }
         
-        templateSelect.addEventListener('change', updateDownloadLink);
-        colorSelect.addEventListener('change', updateDownloadLink);
-        
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
-            // Ctrl/Cmd + P for print
             if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
                 e.preventDefault();
                 window.print();
             }
-            // Esc to go back
             if (e.key === 'Escape') {
                 window.location.href = '{% url 'resumes:resume-builder' %}';
             }
         });
         
-        // Add loading state when switching templates/colors
-        templateSelect.addEventListener('change', () => {
-            const wrapper = document.getElementById('resume-preview');
-            if (wrapper) {
-                wrapper.style.opacity = '0.5';
-                wrapper.style.transition = 'opacity 0.2s';
-            }
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDownloadLink();
         });
-        
-        colorSelect.addEventListener('change', () => {
-            const wrapper = document.getElementById('resume-preview');
-            if (wrapper) {
-                wrapper.style.opacity = '0.5';
-                wrapper.style.transition = 'opacity 0.2s';
-            }
-        });
-        
-        // Restore opacity after page loads
-        window.addEventListener('load', () => {
-            const wrapper = document.getElementById('resume-preview');
-            if (wrapper) {
-                wrapper.style.opacity = '1';
-            }
-            // Fix for Modern template - ensure no horizontal shift
-            fixModernTemplateLayout();
-        });
-        
-        // Fix Modern template layout to prevent page shift
-        function fixModernTemplateLayout() {
-            const wrapper = document.getElementById('resume-preview');
-            const page = wrapper?.querySelector('.page');
-            
-            if (page) {
-                // Check if this is Modern template
-                const sidebar = wrapper.querySelector('.sidebar');
-                const content = wrapper.querySelector('.content');
-                
-                if (sidebar && content) {
-                    // Force proper containment
-                    page.style.width = '100%';
-                    page.style.maxWidth = '100%';
-                    page.style.overflow = 'hidden';
-                    page.style.margin = '0 auto';
-                    page.style.minHeight = 'auto';
-                    page.style.height = 'auto';
-                    
-                    // Ensure sidebar and content are properly sized with natural height
-                    sidebar.style.width = '35%';
-                    sidebar.style.boxSizing = 'border-box';
-                    sidebar.style.minHeight = 'auto';
-                    sidebar.style.height = 'auto';
-                    
-                    content.style.width = '65%';
-                    content.style.boxSizing = 'border-box';
-                    content.style.minHeight = 'auto';
-                    content.style.height = 'auto';
-                    
-                    // Prevent horizontal overflow and ensure centering
-                    wrapper.style.overflowX = 'hidden';
-                    wrapper.style.maxWidth = '900px';
-                    wrapper.style.width = '100%';
-                    wrapper.style.marginLeft = 'auto';
-                    wrapper.style.marginRight = 'auto';
-                    wrapper.style.marginTop = '0';
-                    wrapper.style.marginBottom = '0';
-                    wrapper.style.display = 'block';
-                    wrapper.style.position = 'relative';
-                    wrapper.style.flexShrink = '0';
-                    // Ensure centering is maintained (transform will be applied by CSS for scaling)
-                    // Don't override transform here as it's used for scaling
-                    
-                    // Override any html/body styles from Modern template
-                    const htmlEl = wrapper.querySelector('html');
-                    const bodyEl = wrapper.querySelector('body');
-                    if (htmlEl) {
-                        htmlEl.style.width = '100%';
-                        htmlEl.style.maxWidth = '100%';
-                    }
-                    if (bodyEl) {
-                        bodyEl.style.width = '100%';
-                        bodyEl.style.maxWidth = '100%';
-                        bodyEl.style.margin = '0';
-                        bodyEl.style.padding = '0';
-                    }
-                    
-                    // Ensure page is centered and properly contains floats
-                    page.style.margin = '0 auto';
-                    page.style.width = '100%';
-                    page.style.maxWidth = '100%';
-                    page.style.overflow = 'hidden';
-                    page.style.clear = 'both';
-                    
-                    // Ensure parent container doesn't allow overflow and is centered
-                    const container = wrapper.closest('.preview-container');
-                    if (container) {
-                        container.style.overflowX = 'hidden';
-                        container.style.maxWidth = '100vw';
-                        container.style.display = 'flex';
-                        container.style.justifyContent = 'center';
-                        container.style.alignItems = 'flex-start';
-                    }
-                    
-                    // Prevent body overflow
-                    document.body.style.overflowX = 'hidden';
-                    document.documentElement.style.overflowX = 'hidden';
-                }
-            }
-        }
-        
-        // Re-check layout when template changes
-        templateSelect.addEventListener('change', () => {
-            setTimeout(() => {
-                fixModernTemplateLayout();
-                splitIntoPages();
-            }, 100);
-        });
-        
-        // Re-split pages when color changes
-        colorSelect.addEventListener('change', () => {
-            setTimeout(() => {
-                splitIntoPages();
-            }, 100);
-        });
-        
-        // Watch for DOM changes and fix layout if Modern template loads
-        let observer = null;
-        let isObserving = false;
-        
-        function setupObserver() {
-            if (isObserving) return;
-            
-            const wrapper = document.getElementById('resume-preview');
-            if (wrapper && !observer) {
-                observer = new MutationObserver(() => {
-                    // Only fix layout if it's the Modern template
-                    const page = wrapper.querySelector('.page');
-                    if (page && wrapper.querySelector('.sidebar')) {
-                        fixModernTemplateLayout();
-                    }
-                });
-                
-                observer.observe(wrapper, {
-                    childList: true,
-                    subtree: false, // Only watch direct children to avoid infinite loops
-                    attributes: false // Don't watch attributes to avoid loops
-                });
-                isObserving = true;
-            }
-        }
-        
-        // Start observing after page loads (only once)
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', setupObserver);
-        } else {
-            setupObserver();
-        }
-        
-        // Also fix on initial DOM ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                setTimeout(fixModernTemplateLayout, 100);
-                setTimeout(splitIntoPages, 200);
-            });
-        } else {
-            setTimeout(fixModernTemplateLayout, 100);
-            setTimeout(splitIntoPages, 200);
-        }
-        
-        // Function to split resume into pages based on A4 dimensions
-        function splitIntoPages() {
-            const contentWrapper = document.getElementById('resume-content-wrapper');
-            const previewContainer = document.getElementById('resume-preview-container');
-            
-            if (!contentWrapper || !previewContainer) return;
-            
-            // Get the original content
-            const originalContent = contentWrapper.innerHTML;
-            if (!originalContent) return;
-            
-            // Get template name from URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const templateName = urlParams.get('template') || 'professional';
-            
-            // Modern and Creative should be single page
-            const isSinglePageTemplate = templateName === 'modern' || templateName === 'creative';
-            
-            // Classic and Professional can have multiple pages - no restrictions
-            const isMultiPageTemplate = templateName === 'classic' || templateName === 'professional';
-            
-            // Create a temporary container to measure content with exact A4 dimensions
-            const tempContainer = document.createElement('div');
-            tempContainer.style.position = 'absolute';
-            tempContainer.style.visibility = 'hidden';
-            tempContainer.style.width = '210mm';
-            
-            // Set padding based on template
-            if (templateName === 'modern') {
-                tempContainer.style.padding = '0';
-            } else if (templateName === 'classic' || templateName === 'professional') {
-                tempContainer.style.padding = '1.5cm'; // Match PDF margin
-            } else {
-                tempContainer.style.padding = '0.5cm'; // Creative and others
-            }
-            
-            tempContainer.style.boxSizing = 'border-box';
-            tempContainer.style.background = 'white';
-            
-            // Copy all styles from resume_styles
-            if (document.getElementById('resume-styles')) {
-                const styles = document.getElementById('resume-styles').textContent;
-                // Apply styles to temp container
-                const styleSheet = document.createElement('style');
-                styleSheet.textContent = styles.replace(/\.resume-wrapper/g, '#temp-resume-container');
-                styleSheet.id = 'temp-styles';
-                document.head.appendChild(styleSheet);
-            }
-            tempContainer.id = 'temp-resume-container';
-            tempContainer.innerHTML = originalContent;
-            document.body.appendChild(tempContainer);
-            
-            // Force layout calculation
-            void tempContainer.offsetHeight;
-            
-            // A4 dimensions
-            const A4_HEIGHT_MM = 297;
-            let MARGIN_MM = 0;
-            if (templateName === 'modern') {
-                MARGIN_MM = 0;
-            } else if (templateName === 'classic' || templateName === 'professional') {
-                MARGIN_MM = 15; // 1.5cm = 15mm
-            } else {
-                MARGIN_MM = 5; // 0.5cm = 5mm
-            }
-            
-            const PAGE_HEIGHT_MM = A4_HEIGHT_MM - (MARGIN_MM * 2);
-            const MM_TO_PX = 3.779527559; // 1mm = 3.779527559px at 96 DPI
-            const PAGE_HEIGHT_PX = PAGE_HEIGHT_MM * MM_TO_PX;
-            
-            // Get total height - ensure we measure ALL content
-            const totalHeight = Math.max(tempContainer.scrollHeight, tempContainer.offsetHeight);
-            let numberOfPages = Math.ceil(totalHeight / PAGE_HEIGHT_PX);
-            
-            // Ensure at least 1 page
-            if (numberOfPages < 1) {
-                numberOfPages = 1;
-            }
-            
-            // Force single page for Modern and Creative only
-            if (isSinglePageTemplate) {
-                numberOfPages = 1;
-            }
-            
-            // For Classic and Professional, ensure we show ALL content (no restrictions)
-            // numberOfPages is already calculated correctly above
-            // Add one extra page if there's any remaining content to ensure nothing is cut off
-            if (!isSinglePageTemplate && totalHeight % PAGE_HEIGHT_PX > 0) {
-                // Already handled by Math.ceil, but ensure we account for all content
-                const actualPagesNeeded = Math.ceil(totalHeight / PAGE_HEIGHT_PX);
-                if (actualPagesNeeded > numberOfPages) {
-                    numberOfPages = actualPagesNeeded;
-                }
-            }
-            
-            // Clean up temp container and styles
-            document.body.removeChild(tempContainer);
-            const tempStyles = document.getElementById('temp-styles');
-            if (tempStyles) {
-                document.head.removeChild(tempStyles);
-            }
-            
-            // Create separate page containers that look like actual pages
-            previewContainer.innerHTML = '';
-            
-            // Create a wrapper for all pages
-            const pagesWrapper = document.createElement('div');
-            pagesWrapper.style.display = 'flex';
-            pagesWrapper.style.flexDirection = 'column';
-            pagesWrapper.style.alignItems = 'center';
-            pagesWrapper.style.gap = '20px';
-            pagesWrapper.style.width = '100%';
-            
-            // Create pages
-            for (let pageNum = 0; pageNum < numberOfPages; pageNum++) {
-                const pageDiv = document.createElement('div');
-                pageDiv.className = 'resume-wrapper';
-                pageDiv.style.width = '210mm';
-                pageDiv.style.maxWidth = '210mm';
-                pageDiv.style.height = '297mm';
-                pageDiv.style.minHeight = '297mm';
-                pageDiv.style.maxHeight = '297mm';
-                
-                // Set padding based on template
-                if (templateName === 'modern') {
-                    pageDiv.style.padding = '0';
-                } else if (templateName === 'classic' || templateName === 'professional') {
-                    pageDiv.style.padding = '1.5cm'; // Match PDF margin
-                } else {
-                    pageDiv.style.padding = '0.5cm'; // Creative and others
-                }
-                
-                pageDiv.style.boxSizing = 'border-box';
-                pageDiv.style.background = 'white';
-                pageDiv.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-                pageDiv.style.position = 'relative';
-                pageDiv.style.overflow = 'hidden';
-                pageDiv.style.marginBottom = pageNum < numberOfPages - 1 ? '20px' : '0';
-                
-                // Create content container that shows the appropriate portion
-                const contentDiv = document.createElement('div');
-                contentDiv.style.width = '100%';
-                contentDiv.style.position = 'relative';
-                contentDiv.innerHTML = originalContent;
-                
-                // For single page templates, show all content constrained to one page
-                if (isSinglePageTemplate) {
-                    contentDiv.style.height = templateName === 'modern' ? '297mm' : '287mm';
-                    contentDiv.style.overflow = 'hidden';
-                    contentDiv.style.maxHeight = templateName === 'modern' ? '297mm' : '287mm';
-                    // Ensure all content is visible - don't clip
-                    contentDiv.style.minHeight = templateName === 'modern' ? '297mm' : '287mm';
-                } else {
-                    // For Classic and Professional (multi-page), show ALL content across pages
-                    // Position content to show the correct page portion
-                    if (pageNum > 0) {
-                        const offset = -pageNum * PAGE_HEIGHT_PX;
-                        contentDiv.style.transform = `translateY(${offset}px)`;
-                    }
-                    
-                    // Clip to show only this page's content - but ensure we show everything
-                    contentDiv.style.height = `${PAGE_HEIGHT_PX}px`;
-                    contentDiv.style.overflow = 'hidden';
-                    // Ensure we don't miss any content at the bottom
-                    if (pageNum === numberOfPages - 1) {
-                        // Last page - show all remaining content
-                        const remainingHeight = totalHeight - (pageNum * PAGE_HEIGHT_PX);
-                        if (remainingHeight > 0 && remainingHeight < PAGE_HEIGHT_PX) {
-                            contentDiv.style.height = `${remainingHeight}px`;
-                        }
-                    }
-                }
-                
-                pageDiv.appendChild(contentDiv);
-                pagesWrapper.appendChild(pageDiv);
-            }
-            
-            previewContainer.appendChild(pagesWrapper);
-            
-            // Hide original content wrapper
-            contentWrapper.style.display = 'none';
-        }
-        
-        // Additional fix: Force centering immediately for all templates
-        function forceCenterWrapper() {
-            const wrapper = document.getElementById('resume-preview');
-            if (wrapper) {
-                // Force centering regardless of template
-                wrapper.style.marginLeft = 'auto';
-                wrapper.style.marginRight = 'auto';
-                wrapper.style.width = '100%';
-                wrapper.style.maxWidth = '900px';
-                
-                // Ensure parent container is centered
-                const container = wrapper.closest('.preview-container');
-                if (container) {
-                    container.style.display = 'flex';
-                    container.style.justifyContent = 'center';
-                    container.style.alignItems = 'flex-start';
-                    container.style.width = '100%';
-                }
-            }
-        }
-        
-        // Run immediately (only once, not multiple times)
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', forceCenterWrapper);
-        } else {
-            forceCenterWrapper();
-        }
     </script>
 </body>
 </html>
-

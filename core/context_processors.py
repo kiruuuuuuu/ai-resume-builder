@@ -1,4 +1,5 @@
 from jobs.models import Notification
+from django.conf import settings
 
 def notifications(request):
         if request.user.is_authenticated and request.user.user_type == 'employer':
@@ -8,3 +9,9 @@ def notifications(request):
                 'notification_count': unread_notifications.count()
             }
         return {}
+
+def jobs_feature_enabled(request):
+    """Make JOBS_FEATURE_ENABLED setting available in all templates."""
+    return {
+        'JOBS_FEATURE_ENABLED': getattr(settings, 'JOBS_FEATURE_ENABLED', False)
+    }
