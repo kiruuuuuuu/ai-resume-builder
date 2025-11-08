@@ -27,19 +27,22 @@ Just **redeploy your service** and it should work:
 
 **After redeploy, your app should work!**
 
-### Option 2: Set ALLOWED_HOSTS Environment Variable (Manual)
+### Option 2: Set Environment Variables Manually (If Automatic Doesn't Work)
 
-If you want to set it manually:
+If the automatic fix doesn't work, set these manually:
 
 1. **Go to Railway Dashboard**
 2. **Click on your Django app service**
 3. **Go to "Variables" tab**
-4. **Add new variable**:
+4. **Add/Update variables**:
    - **Name**: `ALLOWED_HOSTS`
    - **Value**: `ai-resume-builder-jk.up.railway.app`
-   - Or use: `*.railway.app,*.up.railway.app` (but this won't work - see Option 1)
+   - **Name**: `CSRF_TRUSTED_ORIGINS`
+   - **Value**: `https://ai-resume-builder-jk.up.railway.app`
 
 5. **Redeploy** the service
+
+**Note**: The automatic fix should work, so you shouldn't need this. But if you do, this will definitely work.
 
 ## 🔧 What Was Fixed
 
@@ -59,11 +62,15 @@ if not ALLOWED_HOSTS and not DEBUG:
     ALLOWED_HOSTS = ['.railway.app', '.up.railway.app']
 ```
 
-**Also fixed CSRF_TRUSTED_ORIGINS**:
+**Also improved CSRF_TRUSTED_ORIGINS**:
 ```python
-# Automatically allow Railway HTTPS origins for CSRF
+# Try to auto-detect Railway domain for CSRF
+# If Railway provides RAILWAY_PUBLIC_DOMAIN, use it
+# Otherwise, will try to use first ALLOWED_HOSTS entry
 if not CSRF_TRUSTED_ORIGINS:
-    CSRF_TRUSTED_ORIGINS = ['https://*.railway.app', 'https://*.up.railway.app']
+    railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
+    if railway_domain:
+        CSRF_TRUSTED_ORIGINS = [f'https://{railway_domain}']
 ```
 
 ## 📝 How Django Domain Patterns Work
