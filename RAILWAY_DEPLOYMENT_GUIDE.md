@@ -451,7 +451,7 @@ railway up
    ```
 5. **Follow prompts**: Enter username, email, and password
 
-**Note**: See [CREATE_SUPERUSER_RAILWAY.md](CREATE_SUPERUSER_RAILWAY.md) for detailed instructions and troubleshooting.
+**Note**: The custom management command `create_superuser_from_env` is automatically run during deployment if the environment variables are set. See Step 4 below for more details.
 
 ---
 
@@ -490,7 +490,7 @@ railway up
 
 **📝 Note**: If you don't see a domain, click **"Generate Domain"** button to create one.
 
-**See [HOW_TO_FIND_RAILWAY_URL.md](HOW_TO_FIND_RAILWAY_URL.md) for detailed instructions with screenshots.**
+**Example URL**: `https://ai-resume-builder-jk.up.railway.app`
 
 ---
 
@@ -576,7 +576,19 @@ Running migrations:
 
 ### Step 4: Create Superuser (Admin Account)
 
-**Using Railway CLI**:
+**Method 1: Automatic Creation via Environment Variables (Recommended) ⭐**
+
+This method automatically creates a superuser during deployment - no terminal needed!
+
+1. **Go to Railway Dashboard** → Your Django app service → "Variables" tab
+2. **Add these three environment variables**:
+   - **Name**: `DJANGO_SUPERUSER_USERNAME` → **Value**: `admin` (or your desired username)
+   - **Name**: `DJANGO_SUPERUSER_EMAIL` → **Value**: `admin@example.com` (or your email)
+   - **Name**: `DJANGO_SUPERUSER_PASSWORD` → **Value**: `your-secure-password-here` (choose a strong password)
+3. **Redeploy** your service (or push a new commit to trigger auto-deploy)
+4. **Done!** Superuser will be created automatically during deployment ✅
+
+**Method 2: Using Railway CLI (Alternative)**
 
 ```powershell
 # Make sure you're logged in and linked
@@ -596,6 +608,8 @@ railway run python manage.py createsuperuser
 ```
 Superuser created successfully.
 ```
+
+**Note**: Method 1 (environment variables) is recommended as it's easier and doesn't require terminal access.
 
 ### Step 5: Expose Service (Get Public URL)
 
@@ -815,6 +829,26 @@ If you want to run both web and worker in one service (uses more resources):
 - ❌ Empty value → Make sure you paste the generated key
 - ❌ Not saved → Click "Add" or "Save" after entering
 
+### Bad Request (400) Error - ALLOWED_HOSTS Issue
+
+**Error**: `Bad Request (400)` when accessing your Railway app URL
+
+**Root Cause**: Django's `ALLOWED_HOSTS` setting doesn't include your Railway domain.
+
+**Solution**: The code automatically sets Railway domains when `ALLOWED_HOSTS` is empty. However, if you still get this error:
+
+1. **Set Environment Variables Manually**:
+   - Go to Railway Dashboard → Your Django app service → "Variables" tab
+   - Add/Update:
+     - **Name**: `ALLOWED_HOSTS`
+     - **Value**: `ai-resume-builder-jk.up.railway.app` (your Railway domain)
+     - **Name**: `CSRF_TRUSTED_ORIGINS`
+     - **Value**: `https://ai-resume-builder-jk.up.railway.app`
+2. **Redeploy** the service
+3. **Verify**: Your app should load correctly at your Railway URL
+
+**Note**: The automatic fix in code should handle this, but setting it manually ensures it works immediately.
+
 ### Application Won't Start - Other Errors
 
 **Check Logs**:
@@ -825,6 +859,7 @@ If you want to run both web and worker in one service (uses more resources):
 - Missing environment variables → Add them in "Variables" tab
 - Database connection errors → Link PostgreSQL service
 - Migration errors → Run migrations manually
+- ALLOWED_HOSTS errors → See "Bad Request (400) Error" section above
 
 **Fix**:
 ```powershell

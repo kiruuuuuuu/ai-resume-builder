@@ -146,10 +146,15 @@ python manage.py runserver
 
 ### Access the Application
 
-Open your browser and navigate to:
+**Development (Local)**:
 - **http://127.0.0.1:8000/**
 
+**Production (Railway)**:
+- **https://ai-resume-builder-jk.up.railway.app/**
+
 ## 🚀 Deployment
+
+**🌐 Live Application**: [https://ai-resume-builder-jk.up.railway.app/](https://ai-resume-builder-jk.up.railway.app/)
 
 For production deployment instructions, see:
 - **[RAILWAY_DEPLOYMENT_GUIDE.md](RAILWAY_DEPLOYMENT_GUIDE.md)** - ⭐ **Recommended: FREE tier, no payment method required**
