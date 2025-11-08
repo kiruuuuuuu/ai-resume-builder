@@ -79,9 +79,22 @@ railway --version
 2. **In Railway Dashboard**:
    - Click "New Project"
    - Select "Deploy from GitHub repo"
-   - Connect your GitHub account
+   - **If stuck on "Loading..."**:
+     - Click "Configure GitHub App" button
+     - Authorize Railway to access your GitHub repositories
+     - Grant necessary permissions
+     - Return to Railway and refresh the page
    - Select your repository: `ai-resume-builder`
    - Railway will automatically detect Django and set up the project
+
+**Troubleshooting "Loading..." Issue**:
+1. **Click "Configure GitHub App"** button (gear icon)
+2. **Authorize Railway** in the GitHub authorization page
+3. **Grant permissions** (read access to repositories)
+4. **Return to Railway** and refresh the page
+5. **Try again** - repositories should now load
+
+**Alternative**: If still stuck, use Option 2 (CLI method) below.
 
 ### Option 2: Deploy from Local Directory
 
@@ -483,6 +496,42 @@ If you want to run both web and worker in one service (uses more resources):
 ---
 
 ## Troubleshooting
+
+### GitHub Connection Stuck on "Loading..."
+
+**Symptoms**:
+- Railway page shows "Loading..." indefinitely
+- Can't see your GitHub repositories
+- "Configure GitHub App" button visible but not working
+
+**Solutions**:
+
+1. **Click "Configure GitHub App" Button**:
+   - Click the gear icon or "Configure GitHub App" button
+   - This will redirect you to GitHub authorization page
+   - Authorize Railway to access your repositories
+   - Grant necessary permissions
+
+2. **Manually Authorize GitHub**:
+   - Go to: https://github.com/settings/installations
+   - Find "Railway" in the list
+   - Click "Configure"
+   - Grant access to repositories (or all repositories)
+   - Save changes
+
+3. **Refresh Railway Page**:
+   - Go back to Railway
+   - Refresh the page (F5 or Ctrl+R)
+   - Try selecting repository again
+
+4. **Use Alternative Method**:
+   - If GitHub connection doesn't work, use CLI method (Option 2)
+   - Or deploy from a template and connect GitHub later
+
+5. **Clear Browser Cache**:
+   - Clear browser cache and cookies
+   - Try in incognito/private window
+   - Or try a different browser
 
 ### Application Won't Start
 
