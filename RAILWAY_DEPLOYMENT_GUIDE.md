@@ -195,7 +195,7 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 ```
 
-**Note**: Railway runs on Linux, so Celery will automatically use `eventlet` pool for better concurrency (your code already handles this).
+**Note**: Railway runs on Linux. We use `prefork` pool (default) for stability with Redis. For higher concurrency, you can use `-P threads --concurrency=10` in the start command.
 
 ---
 
@@ -612,9 +612,10 @@ Your app uses Celery for async tasks like:
 5. Go to "Settings" → "Deploy"
 6. Set "Start Command":
    ```
-   celery -A core worker -l info -P eventlet --concurrency=10
+   celery -A core worker -l info --concurrency=4
    ```
-   **Note**: Railway runs on Linux, so we use `eventlet` pool for better performance.
+   **Note**: Using `prefork` pool (default) - most stable with Redis, no monkey patching needed.
+   **Alternative**: If you need higher concurrency, use `-P threads --concurrency=10` instead.
 
 7. **Add Environment Variables** (same as main service):
    - Go to "Variables" tab
@@ -656,8 +657,9 @@ If you want to run both web and worker in one service (uses more resources):
 1. **Create `Procfile`** in project root:
    ```
    web: python manage.py migrate && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT
-   worker: celery -A core worker -l info -P eventlet --concurrency=10
+   worker: celery -A core worker -l info --concurrency=4
    ```
+   **Note**: Using `prefork` pool (default) for stability. For higher concurrency, use `-P threads --concurrency=10`.
 
 2. **Update Railway Service**:
    - Go to "Settings" → "Deploy"
@@ -683,10 +685,11 @@ If you want to run both web and worker in one service (uses more resources):
 
 ### Celery Configuration Notes
 
-- **Railway runs on Linux**: Your code automatically uses `eventlet` pool (better concurrency)
+- **Pool Type**: Using `prefork` pool (default) - most stable with Redis, no monkey patching conflicts
 - **Redis Connection**: Automatically configured via `REDIS_URL` from Railway
 - **Task Serialization**: Uses JSON (already configured)
-- **Concurrency**: Set to 10 workers (adjust based on your needs)
+- **Concurrency**: Set to 4 workers by default (adjust based on your needs)
+- **Alternative**: For higher concurrency, use `-P threads --concurrency=10` in start command
 
 ---
 
@@ -818,8 +821,9 @@ railway run python manage.py check
    - Especially: `DATABASE_URL`, `REDIS_URL`, `DJANGO_SECRET_KEY`
 
 4. **Check Start Command**:
-   - Should be: `celery -A core worker -l info -P eventlet --concurrency=10`
+   - Should be: `celery -A core worker -l info --concurrency=4`
    - Verify in "Settings" → "Deploy"
+   - **Alternative**: For higher concurrency: `celery -A core worker -l info -P threads --concurrency=10`
 
 5. **Test Redis Connection**:
    ```powershell
@@ -834,7 +838,8 @@ railway run python manage.py check
 **Common Issues**:
 - Missing `REDIS_URL`: Link Redis service to worker
 - Missing `DATABASE_URL`: Link PostgreSQL service to worker
-- Wrong start command: Use `-P eventlet` for Railway (Linux)
+- Wrong start command: Use `celery -A core worker -l info --concurrency=4` (prefork pool, default)
+- Worker crashes with eventlet errors: Use prefork pool (default) instead of eventlet for stability
 - Worker service not created: Create separate service for worker
 
 ---

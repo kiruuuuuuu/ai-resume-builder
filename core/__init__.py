@@ -2,8 +2,8 @@ import sys
 import platform
 
 # Auto-detect platform and pool type to apply appropriate monkey patching
-# Windows: Use 'solo' pool by default, but allow eventlet if explicitly requested
-# Linux/Mac (Production): Use 'eventlet' for better concurrency
+# Only apply eventlet monkey patching when explicitly requested via -P eventlet
+# This prevents conflicts with Redis connections when using prefork pool (default)
 is_windows = platform.system() == 'Windows'
 is_celery_worker = len(sys.argv) > 0 and 'celery' in sys.argv[0] and 'worker' in ' '.join(sys.argv)
 
@@ -15,30 +15,30 @@ if is_celery_worker and len(sys.argv) > 1:
     if '-P eventlet' in cmd_line or '--pool=eventlet' in cmd_line or '--pool eventlet' in cmd_line:
         eventlet_requested = True
 
-# Apply eventlet monkey patching if:
-# 1. Not on Windows (production), OR
-# 2. On Windows but explicitly requested with -P eventlet
-if is_celery_worker and (not is_windows or eventlet_requested):
+# Only apply eventlet monkey patching if explicitly requested
+# Prefork pool (default) is more stable and doesn't need monkey patching
+if is_celery_worker and eventlet_requested:
     try:
         import eventlet
         eventlet.monkey_patch()
-        if is_windows and eventlet_requested:
+        if is_windows:
             print("⚠ Warning: Using eventlet on Windows (explicitly requested)")
             print("  Note: Eventlet on Windows may have compatibility issues.")
             print("  For production, deploy on Linux/Mac for optimal performance.")
         else:
-            print("✓ Eventlet monkey patching applied (Linux/Mac production mode)")
+            print("✓ Eventlet monkey patching applied (explicitly requested via -P eventlet)")
     except ImportError:
-        print("⚠ Warning: eventlet not installed. Install with: pip install eventlet")
-        if eventlet_requested:
-            print("  Error: Eventlet was requested but not installed. Install eventlet or use -P solo instead.")
-        else:
-            print("  Falling back to default pool. For production, use: pip install eventlet")
-        pass  # eventlet not installed, use default pool
-elif is_celery_worker and is_windows and not eventlet_requested:
-    # Windows default - no eventlet
-    print("ℹ Running on Windows: Using solo pool (recommended for Windows)")
-    print("  To test eventlet on Windows, use: celery -A core worker -l info -P eventlet")
+        print("⚠ Error: Eventlet was requested but not installed.")
+        print("  Install with: pip install eventlet")
+        print("  Or use default prefork pool: celery -A core worker -l info")
+        pass  # eventlet not installed, fall back to default pool
+elif is_celery_worker:
+    # Default: no monkey patching (works with prefork, solo, threads, gevent pools)
+    pool_type = "prefork"
+    if is_windows:
+        pool_type = "solo"
+    print(f"ℹ Using {pool_type} pool (default, no monkey patching)")
+    print("  For eventlet, explicitly use: celery -A core worker -l info -P eventlet")
 
 from .celery import app as celery_app
 
