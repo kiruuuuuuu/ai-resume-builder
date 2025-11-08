@@ -4,7 +4,7 @@ Complete step-by-step guide to deploy AI Resume Builder on Railway.app (FREE tie
 
 ## 🎉 Why Railway.app?
 
-- ✅ **FREE Tier**: $5/month credit (no payment method required)
+- ✅ **FREE Tier**: $1/month credit + $5 initial bonus (no payment method required)
 - ✅ **Free PostgreSQL**: Included in free tier
 - ✅ **Free Redis**: Available
 - ✅ **Easy Setup**: Deploy in minutes
@@ -577,23 +577,33 @@ railway run python manage.py check
 
 ### Railway Free Tier
 
-**Included FREE**:
-- $5/month credit
-- PostgreSQL database (included)
-- Redis (included)
-- 500 hours of usage/month
-- 100GB bandwidth/month
+**How Railway Credits Work**:
+1. **Sign-up Bonus**: Railway gives you **$5 one-time credit** when you first sign up (30-day trial)
+2. **Monthly Free Credit**: After trial, Railway gives you **$1/month free credit** (doesn't roll over)
+3. **PostgreSQL**: **FREE** (included, doesn't use credit)
+4. **Redis**: **FREE** (included, doesn't use credit)
+
+**Who Provides the Credit?**
+- ✅ **Railway.app provides it** - It's their free tier offering
+- ✅ **No payment method required** - You get it automatically
+- ✅ **No cost to you** - Railway gives it for free
+- ✅ **Renews monthly** - $1 credit every month (after initial $5)
 
 ### Estimated Monthly Cost: **$0** (Free Tier)
 
 **Configuration**:
-- Web service (Django app): ~$2-3/month (within free credit)
-- PostgreSQL: **FREE** (included, no charge)
-- Redis: **FREE** (included, no charge)
-- Celery worker: ~$2-3/month (within free credit)
-- **Total usage**: ~$4-6/month → **FREE** (within $5/month credit)
+- Web service (Django app): ~$0.50-1/month (within $1/month credit)
+- PostgreSQL: **FREE** (included, no charge, doesn't use credit)
+- Redis: **FREE** (included, no charge, doesn't use credit)
+- Celery worker: ~$0.50-1/month (within $1/month credit)
+- **Total usage**: ~$1-2/month → **FREE** (within $1/month credit + initial $5)
 
 **Total**: **$0/month** if you stay within free tier limits!
+
+**Note**: 
+- Small apps (like yours) typically use ~$0.50-1/month
+- Railway's $1/month free credit is usually enough
+- If you exceed $1/month, you'd need to add payment method (but small apps rarely do)
 
 ### ✅ Celery is FREE on Railway!
 
@@ -601,21 +611,27 @@ railway run python manage.py check
 - ✅ **Celery is FREE** - It's an open-source Python library (no cost)
 - ✅ **Redis is FREE** - Railway includes Redis in free tier
 - ✅ **Worker service is FREE** - Runs on Railway's free credit
-- ✅ **No additional payment** - Everything runs on $5/month free credit
+- ✅ **No additional payment** - Everything runs on Railway's free credit ($1/month + initial $5)
 
 **Why it's free**:
 - Celery is just Python code running as a background process
 - Railway charges based on resource usage (CPU, RAM, time)
-- A small Celery worker uses minimal resources
-- Stays well within the $5/month free credit
+- A small Celery worker uses minimal resources (~$0.50-1/month)
+- Stays well within the $1/month free credit
 
 **What uses Railway credit**:
-- Web service (Django app) - ~$2-3/month
-- Celery worker service - ~$2-3/month
-- PostgreSQL - FREE (included)
-- Redis - FREE (included)
+- Web service (Django app) - ~$0.50-1/month
+- Celery worker service - ~$0.50-1/month
+- PostgreSQL - **FREE** (included, doesn't use credit)
+- Redis - **FREE** (included, doesn't use credit)
 
-**Total**: ~$4-6/month → **FREE** (within $5/month credit) ✅
+**Total**: ~$1-2/month → **FREE** (within $1/month credit + initial $5 bonus) ✅
+
+**Railway Credit Breakdown**:
+- **Initial**: $5 one-time credit (when you sign up)
+- **Monthly**: $1 free credit (every month, doesn't roll over)
+- **Your usage**: ~$1/month (small Django app + Celery worker)
+- **Result**: **FREE** ✅ (stays within $1/month free credit)
 
 ---
 
@@ -651,12 +667,18 @@ railway open
 
 **Railway.app is perfect for free deployment because**:
 - ✅ No payment method required for free tier
-- ✅ Free PostgreSQL included
-- ✅ Free Redis included
-- ✅ $5/month credit (enough for small apps)
+- ✅ Free PostgreSQL included (doesn't use credit)
+- ✅ Free Redis included (doesn't use credit)
+- ✅ $1/month free credit + $5 initial bonus (enough for small apps)
 - ✅ Easy GitHub integration
 - ✅ Automatic deployments
 - ✅ Simple setup
+
+**How Railway Credits Work**:
+- **Railway gives you**: $5 one-time credit when you sign up
+- **Railway gives you**: $1 free credit every month (after trial)
+- **You don't pay**: Railway provides these credits for free
+- **No payment method needed**: For free tier usage
 
 **Next Steps**:
 1. Create Railway account (no payment needed)
