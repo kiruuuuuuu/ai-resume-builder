@@ -234,6 +234,22 @@ CELERY_RESULT_BACKEND=redis://... (can use REDIS_URL or set separately)
 
 **Note**: You can reference `REDIS_URL` in Celery settings, or set `CELERY_BROKER_URL` and `CELERY_RESULT_BACKEND` separately if needed.
 
+#### Storage Configuration (FREE - No AWS Required!)
+
+**Important**: You DON'T need AWS S3! Railway provides FREE local storage.
+
+```
+USE_S3=False
+```
+
+**This means**:
+- ✅ Media files stored on Railway (FREE)
+- ✅ No AWS account needed
+- ✅ No additional cost
+- ✅ Automatic setup
+
+**Note**: Remove AWS variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, etc.) from Railway if they exist - they're not needed since `USE_S3=False`.
+
 #### Optional
 
 ```
@@ -249,6 +265,29 @@ python -c "from django.core.management.utils import get_random_secret_key; print
 ```
 
 Copy the output and use it as `DJANGO_SECRET_KEY`.
+
+### 🆓 Storage: FREE on Railway (No AWS Required!)
+
+**Important**: You DON'T need AWS S3! Your app uses Railway's FREE local storage.
+
+**Variables to Set**:
+```
+USE_S3=False
+```
+
+**What this means**:
+- ✅ Media files (photos, PDFs) stored on Railway (FREE)
+- ✅ No AWS account needed
+- ✅ No additional cost
+- ✅ Automatic - no setup required
+
+**Optional**: Remove AWS variables from Railway if they exist:
+- `AWS_ACCESS_KEY_ID` (not needed)
+- `AWS_SECRET_ACCESS_KEY` (not needed)
+- `AWS_STORAGE_BUCKET_NAME` (not needed)
+- `AWS_S3_REGION_NAME` (not needed)
+
+**See**: `RAILWAY_STORAGE_SETUP.md` for more details.
 
 ---
 
