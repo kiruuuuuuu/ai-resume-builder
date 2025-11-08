@@ -42,8 +42,15 @@ GOOGLE_AI_API_KEY = os.getenv("GOOGLE_AI_API_KEY")
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 't')
 
 # ALLOWED_HOSTS can be set as comma-separated list in environment variable
+# If not set, automatically allow Railway domains in production
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else []
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
+
+# If ALLOWED_HOSTS is empty and we're in production (not DEBUG), allow Railway domains
+if not ALLOWED_HOSTS and not DEBUG:
+    # Allow all Railway domains automatically
+    # Django supports leading dots to match subdomains
+    ALLOWED_HOSTS = ['.railway.app', '.up.railway.app']
 
 # Production Security Settings (only enabled when DEBUG=False)
 if not DEBUG:
@@ -73,8 +80,14 @@ if not DEBUG:
     X_FRAME_OPTIONS = 'DENY'
     
     # CSRF Trusted Origins (set via environment variable)
+    # If not set, automatically allow Railway origins in production
     CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if os.getenv('CSRF_TRUSTED_ORIGINS') else []
     CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS if origin.strip()]
+    
+    # If CSRF_TRUSTED_ORIGINS is empty in production, allow Railway origins
+    if not CSRF_TRUSTED_ORIGINS:
+        # Allow all Railway HTTPS origins
+        CSRF_TRUSTED_ORIGINS = ['https://*.railway.app', 'https://*.up.railway.app']
 else:
     # Development settings (less strict for local development)
     SECURE_SSL_REDIRECT = False
