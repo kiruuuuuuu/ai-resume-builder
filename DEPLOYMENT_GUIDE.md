@@ -46,8 +46,12 @@ Complete step-by-step guide to deploy AI Resume Builder on Fly.io (free tier ava
 
 **Open PowerShell or CMD on YOUR COMPUTER** and run:
 
-**Windows (PowerShell)**:
+**Windows (PowerShell or CMD)**:
 ```powershell
+# If you're in PowerShell, run:
+iwr https://fly.io/install.ps1 -useb | iex
+
+# If you're in CMD, run:
 powershell -Command "iwr https://fly.io/install.ps1 -useb | iex"
 ```
 
@@ -56,12 +60,30 @@ powershell -Command "iwr https://fly.io/install.ps1 -useb | iex"
 curl -L https://fly.io/install.sh | sh
 ```
 
-**Verify Installation** (still in YOUR PowerShell/CMD):
+**Verify Installation** (after installation):
+
+**Option 1: Restart your terminal/PowerShell** (recommended)
+- Close and reopen your PowerShell/CMD window
+- Open a new terminal
+- Run: `flyctl version` or `fly version`
+
+**Option 2: Add to PATH manually** (if restart doesn't work):
 ```powershell
+# In PowerShell, add to PATH for current session:
+$env:Path += ";C:\Users\$env:USERNAME\.fly\bin"
+
+# To add permanently, run this in PowerShell as Administrator:
+[Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Users\$env:USERNAME\.fly\bin", "User")
+```
+
+**Verify it works**:
+```powershell
+flyctl version
+# or
 fly version
 ```
 
-**Note**: Fly CLI is installed on YOUR computer and connects to Fly.io remotely.
+**Note**: Fly CLI is installed on YOUR computer and connects to Fly.io remotely. The installer should add it to PATH automatically, but you may need to restart your terminal.
 
 ---
 
