@@ -430,11 +430,13 @@ railway up
    - `DJANGO_SUPERUSER_USERNAME` = `admin` (or your desired username)
    - `DJANGO_SUPERUSER_EMAIL` = `admin@example.com` (or your email)
    - `DJANGO_SUPERUSER_PASSWORD` = `your-secure-password` (choose a strong password)
-5. **Run from your computer** (in project directory):
-   ```bash
-   railway run python manage.py create_superuser_from_env
-   ```
-6. **Done!** Superuser created automatically!
+5. **Redeploy your service**:
+   - Go to "Deployments" tab
+   - Click "Redeploy" on the latest deployment
+   - OR: Push a new commit to trigger automatic deployment
+6. **Done!** Superuser will be created automatically during deployment!
+
+**Note**: The Dockerfile has been configured to automatically create the superuser if the environment variables are set. No manual command needed!
 
 **Alternative: Railway Web Terminal** (if available):
 

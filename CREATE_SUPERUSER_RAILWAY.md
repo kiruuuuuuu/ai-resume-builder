@@ -34,16 +34,18 @@ This method uses environment variables, so you don't need terminal access!
      - **Name**: `DJANGO_SUPERUSER_PASSWORD`
      - **Value**: `your-secure-password-here` (choose a strong password)
 
-3. **Run the Custom Command via Railway CLI**
+3. **Automatic Creation** (Recommended):
+   - The Dockerfile has been updated to automatically create the superuser during deployment
+   - Just add the environment variables and redeploy
+   - The superuser will be created automatically on the next deployment
+
+4. **Manual Creation via Railway CLI** (Alternative):
    ```bash
    railway run python manage.py create_superuser_from_env
    ```
+   **Note**: Make sure you're linked to the correct service and Railway CLI is properly configured.
 
-4. **Or Add to Dockerfile/Deployment** (One-time setup)
-   - The command will run automatically if you add it to your deployment
-   - Or run it manually once via Railway CLI
-
-**That's it!** The superuser will be created automatically.
+**That's it!** The superuser will be created automatically on the next deployment.
 
 ---
 
@@ -192,11 +194,21 @@ If you can't access terminal, you can create a one-time script:
    - `DJANGO_SUPERUSER_USERNAME=admin`
    - `DJANGO_SUPERUSER_EMAIL=admin@example.com`
    - `DJANGO_SUPERUSER_PASSWORD=your-secure-password`
-5. **Run from your computer** (in project directory):
-   ```bash
-   railway run python manage.py create_superuser_from_env
-   ```
-6. **Done!** Superuser created automatically!
+5. **Redeploy your service**:
+   - Go to Railway Dashboard
+   - Click on your Django app service
+   - Go to "Deployments" tab
+   - Click "Redeploy" on the latest deployment
+   - OR: Just push a new commit to trigger automatic deployment
+
+6. **Done!** Superuser will be created automatically during deployment!
+
+**Alternative: Manual Creation** (if automatic doesn't work):
+```bash
+# Make sure Railway CLI is properly linked
+railway link
+railway run python manage.py create_superuser_from_env
+```
 
 ---
 
