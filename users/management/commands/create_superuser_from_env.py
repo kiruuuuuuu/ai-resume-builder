@@ -29,35 +29,45 @@ class Command(BaseCommand):
     help = 'Create a superuser from environment variables'
 
     def handle(self, *args, **options):
+        self.stdout.write(
+            self.style.SUCCESS('=== Checking for superuser creation ===')
+        )
+        
         username = os.getenv('DJANGO_SUPERUSER_USERNAME')
         email = os.getenv('DJANGO_SUPERUSER_EMAIL', '')
         password = os.getenv('DJANGO_SUPERUSER_PASSWORD')
 
         if not username:
             self.stdout.write(
-                self.style.ERROR(
-                    'Error: DJANGO_SUPERUSER_USERNAME environment variable is not set.'
+                self.style.WARNING(
+                    'DJANGO_SUPERUSER_USERNAME not set. Skipping superuser creation.'
                 )
             )
             self.stdout.write(
-                self.style.WARNING(
-                    'Please set DJANGO_SUPERUSER_USERNAME, DJANGO_SUPERUSER_EMAIL, and DJANGO_SUPERUSER_PASSWORD environment variables.'
+                self.style.SUCCESS(
+                    'To create a superuser, set DJANGO_SUPERUSER_USERNAME, DJANGO_SUPERUSER_EMAIL, and DJANGO_SUPERUSER_PASSWORD environment variables.'
                 )
             )
             return
 
         if not password:
             self.stdout.write(
-                self.style.ERROR(
-                    'Error: DJANGO_SUPERUSER_PASSWORD environment variable is not set.'
+                self.style.WARNING(
+                    'DJANGO_SUPERUSER_PASSWORD not set. Skipping superuser creation.'
                 )
             )
             self.stdout.write(
-                self.style.WARNING(
-                    'Please set DJANGO_SUPERUSER_PASSWORD environment variable.'
+                self.style.SUCCESS(
+                    'To create a superuser, set DJANGO_SUPERUSER_PASSWORD environment variable.'
                 )
             )
             return
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'Environment variables found. Attempting to create superuser: {username}'
+            )
+        )
 
         # Check if user already exists
         if User.objects.filter(username=username).exists():

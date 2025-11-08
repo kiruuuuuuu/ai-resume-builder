@@ -37,5 +37,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD curl -f http://localhost:8000/ || exit 1
 
 # Run migrations, create superuser (if env vars set), and start server
-CMD python manage.py migrate && python manage.py create_superuser_from_env || true && gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
+CMD python manage.py migrate && (python manage.py create_superuser_from_env || echo "Superuser creation skipped or failed, continuing...") && gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
 
