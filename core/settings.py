@@ -337,26 +337,22 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 
 # Auto-configure pool based on platform
+# Celery Worker Pool Configuration
 # Note: Command-line -P flag overrides this setting
-# Windows: Default to 'solo' pool (reliable, no eventlet issues)
-# Linux/Mac: Default to 'eventlet' pool (better concurrency for I/O-bound tasks)
+# We don't set CELERY_WORKER_POOL here to avoid conflicts
+# Instead, we let Celery use its default (prefork) or the command-line argument
+# This prevents the "worker_pool setting shouldn't be used" warning
 import platform
-import sys
 
-# Check if pool type is explicitly set via command line
-pool_explicitly_set = False
-if len(sys.argv) > 1:
-    cmd_line = ' '.join(sys.argv)
-    if '-P ' in cmd_line or '--pool=' in cmd_line or '--pool ' in cmd_line:
-        pool_explicitly_set = True
-
-if not pool_explicitly_set:
-    # Only set default if not explicitly specified
-    if platform.system() == 'Windows':
-        CELERY_WORKER_POOL = 'solo'
-        print("ℹ Celery default for Windows: Use '-P solo' pool (recommended)")
-        print("  To test eventlet: celery -A core worker -l info -P eventlet")
-    else:
-        # Production on Linux/Mac - use eventlet for better performance
-        CELERY_WORKER_POOL = 'eventlet'
-        print("ℹ Celery default for Linux/Mac: Use '-P eventlet' pool")
+# For Windows development, recommend solo pool in documentation
+# For Linux/Mac production, use prefork pool (default) - most stable with Redis
+# Eventlet is NOT recommended due to Redis connection errors
+if platform.system() == 'Windows':
+    # Windows: Don't set CELERY_WORKER_POOL, let command-line handle it
+    # Default behavior: Use 'solo' pool via command-line argument
+    pass
+else:
+    # Linux/Mac: Don't set CELERY_WORKER_POOL, let Celery use default (prefork)
+    # This avoids the warning about worker_pool setting
+    # Prefork is the default and most stable with Redis
+    pass
