@@ -23,63 +23,105 @@ Complete step-by-step guide to deploy AI Resume Builder on Fly.io (free tier ava
 ## Prerequisites
 
 ### Required Accounts
-- [ ] Fly.io account (sign up at https://fly.io)
+- [ ] Fly.io account (sign up at https://fly.io in browser)
 - [ ] Google Cloud account (for Gemini API key)
 - [ ] AWS account (optional, for S3 media storage)
 
-### Required Tools
-- [ ] Fly CLI installed (`flyctl` or `fly`)
-- [ ] Git installed
-- [ ] Python 3.11+ installed locally (for testing)
+### Required Tools (On Your Computer)
+- [ ] Fly CLI installed (`flyctl` or `fly`) - **Installed on YOUR computer**
+- [ ] Git installed - **On YOUR computer**
+- [ ] Python 3.11+ installed locally (for testing) - **On YOUR computer**
+- [ ] PowerShell or CMD - **On YOUR computer** (for running commands)
 
-### Install Fly CLI
+### ⚠️ Important: Where Commands Run
+
+**All `fly` commands are run on YOUR COMPUTER (PowerShell/CMD), not in Fly.io console!**
+
+- ✅ Create account: **Browser**
+- ✅ Install Fly CLI: **Your Computer (PowerShell/CMD)**
+- ✅ All deployment commands: **Your Computer (PowerShell/CMD)**
+- ✅ Only SSH/Console: **After deployment** (for verification, optional)
+
+### Install Fly CLI (On Your Computer)
+
+**Open PowerShell or CMD on YOUR COMPUTER** and run:
 
 **Windows (PowerShell)**:
 ```powershell
 powershell -Command "iwr https://fly.io/install.ps1 -useb | iex"
 ```
 
-**macOS/Linux**:
+**macOS/Linux (Terminal)**:
 ```bash
 curl -L https://fly.io/install.sh | sh
 ```
 
-**Verify Installation**:
-```bash
+**Verify Installation** (still in YOUR PowerShell/CMD):
+```powershell
 fly version
 ```
+
+**Note**: Fly CLI is installed on YOUR computer and connects to Fly.io remotely.
 
 ---
 
 ## Account Setup
 
-### 1. Create Fly.io Account
+### 1. Create Fly.io Account (In Browser)
 
-1. Go to https://fly.io
+1. Go to https://fly.io in your **web browser**
 2. Sign up with GitHub, Google, or email
 3. Verify your email address
+4. **Done!** ✅
 
-### 2. Login to Fly.io
+### 2. Install Fly CLI (On Your Computer)
 
-```bash
+**Open PowerShell or CMD on YOUR COMPUTER** and run:
+
+**Windows (PowerShell)**:
+```powershell
+powershell -Command "iwr https://fly.io/install.ps1 -useb | iex"
+```
+
+**Verify Installation**:
+```powershell
+fly version
+```
+
+### 3. Login to Fly.io (On Your Computer)
+
+**Still in YOUR PowerShell/CMD**, run:
+
+```powershell
 fly auth login
 ```
 
-This will open your browser for authentication.
+This will:
+- Open your browser automatically
+- Ask you to authorize the CLI
+- Return to PowerShell/CMD when done
+
+**Important**: All commands from now on are run on **YOUR COMPUTER** (PowerShell/CMD), not in Fly.io console!
 
 ---
 
 ## Project Initialization
 
+**All commands below are run on YOUR COMPUTER (PowerShell/CMD)**
+
 ### 1. Navigate to Project Directory
 
-```bash
+**In YOUR PowerShell/CMD**, run:
+
+```powershell
 cd "C:\Users\kiruk\OneDrive\Desktop\resume v2\AI_Resume_Builder v2.0"
 ```
 
 ### 2. Initialize Fly.io App
 
-```bash
+**Still in YOUR PowerShell/CMD**, run:
+
+```powershell
 fly launch
 ```
 
@@ -306,9 +348,13 @@ Configure worker app's `fly.toml` with only the Celery process.
 
 ## Environment Variables
 
+**All commands below are run on YOUR COMPUTER (PowerShell/CMD)**
+
 ### Set All Required Secrets
 
-```bash
+**In YOUR PowerShell/CMD**, run:
+
+```powershell
 # Critical Security
 fly secrets set DJANGO_SECRET_KEY="your-generated-secret-key"
 fly secrets set DEBUG=False
@@ -434,14 +480,18 @@ staticfiles/
 
 ## Media Files Setup
 
+**All commands below are run on YOUR COMPUTER (PowerShell/CMD)**
+
 ### Option 1: AWS S3 (Recommended for Production)
 
-1. **Create S3 Bucket**:
+**Setup Steps** (mix of browser and your computer):
+
+1. **Create S3 Bucket** (In AWS Console - Browser):
    - Go to AWS S3 Console
    - Create bucket (e.g., `ai-resume-builder-media`)
    - Configure CORS and permissions
 
-2. **Create IAM User**:
+2. **Create IAM User** (In AWS Console - Browser):
    - Create IAM user with S3 access
    - Generate access keys
 
@@ -470,10 +520,12 @@ staticfiles/
    fly secrets set AWS_S3_REGION_NAME="us-east-1"
    ```
 
-### Option 2: Fly Volumes (Local Storage)
+### Option 2: Fly Volumes (Local Storage) - ⭐ Recommended for Starting
+
+**In YOUR PowerShell/CMD**, run:
 
 1. **Create Volume**:
-   ```bash
+   ```powershell
    fly volumes create media_data --size 3 --region iad
    ```
 
@@ -496,6 +548,8 @@ staticfiles/
 
 ## Deployment
 
+**All commands below are run on YOUR COMPUTER (PowerShell/CMD)**
+
 ### 1. Final Pre-Deployment Checks
 
 - [ ] All migrations tested
@@ -506,7 +560,9 @@ staticfiles/
 
 ### 2. Deploy Application
 
-```bash
+**In YOUR PowerShell/CMD**, run:
+
+```powershell
 fly deploy
 ```
 
@@ -518,9 +574,9 @@ This will:
 
 ### 3. Run Migrations
 
-After first deployment, run migrations:
+After first deployment, **from YOUR PowerShell/CMD**, run:
 
-```bash
+```powershell
 fly ssh console -C "python manage.py migrate"
 ```
 
@@ -528,13 +584,19 @@ Or add to Dockerfile CMD (already included).
 
 ### 4. Create Superuser
 
-```bash
+**From YOUR PowerShell/CMD**, run:
+
+```powershell
 fly ssh console -C "python manage.py createsuperuser"
 ```
 
+**Note**: `fly ssh console` connects from YOUR computer to the Fly.io machine temporarily.
+
 ### 5. Verify Deployment
 
-```bash
+**All commands run from YOUR PowerShell/CMD**:
+
+```powershell
 # Check app status
 fly status
 
