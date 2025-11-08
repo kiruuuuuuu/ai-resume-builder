@@ -109,12 +109,27 @@ This will:
 
 **All commands below are run on YOUR COMPUTER (PowerShell/CMD)**
 
-### 1. Navigate to Project Directory
+### 1. Open PowerShell/CMD in Project Directory
 
-**In YOUR PowerShell/CMD**, run:
+**IMPORTANT**: Open PowerShell/CMD in your project folder!
 
+**Easiest Method**:
+1. Open File Explorer
+2. Navigate to: `C:\Users\kiruk\OneDrive\Desktop\resume v2\AI_Resume_Builder v2.0`
+3. Right-click in the folder → "Open in Terminal" or "Open PowerShell window here"
+
+**Or manually navigate**:
 ```powershell
 cd "C:\Users\kiruk\OneDrive\Desktop\resume v2\AI_Resume_Builder v2.0"
+```
+
+**Verify you're in the right place**:
+```powershell
+# Should show your project path
+pwd
+
+# Should show manage.py, requirements.txt, etc.
+ls
 ```
 
 ### 2. Initialize Fly.io App
