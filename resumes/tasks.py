@@ -9,25 +9,48 @@ from .models import Resume, ParsedResumeCache, ResumePDFGeneration, Experience, 
 import json
 import logging
 import os
+import base64
+import tempfile
 
 # Use a more specific logger for better debugging
 logger = logging.getLogger(__name__)
 
 @shared_task
-def parse_resume_task(user_id, file_path):
+def parse_resume_task(user_id, filename, file_content_b64):
     """
     Asynchronous task to parse a resume file and store the structured data.
+    
+    Args:
+        user_id: The ID of the user uploading the resume
+        filename: The original filename (e.g., 'resume.pdf')
+        file_content_b64: Base64-encoded file content as a string
     """
+    temp_file_path = None
     try:
-        logger.info(f"Starting resume parse task for user_id: {user_id} and file: {file_path}")
+        logger.info(f"Starting resume parse task for user_id: {user_id} and file: {filename}")
+        
+        # Decode base64 file content
+        file_content = base64.b64decode(file_content_b64)
+        
+        # Create a temporary file to store the content
+        # This is necessary because PyMuPDF and python-docx require file paths
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(filename)[1]) as temp_file:
+            temp_file.write(file_content)
+            temp_file_path = temp_file.name
+        
+        logger.info(f"Created temporary file: {temp_file_path} for processing")
+        
+        # Extract text from the file
         text = ""
-        if file_path.lower().endswith('.pdf'):
-            text = extract_text_from_pdf(file_path)
-        elif file_path.lower().endswith('.docx'):
-            text = extract_text_from_docx(file_path)
+        if filename.lower().endswith('.pdf'):
+            text = extract_text_from_pdf(temp_file_path)
+        elif filename.lower().endswith('.docx'):
+            text = extract_text_from_docx(temp_file_path)
+        else:
+            logger.error(f"Unsupported file type: {filename}")
 
         if text:
-            logger.info(f"Extracted text from {file_path}. Length: {len(text)} chars. Now calling Gemini for parsing.")
+            logger.info(f"Extracted text from {filename}. Length: {len(text)} chars. Now calling Gemini for parsing.")
             structured_data = parse_text_with_gemini(text)
             if structured_data:
                 logger.info(f"Successfully parsed resume data for user_id: {user_id}.")
@@ -39,16 +62,18 @@ def parse_resume_task(user_id, file_path):
             else:
                 logger.error(f"Gemini parsing returned no structured data for user_id: {user_id}.")
         else:
-            logger.warning(f"No text could be extracted from file {file_path} for user_id: {user_id}.")
-
-        # Clean up the temporary file
-        fs = FileSystemStorage()
-        if fs.exists(file_path):
-            fs.delete(file_path)
-            logger.info(f"Cleaned up temporary file: {file_path}")
+            logger.warning(f"No text could be extracted from file {filename} for user_id: {user_id}.")
 
     except Exception as e:
         logger.error(f"Error in parse_resume_task for user {user_id}: {e}", exc_info=True)
+    finally:
+        # Clean up the temporary file
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.unlink(temp_file_path)
+                logger.info(f"Cleaned up temporary file: {temp_file_path}")
+            except Exception as e:
+                logger.warning(f"Failed to delete temporary file {temp_file_path}: {e}")
 
 
 @shared_task

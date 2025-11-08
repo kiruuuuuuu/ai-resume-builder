@@ -257,11 +257,15 @@ def upload_resume_view(request):
                 messages.error(request, "File size exceeds 10MB limit. Please upload a smaller file.")
                 return redirect('resumes:resume-dashboard')
 
-            fs = FileSystemStorage()
-            filename = fs.save(resume_file.name, resume_file)
-            full_file_path = fs.path(filename)
+            # Read file content into memory and encode as base64
+            # This allows the file to be passed to Celery worker in a separate container
+            import base64
+            file_content = resume_file.read()
+            file_content_b64 = base64.b64encode(file_content).decode('utf-8')
+            filename = resume_file.name
 
-            parse_resume_task.delay(request.user.id, full_file_path)
+            # Pass file content and filename to Celery task
+            parse_resume_task.delay(request.user.id, filename, file_content_b64)
 
             return redirect('resumes:parsing-progress')
 
