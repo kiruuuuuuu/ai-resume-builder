@@ -457,6 +457,43 @@ railway up
 
 ## Post-Deployment Checklist
 
+### Step 0: Find Your App URL 🌐
+
+**To access your deployed application, you need to find your Railway app URL:**
+
+1. **Go to Railway Dashboard**
+   - Visit: https://railway.app
+   - Login to your account
+
+2. **Select Your Project**
+   - Click on your project name
+
+3. **Click on Your Django App Service**
+   - Click on your Django app service (not PostgreSQL, Redis, or Celery worker)
+   - It's usually the main service with your repo name
+
+4. **Find Your URL**
+   - **Option A**: Look at the top of the service page for **"Domains"** section
+   - **Option B**: Go to **"Settings"** tab → Scroll to **"Domains"** section
+   - **Option C**: Look for a **"Generate Domain"** button if no domain exists yet
+
+5. **Your URL Format**:
+   ```
+   https://your-service-name.up.railway.app
+   ```
+   Or:
+   ```
+   https://your-app-name-production.up.railway.app
+   ```
+
+6. **Click the URL** to open your app in a browser
+
+**📝 Note**: If you don't see a domain, click **"Generate Domain"** button to create one.
+
+**See [HOW_TO_FIND_RAILWAY_URL.md](HOW_TO_FIND_RAILWAY_URL.md) for detailed instructions with screenshots.**
+
+---
+
 ### Step 1: Check Service Status & Logs
 
 **In Railway Dashboard**:
