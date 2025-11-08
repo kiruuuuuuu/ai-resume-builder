@@ -365,35 +365,130 @@ Configure worker app's `fly.toml` with only the Celery process.
 
 **All commands below are run on YOUR COMPUTER (PowerShell/CMD)**
 
-### Set All Required Secrets
+### 🔑 What Keys to Generate
 
-**In YOUR PowerShell/CMD**, run:
+#### 1. DJANGO_SECRET_KEY (CRITICAL - Must Generate)
+
+**Generate using**:
+```bash
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+**Example Output**:
+```
+%w)2qxuhyre46!)j7-b6tp#7d@thhw3+y)iuu%w)8mvwh=zi)r
+```
+
+**Save this value** - You'll need it for Fly.io secrets.
+
+#### 2. GOOGLE_AI_API_KEY (Required for AI Features)
+
+**Get from**: https://aistudio.google.com/app/apikey
+
+**Steps**:
+1. Go to https://aistudio.google.com/app/apikey
+2. Sign in with Google account
+3. Click "Create API Key"
+4. Copy the API key
+5. Save it securely
+
+**Example**:
+```
+AIzaSyAbc123def456ghi789jkl012mno345pqr
+```
+
+#### 3. Database & Redis Credentials
+
+**These are automatically provided by Fly.io** when you create Postgres/Redis:
+- `DATABASE_URL` - Auto-set by `fly postgres attach`
+- `REDIS_URL` - Auto-set by `fly redis attach`
+- `CELERY_BROKER_URL` - Can use `REDIS_URL` or set manually
+- `CELERY_RESULT_BACKEND` - Can use `REDIS_URL` or set manually
+
+**You don't need to generate these** - Fly.io provides them.
+
+---
+
+### Complete Environment Variables List
+
+#### Critical Security (Must Set)
 
 ```powershell
-# Critical Security
+# Generate SECRET_KEY first (see above)
 fly secrets set DJANGO_SECRET_KEY="your-generated-secret-key"
 fly secrets set DEBUG=False
 fly secrets set ALLOWED_HOSTS="yourapp.fly.dev,yourdomain.com"
+```
 
-# Google AI
+#### AI Features (Required)
+
+```powershell
 fly secrets set GOOGLE_AI_API_KEY="your-google-ai-api-key"
 fly secrets set USE_GEMINI=True
 fly secrets set GEMINI_MODEL="models/gemini-2.5-flash"
+```
 
-# Database (automatically set by fly postgres attach)
-# DATABASE_URL is set automatically
+#### Database (Auto-Set by Fly Postgres)
 
-# Redis (automatically set by fly redis attach)
-# REDIS_URL is set automatically
-# Or set manually:
-# fly secrets set CELERY_BROKER_URL="redis://..."
-# fly secrets set CELERY_RESULT_BACKEND="redis://..."
+When you run `fly postgres attach`, these are automatically set:
+- `DATABASE_URL` - Full connection string
+- `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`
 
-# Job Features (optional)
+**Or set manually** (if needed):
+```powershell
+fly secrets set USE_POSTGRESQL=True
+fly secrets set DB_NAME="your_db_name"
+fly secrets set DB_USER="your_db_user"
+fly secrets set DB_PASSWORD="your_db_password"
+fly secrets set DB_HOST="your_db_host"
+fly secrets set DB_PORT="5432"
+```
+
+#### Redis/Celery (Auto-Set by Fly Redis)
+
+When you run `fly redis attach`, `REDIS_URL` is automatically set.
+
+**Or set manually**:
+```powershell
+fly secrets set CELERY_BROKER_URL="redis://your-redis-url"
+fly secrets set CELERY_RESULT_BACKEND="redis://your-redis-url"
+```
+
+#### Optional Settings
+
+```powershell
+# Job Features (default: False)
 fly secrets set JOBS_FEATURE_ENABLED=False
 
-# Logging
+# Logging (default: INFO)
 fly secrets set DJANGO_LOG_LEVEL=INFO
+
+# CSRF Trusted Origins (if using custom domain)
+fly secrets set CSRF_TRUSTED_ORIGINS="https://yourapp.fly.dev,https://yourdomain.com"
+```
+
+#### AWS S3 (Optional - Only if using S3 for media)
+
+```powershell
+fly secrets set AWS_ACCESS_KEY_ID="your-access-key"
+fly secrets set AWS_SECRET_ACCESS_KEY="your-secret-key"
+fly secrets set AWS_STORAGE_BUCKET_NAME="your-bucket-name"
+fly secrets set AWS_S3_REGION_NAME="us-east-1"
+```
+
+---
+
+### Set All Secrets at Once
+
+```powershell
+fly secrets set \
+  DJANGO_SECRET_KEY="your-secret-key" \
+  DEBUG=False \
+  ALLOWED_HOSTS="yourapp.fly.dev" \
+  GOOGLE_AI_API_KEY="your-api-key" \
+  USE_GEMINI=True \
+  JOBS_FEATURE_ENABLED=False \
+  DJANGO_LOG_LEVEL=INFO
 ```
 
 ### Verify Secrets
@@ -402,13 +497,34 @@ fly secrets set DJANGO_LOG_LEVEL=INFO
 fly secrets list
 ```
 
-### Generate SECRET_KEY
+### Development .env File
 
-```bash
-python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+For local development, create a `.env` file:
+
+```env
+# Critical Security
+DJANGO_SECRET_KEY=your-generated-secret-key-here
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+# AI Features
+GOOGLE_AI_API_KEY=your-google-ai-api-key-here
+USE_GEMINI=True
+GEMINI_MODEL=models/gemini-2.5-flash
+
+# Database (Development - SQLite by default)
+USE_POSTGRESQL=False
+
+# Celery (Development - Local Redis)
+CELERY_BROKER_URL=redis://127.0.0.1:6379/0
+CELERY_RESULT_BACKEND=redis://127.0.0.1:6379/0
+
+# Optional
+JOBS_FEATURE_ENABLED=False
+DJANGO_LOG_LEVEL=INFO
 ```
 
-Copy the output and use it in `fly secrets set DJANGO_SECRET_KEY="..."`.
+**⚠️ Important**: Never commit `.env` file to Git! It's already in `.gitignore`.
 
 ---
 
@@ -497,7 +613,43 @@ staticfiles/
 
 **All commands below are run on YOUR COMPUTER (PowerShell/CMD)**
 
-### Option 1: AWS S3 (Recommended for Production)
+### 📸 What Files Need Storage?
+
+Your application stores:
+1. **Profile Photos** - User profile pictures
+2. **Company Logos** - Employer company logos  
+3. **Bug Report Screenshots** - Screenshots from bug reports
+4. **Generated PDFs** - Resume PDF files (optional, can be regenerated)
+
+### ✅ Do You Need Cloud Storage?
+
+**Short Answer: NO, Not Required!**
+
+You have **TWO options**:
+
+### Option 1: Fly Volumes (FREE) ⭐ **Recommended for Starting**
+
+- ✅ **FREE** - No additional cost
+- ✅ **Simple** - Easy to set up (2 commands)
+- ✅ **Persistent** - Files survive deployments
+- ✅ **Good for starting** - Perfect for small to medium apps
+- ⚠️ **Limited** - Not shared across regions
+- ⚠️ **Backup** - You need to handle backups manually
+
+**Setup** (5 minutes):
+```powershell
+# 1. Create volume
+fly volumes create media_data --size 3 --region iad
+
+# 2. Add to fly.toml (add this section)
+[[mounts]]
+  source = "media_data"
+  destination = "/app/media"
+```
+
+**That's it!** Your photos will be stored on the Fly volume.
+
+### Option 2: AWS S3 (PAID) ⭐ **Recommended for Production**
 
 **Setup Steps** (mix of browser and your computer):
 
@@ -558,6 +710,51 @@ staticfiles/
    ```
 
 **Note**: Volumes are persistent but not shared across regions. S3 is recommended for production.
+
+### 💰 Cost Comparison
+
+**Fly Volumes**:
+- **Cost**: FREE (included in Fly.io)
+- **Storage**: 3GB (default, can increase)
+- **Limits**: Volume size limits
+
+**AWS S3**:
+- **Cost**: ~$0.023 per GB/month (storage)
+- **Cost**: ~$0.09 per GB (data transfer out)
+- **Free Tier**: 5GB storage, 20,000 GET requests for 12 months
+- **Example**: 10GB storage = ~$0.23/month + transfer costs
+
+**For small apps**: Fly Volumes is essentially free  
+**For large apps**: S3 is worth the cost for reliability
+
+### 📋 Quick Decision Guide
+
+**Choose Fly Volumes If**:
+- ✅ You're just starting out
+- ✅ You want to keep costs low (FREE)
+- ✅ You have < 10GB of files
+- ✅ You don't need multi-region storage
+- ✅ You want simple setup
+
+**Choose AWS S3 If**:
+- ✅ You expect lots of files (> 10GB)
+- ✅ You need high availability
+- ✅ You want CDN integration
+- ✅ You need automatic backups
+- ✅ You want industry-standard storage
+
+### 🔄 Switching Later
+
+**Good News**: You can switch from Fly Volumes to S3 anytime!
+
+**Steps**:
+1. Set up S3 (follow Option 2 above)
+2. Set `USE_S3=True` in Fly.io secrets
+3. Migrate files (optional - new uploads will go to S3)
+4. Deploy
+
+**Old files**: Will remain on Fly Volume (can migrate manually if needed)  
+**New files**: Will go to S3
 
 ---
 

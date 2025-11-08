@@ -151,14 +151,26 @@ Open your browser and navigate to:
 
 ## 🚀 Deployment
 
-For production deployment instructions, see the [**Complete Documentation**](docs/DOCUMENTATION.md#deployment-guide).
+For production deployment instructions, see:
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Complete step-by-step Fly.io deployment guide
+- **[PRE_DEPLOYMENT_CHECKLIST.md](PRE_DEPLOYMENT_CHECKLIST.md)** - Pre-deployment checklist
+- **[SECURITY_FIXES_GUIDE.md](SECURITY_FIXES_GUIDE.md)** - Security fixes and improvements
 
 ## 📚 Documentation
 
-For detailed documentation, see:
-- **[Complete Documentation](docs/DOCUMENTATION.md)** - Comprehensive setup, configuration, and deployment guides
+### Main Documentation Files
+
+- **[Complete Documentation](docs/DOCUMENTATION.md)** - Comprehensive setup, configuration, and feature guides
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Complete Fly.io deployment guide with step-by-step instructions
+- **[PRE_DEPLOYMENT_CHECKLIST.md](PRE_DEPLOYMENT_CHECKLIST.md)** - Pre-deployment checklist and status
+- **[SECURITY_FIXES_GUIDE.md](SECURITY_FIXES_GUIDE.md)** - Security fixes, improvements, and checklist
+- **[ADMIN_SETUP_GUIDE.md](ADMIN_SETUP_GUIDE.md)** - How to create admin user and access admin dashboard
+- **[TEST_EXECUTION_GUIDE.md](TEST_EXECUTION_GUIDE.md)** - How to run tests and test coverage
+- **[REMAINING_WORK.md](REMAINING_WORK.md)** - Remaining tasks and improvements
+
+### Quick Links
+
 - **Celery Configuration** - See [DOCUMENTATION.md](docs/DOCUMENTATION.md#celery-configuration)
-- **Deployment Guide** - See [DOCUMENTATION.md](docs/DOCUMENTATION.md#deployment-guide)
 - **Social Login Setup** - See [DOCUMENTATION.md](docs/DOCUMENTATION.md#social-login-setup)
 - **Database Configuration** - See [DOCUMENTATION.md](docs/DOCUMENTATION.md#database-configuration)
 
@@ -252,7 +264,7 @@ python manage.py test
 - [ ] Set up SSL certificates
 - [ ] Configure process management (systemd/supervisor)
 
-For detailed deployment instructions, see [DOCUMENTATION.md](docs/DOCUMENTATION.md#deployment-guide).
+For detailed deployment instructions, see **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)**.
 
 ## 🐛 Troubleshooting
 
