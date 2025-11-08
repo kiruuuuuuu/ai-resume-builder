@@ -84,10 +84,15 @@ if not DEBUG:
     CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if os.getenv('CSRF_TRUSTED_ORIGINS') else []
     CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS if origin.strip()]
     
-    # If CSRF_TRUSTED_ORIGINS is empty in production, allow Railway origins
+    # If CSRF_TRUSTED_ORIGINS is empty in production, we'll need to set it manually
+    # Note: Django doesn't support wildcards in CSRF_TRUSTED_ORIGINS
+    # If CSRF errors occur, set CSRF_TRUSTED_ORIGINS environment variable with your specific domain
+    # Example: CSRF_TRUSTED_ORIGINS=https://ai-resume-builder-jk.up.railway.app
     if not CSRF_TRUSTED_ORIGINS:
-        # Allow all Railway HTTPS origins
-        CSRF_TRUSTED_ORIGINS = ['https://*.railway.app', 'https://*.up.railway.app']
+        # Try to get the domain from Railway's environment or use a default pattern
+        # For now, we'll rely on ALLOWED_HOSTS being set correctly
+        # CSRF will work as long as the domain matches ALLOWED_HOSTS and uses HTTPS
+        pass
 else:
     # Development settings (less strict for local development)
     SECURE_SSL_REDIRECT = False
