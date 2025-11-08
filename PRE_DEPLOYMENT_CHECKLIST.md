@@ -1,6 +1,6 @@
 # Pre-Deployment Checklist
 
-Use this checklist to ensure your AI Resume Builder application is ready for production deployment on Fly.io.
+Use this checklist to ensure your AI Resume Builder application is ready for production deployment on Railway.app.
 
 ## 🔒 Security Checklist
 
@@ -8,28 +8,28 @@ Use this checklist to ensure your AI Resume Builder application is ready for pro
 - [ ] **SECRET_KEY**: Set a strong, unique secret key in environment variables
   - Generate using: `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`
   - Never commit to version control
-  - Set in Fly.io secrets: `fly secrets set DJANGO_SECRET_KEY="your-secret-key"`
+  - Set in Railway Dashboard → Your service → "Variables" tab: `DJANGO_SECRET_KEY=your-secret-key`
 
 - [ ] **DEBUG**: Set to `False` in production
-  - Set in Fly.io secrets: `fly secrets set DEBUG=False`
-  - Verify: `DEBUG=False` in `.env` or environment variables
+  - Set in Railway Dashboard → Your service → "Variables" tab: `DEBUG=False`
+  - Verify: `DEBUG=False` in Railway variables
 
 - [ ] **ALLOWED_HOSTS**: Configure with your domain(s)
-  - Set in Fly.io secrets: `fly secrets set ALLOWED_HOSTS="yourdomain.com,www.yourdomain.com"`
-  - Include Fly.io app URL: `fly secrets set ALLOWED_HOSTS="yourdomain.com,yourapp.fly.dev"`
+  - Set in Railway Dashboard → Your service → "Variables" tab: `ALLOWED_HOSTS=*.railway.app,your-custom-domain.com`
+  - Include Railway domain: `ALLOWED_HOSTS=*.railway.app,your-app.up.railway.app`
 
 - [ ] **CSRF_TRUSTED_ORIGINS**: Add your domain(s) if using custom domain
-  - Add to `core/settings.py`: `CSRF_TRUSTED_ORIGINS = ['https://yourdomain.com', 'https://yourapp.fly.dev']`
+  - Set in Railway Dashboard → Your service → "Variables" tab: `CSRF_TRUSTED_ORIGINS=https://*.railway.app,https://your-custom-domain.com`
 
 ### Security Headers
 - [ ] Verify security middleware is enabled in `MIDDLEWARE`
 - [ ] Consider adding security headers (X-Frame-Options, X-Content-Type-Options, etc.)
-- [ ] Ensure HTTPS is enforced (automatic on Fly.io with custom domains)
+- [ ] Ensure HTTPS is enforced (automatic on Railway with custom domains)
 
 ## 📦 Environment Variables
 
 ### Required Environment Variables
-Set all of these in Fly.io using `fly secrets set`:
+Set all of these in Railway Dashboard → Your service → "Variables" tab:
 
 - [ ] `DJANGO_SECRET_KEY` - Django secret key (CRITICAL)
 - [ ] `DEBUG=False` - Disable debug mode
@@ -43,11 +43,12 @@ Set all of these in Fly.io using `fly secrets set`:
 - [ ] `DB_NAME` - Database name
 - [ ] `DB_USER` - Database user
 - [ ] `DB_PASSWORD` - Database password
-- [ ] `DB_HOST` - Database host (from Fly Postgres)
+- [ ] `DATABASE_URL` - Database connection URL (from Railway PostgreSQL service - automatically set via Reference Variable)
 - [ ] `DB_PORT` - Database port (usually 5432)
 
 ### Celery/Redis Configuration
-- [ ] `CELERY_BROKER_URL` - Redis connection URL (from Fly Redis or external)
+- [ ] `REDIS_URL` - Redis connection URL (from Railway Redis service - automatically set via Reference Variable)
+- [ ] `CELERY_BROKER_URL` - Can use `REDIS_URL` or set separately
 - [ ] `CELERY_RESULT_BACKEND` - Redis connection URL for results
 
 ### Optional Environment Variables
@@ -67,7 +68,7 @@ Set all of these in Fly.io using `fly secrets set`:
   ```
 
 - [ ] **Database Backup**: Create backup of development database (if needed)
-- [ ] **PostgreSQL Setup**: Fly Postgres database created and configured
+- [ ] **PostgreSQL Setup**: Railway PostgreSQL database created and configured
 - [ ] **Connection Test**: Verify database connection works
 - [ ] **Superuser**: Create admin superuser
   ```bash
@@ -87,20 +88,22 @@ Set all of these in Fly.io using `fly secrets set`:
 
 ## 📸 Media Files
 
-- [ ] **Storage Strategy**: Decide on storage (Fly volumes or AWS S3)
-- [ ] **AWS S3 Setup** (if using):
-  - [ ] S3 bucket created
-  - [ ] IAM user with proper permissions
-  - [ ] CORS configuration set
-  - [ ] Environment variables configured
-- [ ] **Fly Volumes** (if using local storage):
-  - [ ] Volume created: `fly volumes create media_data`
-  - [ ] Volume mounted in `fly.toml`
+- [ ] **Storage Strategy**: Railway local storage (FREE - recommended) or Railway Volumes
+- [ ] **Railway Local Storage** (Recommended - FREE):
+  - [ ] Set `USE_S3=False` in Railway variables
+  - [ ] Files stored on Railway container filesystem
+  - [ ] No additional setup required
+- [ ] **Railway Volumes** (Optional - for persistent storage):
+  - [ ] Go to Railway Dashboard → Your service → "Settings" → "Volumes"
+  - [ ] Create a new volume (e.g., `media-storage`)
+  - [ ] Mount it to `/app/media`
+- [ ] **AWS S3 Setup** (Not needed - Railway provides FREE storage):
+  - [ ] Set `USE_S3=False` (no AWS required)
 
 ## 🔄 Celery & Redis
 
-- [ ] **Redis Setup**: Fly Redis or external Redis configured
-- [ ] **Celery Worker**: Worker process configured in `fly.toml`
+- [ ] **Redis Setup**: Railway Redis service created and configured
+- [ ] **Celery Worker**: Worker service created in Railway (separate service)
 - [ ] **Task Testing**: Test Celery tasks work correctly
 - [ ] **Worker Logs**: Verify worker logs are accessible
 
@@ -118,19 +121,19 @@ Set all of these in Fly.io using `fly secrets set`:
 ## 📝 Documentation
 
 - [ ] **README.md**: Updated with current information
-- [ ] **DEPLOYMENT_GUIDE.md**: Complete deployment instructions
+- [ ] **RAILWAY_DEPLOYMENT_GUIDE.md**: Complete deployment instructions
 - [ ] **REMAINING_WORK.md**: Documented known issues and improvements
 
 ## 🚀 Deployment-Specific
 
-### Fly.io Specific
-- [ ] **Fly CLI**: Installed and authenticated
-- [ ] **fly.toml**: Configuration file created and configured
-- [ ] **App Created**: Fly.io app initialized
-- [ ] **PostgreSQL**: Fly Postgres database attached
-- [ ] **Redis**: Fly Redis or external Redis configured
-- [ ] **Secrets**: All environment variables set via `fly secrets set`
-- [ ] **Health Checks**: Health check endpoint configured
+### Railway.app Specific
+- [ ] **Railway Account**: Created Railway.app account (FREE, no payment method required)
+- [ ] **Railway CLI**: Installed and authenticated (optional but recommended)
+- [ ] **Project Created**: Railway project created
+- [ ] **PostgreSQL**: Railway PostgreSQL service created and linked
+- [ ] **Redis**: Railway Redis service created and linked
+- [ ] **Environment Variables**: All environment variables set in Railway Dashboard → "Variables" tab
+- [ ] **Service Deployed**: Django service deployed and running
 - [ ] **Processes**: Web server and Celery worker processes configured
 
 ## 🔍 Pre-Launch Testing
@@ -149,20 +152,20 @@ Set all of these in Fly.io using `fly secrets set`:
 ## 📊 Monitoring & Logging
 
 - [ ] **Error Logging**: Configure error logging
-- [ ] **Application Logs**: Verify logs are accessible via `fly logs`
+- [ ] **Application Logs**: Verify logs are accessible via Railway Dashboard → "Logs" tab or `railway logs`
 - [ ] **Database Monitoring**: Set up database monitoring (optional)
 - [ ] **Uptime Monitoring**: Set up uptime monitoring (optional)
 
 ## 🔐 Backup Strategy
 
-- [ ] **Database Backups**: Configure automatic backups (Fly Postgres has built-in backups)
+- [ ] **Database Backups**: Configure automatic backups (Railway PostgreSQL has built-in backups)
 - [ ] **Media Backups**: Plan for media file backups (if using local storage)
 - [ ] **Backup Testing**: Test backup restoration process
 
 ## ✅ Final Checks
 
 - [ ] **Domain Configuration**: Custom domain configured (if applicable)
-- [ ] **SSL Certificate**: SSL automatically configured by Fly.io
+- [ ] **SSL Certificate**: SSL automatically configured by Railway
 - [ ] **Performance**: Test application performance
 - [ ] **Security Scan**: Run security checks
 - [ ] **Load Testing**: Basic load testing (optional but recommended)
@@ -172,21 +175,29 @@ Set all of these in Fly.io using `fly secrets set`:
 ## Quick Command Reference
 
 ```bash
-# Set all secrets at once
-fly secrets set DJANGO_SECRET_KEY="..." DEBUG=False ALLOWED_HOSTS="..." GOOGLE_AI_API_KEY="..."
+# Login to Railway
+railway login
 
-# Check secrets
-fly secrets list
+# Link to project
+railway link
+
+# Run migrations
+railway run python manage.py migrate
+
+# Create superuser
+railway run python manage.py createsuperuser
 
 # View logs
-fly logs
+railway logs
 
-# Check app status
-fly status
+# View variables
+railway variables
 
-# SSH into app
-fly ssh console
+# Open app in browser
+railway open
 ```
+
+**Note**: Environment variables are set in Railway Dashboard → Your service → "Variables" tab, not via CLI.
 
 ---
 
@@ -214,30 +225,30 @@ fly ssh console
 2. **Prepare for Deployment** (10 minutes):
    - [ ] Generate SECRET_KEY (if not done)
    - [ ] Have GOOGLE_AI_API_KEY ready
-   - [ ] Review `DEPLOYMENT_GUIDE.md`
+   - [ ] Review `RAILWAY_DEPLOYMENT_GUIDE.md`
 
 3. **Follow Deployment Steps** (1-2 hours):
-   - [ ] Install Fly CLI
-   - [ ] Create Fly.io account
-   - [ ] Follow `DEPLOYMENT_GUIDE.md` step-by-step
+   - [ ] Create Railway.app account (FREE, no payment method required)
+   - [ ] Install Railway CLI (optional but recommended)
+   - [ ] Follow `RAILWAY_DEPLOYMENT_GUIDE.md` step-by-step
 
 ---
 
 ## 🎯 Which File to Use for Deployment?
 
-### Main Deployment File: `DEPLOYMENT_GUIDE.md`
+### Main Deployment File: `RAILWAY_DEPLOYMENT_GUIDE.md`
 
 **Use this file for step-by-step deployment instructions.**
 
 It contains:
-- Complete Fly.io setup instructions
+- Complete Railway.app setup instructions
 - Database setup
 - Redis setup
 - Environment variable configuration
 - Static files configuration
-- Media files setup
+- Media files setup (FREE - no AWS required)
 - Deployment commands
-- Post-deployment steps
+- Post-deployment checklist
 - Troubleshooting guide
 
 ### Supporting Files:

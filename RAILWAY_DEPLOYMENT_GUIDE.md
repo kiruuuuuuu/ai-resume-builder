@@ -21,8 +21,10 @@ Complete step-by-step guide to deploy AI Resume Builder on Railway.app (FREE tie
 5. [Redis Setup](#redis-setup)
 6. [Environment Variables](#environment-variables)
 7. [Deployment](#deployment)
-8. [Post-Deployment](#post-deployment)
-9. [Troubleshooting](#troubleshooting)
+8. [Post-Deployment Checklist](#post-deployment-checklist)
+9. [Celery Worker Setup](#celery-worker-setup)
+10. [Troubleshooting](#troubleshooting)
+11. [Cost Estimation](#cost-estimation)
 
 ---
 
@@ -215,6 +217,46 @@ DEBUG=False
 ALLOWED_HOSTS=*.railway.app,your-custom-domain.com
 ```
 
+**⚠️ CRITICAL: Setting DJANGO_SECRET_KEY**
+
+Your service **WILL NOT START** without `DJANGO_SECRET_KEY`. Follow these steps carefully:
+
+**Step 1: Generate SECRET_KEY**
+
+```powershell
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+Copy the output (it will be a long random string).
+
+**Step 2: Add to Railway**
+
+1. Go to Railway Dashboard → Your service → "Variables" tab
+2. Click "New Variable"
+3. **Variable Name**: `DJANGO_SECRET_KEY` (exactly as shown, case-sensitive)
+   - ❌ **DO NOT** use: `SECRET_KEY`, `django_secret_key`, `DJANGO_SECRETKEY`
+   - ✅ **USE**: `DJANGO_SECRET_KEY` (with underscores, all uppercase)
+4. **Variable Value**: Paste the generated SECRET_KEY
+5. Click "Add" or "Save"
+6. **Verify**: The variable should appear in the list
+
+**Step 3: Wait for Auto-Redeploy**
+
+- Railway automatically redeploys when you add variables
+- Wait 1-2 minutes
+- Check "Deployments" tab for new deployment
+
+**Step 4: Check Logs**
+
+- Go to "Logs" tab
+- Should see successful startup (no more `DJANGO_SECRET_KEY` errors)
+
+**Common Mistakes**:
+- ❌ Wrong name: `SECRET_KEY` → Use `DJANGO_SECRET_KEY`
+- ❌ Wrong case: `django_secret_key` → Use `DJANGO_SECRET_KEY`
+- ❌ Empty value → Make sure you paste the generated key
+- ❌ Not saved → Click "Add" or "Save" after entering
+
 #### AI Features
 
 ```
@@ -248,6 +290,31 @@ USE_S3=False
 - ✅ No additional cost
 - ✅ Automatic setup
 
+**Storage Options**:
+
+**Option 1: Railway Local Storage (FREE) - Recommended**
+- Files stored on Railway's container filesystem
+- **FREE** - No additional cost
+- Files persist as long as service is running
+- Perfect for small to medium applications
+- **Setup**: Nothing to do! Already configured with `USE_S3=False`
+
+**Option 2: Railway Volumes (Persistent Storage) - Optional**
+- Persistent storage that survives deployments
+- **FREE** for small volumes (within Railway's free tier)
+- **Setup**:
+  1. Go to Railway Dashboard → Your service → "Settings" → "Volumes"
+  2. Create a new volume (e.g., `media-storage`)
+  3. Mount it to `/app/media`
+
+**What Files Are Stored?**:
+- Profile photos
+- Company logos
+- Bug report screenshots
+- Generated PDFs (optional, can be regenerated)
+
+**Storage Location**: `/app/media` on Railway container
+
 **Note**: Remove AWS variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, etc.) from Railway if they exist - they're not needed since `USE_S3=False`.
 
 #### Optional
@@ -257,37 +324,6 @@ JOBS_FEATURE_ENABLED=False
 DJANGO_LOG_LEVEL=INFO
 CSRF_TRUSTED_ORIGINS=https://*.railway.app
 ```
-
-### Generate SECRET_KEY
-
-```powershell
-python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
-```
-
-Copy the output and use it as `DJANGO_SECRET_KEY`.
-
-### 🆓 Storage: FREE on Railway (No AWS Required!)
-
-**Important**: You DON'T need AWS S3! Your app uses Railway's FREE local storage.
-
-**Variables to Set**:
-```
-USE_S3=False
-```
-
-**What this means**:
-- ✅ Media files (photos, PDFs) stored on Railway (FREE)
-- ✅ No AWS account needed
-- ✅ No additional cost
-- ✅ Automatic - no setup required
-
-**Optional**: Remove AWS variables from Railway if they exist:
-- `AWS_ACCESS_KEY_ID` (not needed)
-- `AWS_SECRET_ACCESS_KEY` (not needed)
-- `AWS_STORAGE_BUCKET_NAME` (not needed)
-- `AWS_S3_REGION_NAME` (not needed)
-
-**See**: `RAILWAY_STORAGE_SETUP.md` for more details.
 
 ---
 
@@ -394,40 +430,160 @@ Or use Railway's web terminal in the dashboard.
 
 ---
 
-## Post-Deployment
+## Post-Deployment Checklist
 
-### 1. Get Your App URL
-
-**In Railway Dashboard**:
-1. Click on your Django service
-2. Go to "Settings" tab
-3. Click "Generate Domain"
-4. Copy your app URL (e.g., `https://ai-resume-builder-production.up.railway.app`)
-
-### 2. Update ALLOWED_HOSTS
-
-Add your Railway domain to `ALLOWED_HOSTS`:
-```
-ALLOWED_HOSTS=*.railway.app,your-app-name.up.railway.app
-```
-
-### 3. Verify Deployment
-
-1. Visit your app URL
-2. Test:
-   - Home page loads
-   - User registration works
-   - Resume builder works
-   - PDF generation works
-
-### 4. Set Up Custom Domain (Optional)
+### Step 1: Check Service Status & Logs
 
 **In Railway Dashboard**:
-1. Click on your service
-2. Go to "Settings" → "Domains"
-3. Click "Custom Domain"
-4. Add your domain
-5. Update DNS records as instructed
+1. Click "Logs" tab (top navigation)
+2. Check for errors:
+   - Look for `DJANGO_SECRET_KEY` error → **Go to Step 2**
+   - Look for database connection errors → **Go to Step 3**
+   - Look for any other red error messages
+
+**What to Look For**:
+
+**✅ Success**: Should see Django server starting
+```
+Starting server...
+Booting worker with pid: ...
+```
+
+**❌ Error**: If you see:
+```
+ValueError: DJANGO_SECRET_KEY environment variable is not set!
+```
+→ **Add `DJANGO_SECRET_KEY` to Railway variables** (see Environment Variables section above)
+
+**❌ Error**: If you see:
+```
+django.db.utils.OperationalError: could not connect to server
+```
+→ **Link PostgreSQL service** (see Step 3 below)
+
+### Step 2: Link PostgreSQL Database
+
+**If Database Connection Error Appears**:
+
+1. Go to "Variables" tab
+2. Click "Reference Variable" button
+3. Select PostgreSQL service from dropdown
+4. Select `DATABASE_URL` from variable list
+5. Click "Add"
+6. Wait for redeploy (automatic)
+
+**Verify Database Connection**:
+- After redeploy, check logs
+- Should see: "Connected to database" or similar
+- No database connection errors
+
+### Step 3: Run Database Migrations
+
+**Option A: Using Railway CLI (Recommended)**
+
+```powershell
+# Navigate to project directory
+cd "C:\Users\kiruk\OneDrive\Desktop\resume v2\AI_Resume_Builder v2.0"
+
+# Login to Railway (if not already)
+railway login
+
+# Link to your project (if not already)
+railway link
+
+# Run migrations
+railway run python manage.py migrate
+```
+
+**Expected Output**:
+```
+Operations to perform:
+  Apply all migrations: admin, auth, contenttypes, sessions, users, resumes, jobs, pages
+Running migrations:
+  Applying users.0001_initial... OK
+  Applying resumes.0001_initial... OK
+  ...
+```
+
+**Option B: Check if Migrations Ran Automatically**
+
+1. Go to "Logs" tab
+2. Look for: "Running migrations..." or "Applying migrations..."
+3. If you see migration messages → Migrations already ran ✅
+4. If no migration messages → Run migrations manually (Option A)
+
+### Step 4: Create Superuser (Admin Account)
+
+**Using Railway CLI**:
+
+```powershell
+# Make sure you're logged in and linked
+railway login
+railway link
+
+# Create superuser
+railway run python manage.py createsuperuser
+```
+
+**Follow the prompts**:
+- **Username**: `admin` (or your preferred username)
+- **Email**: `admin@example.com` (optional but recommended)
+- **Password**: Enter a strong password (you'll be asked twice)
+
+**Expected Output**:
+```
+Superuser created successfully.
+```
+
+### Step 5: Expose Service (Get Public URL)
+
+**In Railway Dashboard**:
+
+1. Go to "Settings" tab
+2. Scroll to "Networking" section
+3. Click "Generate Domain" button
+   - Railway will generate a free domain like: `ai-resume-builder-production.up.railway.app`
+4. Copy the domain (you'll need this)
+
+**Alternative: Add Custom Domain**
+
+1. Go to "Settings" → "Networking"
+2. Click "Custom Domain"
+3. Add your domain (if you have one)
+4. Update DNS records as instructed
+
+### Step 6: Verify Everything Works
+
+**Test Your App**:
+
+1. Open your Railway domain in browser:
+   - Example: `https://ai-resume-builder-production.up.railway.app`
+
+2. Test Features:
+   - [ ] Home page loads
+   - [ ] User registration works
+   - [ ] User login works
+   - [ ] Resume builder works
+   - [ ] PDF generation works
+   - [ ] Admin dashboard accessible: `https://your-domain.railway.app/users/admin-login/`
+
+**Check Service Status**:
+
+1. Go to Railway Dashboard
+2. Check service status:
+   - Should be **"Running"** (green)
+   - Should show **"1 Replica"** (or more)
+
+### Quick Status Checklist
+
+- [ ] **Step 1**: Checked logs - no `DJANGO_SECRET_KEY` error
+- [ ] **Step 2**: Set `DJANGO_SECRET_KEY` in Railway variables
+- [ ] **Step 3**: Linked PostgreSQL database (`DATABASE_URL`)
+- [ ] **Step 4**: Ran database migrations
+- [ ] **Step 5**: Created superuser (admin account)
+- [ ] **Step 6**: Exposed service (got public URL)
+- [ ] **Step 7**: Tested app - everything works
+- [ ] **Step 8**: Set up Celery worker (optional, see Celery Worker Setup section)
 
 ---
 
@@ -572,16 +728,38 @@ If you want to run both web and worker in one service (uses more resources):
    - Try in incognito/private window
    - Or try a different browser
 
-### Application Won't Start
+### Application Won't Start - DJANGO_SECRET_KEY Error
+
+**Error**: `ValueError: DJANGO_SECRET_KEY environment variable is not set!`
+
+**Fix**:
+1. Go to Railway Dashboard → Your service → "Variables" tab
+2. Check if `DJANGO_SECRET_KEY` exists:
+   - If **NOT** in the list → Click "New Variable"
+   - If **exists** but wrong → Click edit icon (pencil)
+3. **Add/Update Variable**:
+   - **Name**: `DJANGO_SECRET_KEY` (exactly, case-sensitive)
+   - **Value**: Generate using: `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`
+   - Click "Add" or "Save"
+4. **Wait for Auto-Redeploy**: Railway automatically redeploys when you add variables
+5. **Check Logs**: Should see successful startup (no more errors)
+
+**Common Mistakes**:
+- ❌ Wrong name: `SECRET_KEY` → Use `DJANGO_SECRET_KEY`
+- ❌ Wrong case: `django_secret_key` → Use `DJANGO_SECRET_KEY`
+- ❌ Empty value → Make sure you paste the generated key
+- ❌ Not saved → Click "Add" or "Save" after entering
+
+### Application Won't Start - Other Errors
 
 **Check Logs**:
 1. In Railway Dashboard → Your service → "Deployments" → "View Logs"
 2. Look for errors
 
 **Common Issues**:
-- Missing environment variables
-- Database connection errors
-- Migration errors
+- Missing environment variables → Add them in "Variables" tab
+- Database connection errors → Link PostgreSQL service
+- Migration errors → Run migrations manually
 
 **Fix**:
 ```powershell

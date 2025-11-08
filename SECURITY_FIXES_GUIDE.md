@@ -34,20 +34,14 @@ DJANGO_SECRET_KEY=your-generated-secret-key-here
 
 ### 3. ⚠️ Set Production Environment Variables
 
-**For Fly.io Deployment**:
+**For Railway.app Deployment**:
 
-```bash
-# Set critical security variables
-fly secrets set DEBUG=False
-fly secrets set ALLOWED_HOSTS="yourdomain.com,www.yourdomain.com,yourapp.fly.dev"
-
-# Generate and set SECRET_KEY (if not already set)
-python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
-fly secrets set DJANGO_SECRET_KEY="your-generated-secret-key"
-
-# Set CSRF trusted origins (if using custom domain)
-fly secrets set CSRF_TRUSTED_ORIGINS="https://yourdomain.com,https://www.yourdomain.com,https://yourapp.fly.dev"
-```
+1. Go to Railway Dashboard → Your service → "Variables" tab
+2. Set critical security variables:
+   - `DEBUG=False`
+   - `ALLOWED_HOSTS=*.railway.app,your-custom-domain.com`
+   - `DJANGO_SECRET_KEY=your-generated-secret-key` (generate using: `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`)
+   - `CSRF_TRUSTED_ORIGINS=https://*.railway.app,https://your-custom-domain.com` (if using custom domain)
 
 ### 4. ✅ File Upload Security
 
@@ -219,21 +213,18 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Expire on browser close
 
 ### During Deployment (2 minutes)
 
-```bash
-# Set all secrets at once
-fly secrets set \
-  DJANGO_SECRET_KEY="your-secret-key" \
-  DEBUG=False \
-  ALLOWED_HOSTS="yourdomain.com,yourapp.fly.dev" \
-  GOOGLE_AI_API_KEY="your-api-key" \
-  CSRF_TRUSTED_ORIGINS="https://yourdomain.com,https://yourapp.fly.dev"
-```
+Set in Railway Dashboard → Your service → "Variables" tab:
+- `DJANGO_SECRET_KEY=your-secret-key`
+- `DEBUG=False`
+- `ALLOWED_HOSTS=*.railway.app,your-custom-domain.com`
+- `GOOGLE_AI_API_KEY=your-api-key`
+- `CSRF_TRUSTED_ORIGINS=https://*.railway.app,https://your-custom-domain.com`
 
 ### After Deployment (5 minutes)
 
 ```bash
 # Verify security settings
-fly ssh console -C "python manage.py check --deploy"
+railway run python manage.py check --deploy
 
 # Should show 0 issues (or only informational messages)
 ```
@@ -273,7 +264,7 @@ fly ssh console -C "python manage.py check --deploy"
 python manage.py check --deploy
 
 # In production (should show 0 issues)
-fly ssh console -C "python manage.py check --deploy"
+railway run python manage.py check --deploy
 ```
 
 ### Test File Upload Limits
@@ -311,7 +302,7 @@ for i in {1..20}; do curl -X POST http://localhost:8000/resumes/enhance-api/; do
 
 ### What You Need to Do ⚠️
 
-1. ⚠️ Set environment variables in Fly.io during deployment
+1. ⚠️ Set environment variables in Railway.app during deployment
 2. ⚠️ Verify SECRET_KEY is secure
 3. ⚠️ Test security settings in production
 
@@ -327,7 +318,7 @@ for i in {1..20}; do curl -X POST http://localhost:8000/resumes/enhance-api/; do
 ## 🎯 Next Steps
 
 1. **Now**: Verify your `.env` file has a secure SECRET_KEY
-2. **During Deployment**: Set all environment variables in Fly.io
+2. **During Deployment**: Set all environment variables in Railway Dashboard → "Variables" tab
 3. **After Deployment**: Run `python manage.py check --deploy` to verify
 4. **Later**: Implement quick improvements as needed
 
@@ -365,21 +356,18 @@ for i in {1..20}; do curl -X POST http://localhost:8000/resumes/enhance-api/; do
 
 #### During Deployment (2 minutes)
 
-Set these in Fly.io:
-```bash
-fly secrets set \
-  DJANGO_SECRET_KEY="your-secret-key" \
-  DEBUG=False \
-  ALLOWED_HOSTS="yourdomain.com,yourapp.fly.dev" \
-  GOOGLE_AI_API_KEY="your-api-key" \
-  CSRF_TRUSTED_ORIGINS="https://yourdomain.com,https://yourapp.fly.dev"
-```
+Set these in Railway Dashboard → Your service → "Variables" tab:
+- `DJANGO_SECRET_KEY=your-secret-key`
+- `DEBUG=False`
+- `ALLOWED_HOSTS=*.railway.app,your-custom-domain.com`
+- `GOOGLE_AI_API_KEY=your-api-key`
+- `CSRF_TRUSTED_ORIGINS=https://*.railway.app,https://your-custom-domain.com`
 
 #### After Deployment (2 minutes)
 
 Verify security:
 ```bash
-fly ssh console -C "python manage.py check --deploy"
+railway run python manage.py check --deploy
 ```
 
 Should show **0 issues**.

@@ -153,7 +153,6 @@ Open your browser and navigate to:
 
 For production deployment instructions, see:
 - **[RAILWAY_DEPLOYMENT_GUIDE.md](RAILWAY_DEPLOYMENT_GUIDE.md)** - ⭐ **Recommended: FREE tier, no payment method required**
-- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Fly.io deployment guide (requires payment method)
 - **[PRE_DEPLOYMENT_CHECKLIST.md](PRE_DEPLOYMENT_CHECKLIST.md)** - Pre-deployment checklist
 - **[SECURITY_FIXES_GUIDE.md](SECURITY_FIXES_GUIDE.md)** - Security fixes and improvements
 
@@ -162,17 +161,12 @@ For production deployment instructions, see:
 **For Free Deployment (No Payment Method)**:
 - Use **[Railway.app](RAILWAY_DEPLOYMENT_GUIDE.md)** - FREE tier, no credit card required, includes PostgreSQL and Redis
 
-**For Fly.io**:
-- Requires payment method (even for free tier)
-- You get $5 free credit
-- Won't be charged if you stay within limits
-
 ## 📚 Documentation
 
 ### Main Documentation Files
 
 - **[Complete Documentation](docs/DOCUMENTATION.md)** - Comprehensive setup, configuration, and feature guides
-- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Complete Fly.io deployment guide with step-by-step instructions
+- **[RAILWAY_DEPLOYMENT_GUIDE.md](RAILWAY_DEPLOYMENT_GUIDE.md)** - Complete Railway.app deployment guide with step-by-step instructions
 - **[PRE_DEPLOYMENT_CHECKLIST.md](PRE_DEPLOYMENT_CHECKLIST.md)** - Pre-deployment checklist and status
 - **[SECURITY_FIXES_GUIDE.md](SECURITY_FIXES_GUIDE.md)** - Security fixes, improvements, and checklist
 - **[ADMIN_SETUP_GUIDE.md](ADMIN_SETUP_GUIDE.md)** - How to create admin user and access admin dashboard
@@ -275,7 +269,7 @@ python manage.py test
 - [ ] Set up SSL certificates
 - [ ] Configure process management (systemd/supervisor)
 
-For detailed deployment instructions, see **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)**.
+For detailed deployment instructions, see **[RAILWAY_DEPLOYMENT_GUIDE.md](RAILWAY_DEPLOYMENT_GUIDE.md)**.
 
 ## 🐛 Troubleshooting
 
