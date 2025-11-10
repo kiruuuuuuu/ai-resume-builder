@@ -193,8 +193,10 @@ def parse_text_with_gemini(text: str) -> Dict[str, Any]:
     """
 
     try:
-        response = _call_gemini_with_retry(model, prompt)
+        # Use longer timeout for parsing operations (60 seconds)
+        response = _call_gemini_with_retry(model, prompt, max_retries=3, timeout_seconds=60)
         if not response:
+            logger.error("Gemini API call failed after all retries. Returning None.")
             return None
 
         text_response = response.text
@@ -320,9 +322,11 @@ def score_and_critique_resume(full_resume_text: str) -> Dict[str, Any]:
     """
 
     try:
-        response = _call_gemini_with_retry(model, prompt)
+        # Use longer timeout for scoring operations (60 seconds)
+        response = _call_gemini_with_retry(model, prompt, max_retries=3, timeout_seconds=60)
         if not response:
-            return None
+            logger.error("Gemini API call failed for resume scoring. Returning default score.")
+            return {'score': 0, 'feedback': ['Could not analyze resume. Add some content first.']}
 
         text_response = response.text
         start_index = text_response.find('{')
