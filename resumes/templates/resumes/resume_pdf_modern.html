@@ -28,11 +28,13 @@
         }
         .page {
             width: 100%;
-            height: 297mm; /* Exact A4 page height - single page */
+            min-height: 297mm; /* Minimum A4 page height */
+            max-height: 297mm; /* Maximum A4 page height - single page */
             overflow: hidden; /* Prevent overflow */
             position: relative;
             page-break-after: avoid; /* Prevent page break */
             page-break-inside: avoid; /* Prevent page break */
+            display: flex; /* Use flexbox for better control */
         }
         .page::after {
             content: "";
@@ -42,23 +44,28 @@
         .sidebar {
             width: 35%;
             float: left;
-            height: 297mm; /* Exact A4 page height - always extends to bottom */
-            min-height: 297mm; /* Ensure minimum height */
+            min-height: 297mm; /* Minimum height */
+            max-height: 297mm; /* Maximum height */
             background-color: {{ accent_color|default:'#2c3e50' }} !important;
             color: #f0f0f0;
-            padding: 15px 14px; /* Further reduced padding */
+            padding: 12px 10px; /* Adaptive padding */
             box-sizing: border-box;
             position: relative;
             overflow: hidden; /* Prevent overflow */
+            display: flex;
+            flex-direction: column;
         }
         .content {
             width: 65%;
             float: left;
-            height: 297mm; /* Exact A4 page height */
-            padding: 15px 14px; /* Further reduced padding */
+            min-height: 297mm; /* Minimum height */
+            max-height: 297mm; /* Maximum height */
+            padding: 12px 10px; /* Adaptive padding */
             box-sizing: border-box;
             position: relative;
             overflow: hidden; /* Prevent overflow */
+            display: flex;
+            flex-direction: column;
         }
         .clearfix::after {
             content: "";
@@ -76,30 +83,33 @@
         /* --- Sidebar Styling --- */
         .profile-photo-container {
             text-align: center;
-            margin-bottom: 8px; /* Further reduced */
+            margin-bottom: 6px; /* Adaptive spacing */
+            flex-shrink: 0;
         }
         .profile-photo {
-            width: 70px; /* Further reduced */
-            height: 70px; /* Further reduced */
+            width: 65px; /* Slightly smaller */
+            height: 65px; /* Slightly smaller */
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid rgba(255, 255, 255, 0.3);
         }
         .sidebar h2 {
-            font-size: 10pt; /* Reduced */
+            font-size: 9.5pt; /* Slightly reduced */
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #ffffff;
             border-bottom: 1px solid #7f8c8d;
             padding-bottom: 2px;
-            margin: 10px 0 4px 0; /* Further reduced margins */
+            margin: 8px 0 3px 0; /* Adaptive margins */
             font-weight: 700;
+            flex-shrink: 0;
         }
         .contact-item, .sidebar-item {
             display: flex;
             align-items: flex-start;
-            margin-bottom: 3px; /* Further reduced */
-            font-size: 9pt; /* Reduced */
+            margin-bottom: 2px; /* Minimal spacing */
+            font-size: 8.5pt; /* Slightly smaller */
+            line-height: 1.2; /* Tighter line height */
         }
         .contact-item svg {
             width: 12px;
@@ -110,46 +120,50 @@
         }
         .contact-item-text { word-break: break-all; }
         .skill-category {
-            margin-bottom: 5px; /* Reduced */
+            margin-bottom: 4px; /* Adaptive spacing */
         }
         .skill-category strong {
             display: block;
             color: #ffffff;
-            margin-bottom: 2px;
-            font-size: 9.5pt; /* Increased */
+            margin-bottom: 1px;
+            font-size: 9pt; /* Slightly reduced */
             font-weight: 500;
         }
         .skill-category span {
-            font-size: 9pt; /* Increased */
+            font-size: 8.5pt; /* Slightly reduced */
             color: #bdc3c7;
+            line-height: 1.2;
         }
 
         /* --- Main Content Styling --- */
         .name {
-            font-size: 26pt; /* Increased */
+            font-size: 24pt; /* Slightly reduced for better fit */
             font-weight: bold;
             color: #2c3e50;
             line-height: 1.1;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
+            flex-shrink: 0;
         }
         .job-title-header {
-            font-size: 13pt; /* Increased */
+            font-size: 12pt; /* Slightly reduced */
             color: {{ accent_color|default:'#3498db' }};
             font-weight: 500;
-            margin-bottom: 12px; /* Reduced */
+            margin-bottom: 8px; /* Adaptive spacing */
+            flex-shrink: 0;
         }
         .content h2 {
-            font-size: 11pt; /* Reduced */
+            font-size: 10.5pt; /* Slightly reduced */
             color: #2c3e50;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             border-bottom: 1.5px solid {{ accent_color|default:'#3498db' }};
             padding-bottom: 2px;
-            margin: 8px 0 4px 0; /* Further reduced margins */
+            margin: 6px 0 3px 0; /* Adaptive margins */
             font-weight: 700;
+            flex-shrink: 0;
         }
         .item {
-            margin-bottom: 6px; /* Further reduced */
+            margin-bottom: 4px; /* Minimal spacing */
             page-break-inside: avoid;
         }
         .item-header {
@@ -178,26 +192,29 @@
             padding-left: 10px;
         }
         .description-list {
-            margin: 2px 0 0 0; /* Further reduced */
-            padding-left: 14px;
+            margin: 1px 0 0 0; /* Minimal spacing */
+            padding-left: 12px;
             list-style-type: disc;
             list-style-position: outside;
         }
         .description-list li {
-            margin-bottom: 1px; /* Further reduced */
+            margin-bottom: 0.5px; /* Very minimal spacing */
             padding-left: 2px;
             text-align: justify;
-            line-height: 1.2; /* Tighter */
+            line-height: 1.15; /* Very tight */
+            font-size: 8.5pt; /* Slightly smaller */
         }
         .tech-details {
-            font-size: 9pt; /* Reduced */
+            font-size: 8.5pt; /* Slightly smaller */
             color: #444;
-            margin-top: 2px; /* Reduced */
+            margin-top: 1px; /* Minimal spacing */
+            line-height: 1.2;
         }
         section {
             page-break-inside: avoid;
             page-break-after: avoid;
             margin-bottom: 0;
+            flex: 1 1 auto; /* Allow sections to grow/shrink */
         }
     </style>
 </head>
