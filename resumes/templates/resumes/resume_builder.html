@@ -414,7 +414,7 @@
         </div>
         
         <!-- Preview Action Bar -->
-        <div class="mt-6 bg-white rounded-xl shadow-lg border border-gray-200 p-6" x-data="{ selectedTemplate: 'professional', selectedColor: 'indigo' }">
+        <div class="mt-6 bg-white rounded-xl shadow-lg border border-gray-200 p-6" x-data="pdfDownloadManager()">
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div class="flex-1">
                     <h3 class="text-lg font-semibold text-gray-900 mb-2">Preview & Download</h3>
@@ -863,7 +863,15 @@
                         }
                     }
                 });
-            },
+            }
+        }
+    }
+
+    // PDF Download Manager - separate Alpine component
+    function pdfDownloadManager() {
+        return {
+            selectedTemplate: 'professional',
+            selectedColor: 'indigo',
             // Start PDF generation via JSON endpoint and poll until ready
             startPdfGeneration(template, color) {
                 const startUrl = `{% url 'resumes:download-resume-pdf' resume_id=resume.id template_name='professional' %}`
@@ -873,11 +881,25 @@
                         if (type === 'error') window.toast.error(msg);
                         else if (type === 'success') window.toast.success(msg, 4000);
                         else window.toast.info ? window.toast.info(msg) : window.toast.success(msg, 3000);
+                    } else {
+                        console.log(msg);
                     }
                 };
-                fetch(startUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' }})
-                    .then(r => r.json())
+                console.log('Starting PDF generation for template:', template, 'color:', color);
+                fetch(startUrl, { 
+                    headers: { 
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                    } 
+                })
+                    .then(r => {
+                        if (!r.ok) {
+                            throw new Error(`HTTP error! status: ${r.status}`);
+                        }
+                        return r.json();
+                    })
                     .then(data => {
+                        console.log('PDF generation response:', data);
                         if (data.status === 'pending' && data.pdf_generation_id) {
                             notify('PDF generation started. We will download it when it is ready.');
                             this.pollPdf(data.pdf_generation_id, 0);
@@ -893,18 +915,38 @@
             },
             pollPdf(pdfId, attempt) {
                 const url = `{% url 'resumes:check-pdf-status' pdf_generation_id=0 %}`.replace('/0/', `/${pdfId}/`);
-                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }})
-                    .then(r => r.json())
+                console.log('Polling PDF status, attempt:', attempt, 'PDF ID:', pdfId);
+                fetch(url, { 
+                    headers: { 
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                    } 
+                })
+                    .then(r => {
+                        if (!r.ok) {
+                            throw new Error(`HTTP error! status: ${r.status}`);
+                        }
+                        return r.json();
+                    })
                     .then(data => {
+                        console.log('PDF status response:', data);
                         if (data.status === 'completed' && data.download_url) {
                             if (window.toast) window.toast.success('PDF ready. Downloading...', 3000);
                             // Trigger browser download
-                            window.location.href = `{% url 'resumes:download-generated-pdf' pdf_generation_id=0 %}`.replace('/0/', `/${pdfId}/`);
+                            const downloadUrl = `{% url 'resumes:download-generated-pdf' pdf_generation_id=0 %}`.replace('/0/', `/${pdfId}/`);
+                            console.log('Triggering download:', downloadUrl);
+                            window.location.href = downloadUrl;
+                        } else if (data.status === 'completed') {
+                            // If status is completed but no download_url, try the download endpoint anyway
+                            const downloadUrl = `{% url 'resumes:download-generated-pdf' pdf_generation_id=0 %}`.replace('/0/', `/${pdfId}/`);
+                            console.log('PDF completed, triggering download:', downloadUrl);
+                            window.location.href = downloadUrl;
                         } else if (data.status === 'failed') {
                             if (window.toast) window.toast.error(data.error || 'PDF generation failed.');
                         } else {
+                            // Still processing or pending
                             if (attempt < 40) {
-                                setTimeout(() => this.pollPdf(pdfId, attempt + 1), 3000);
+                                setTimeout(() => this.pollPdf(pdfId, attempt + 1), 2000);
                             } else {
                                 if (window.toast) window.toast.error('PDF generation is taking too long. Please try again later.');
                             }
