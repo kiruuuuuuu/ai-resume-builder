@@ -24,7 +24,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <style>
         body { 
@@ -1096,28 +1095,17 @@
                                 <p class="text-xs text-gray-500 break-all" x-text="bugUrl"></p>
                             </div>
 
-                            <!-- Screenshot Capture -->
+                            <!-- Screenshot Upload -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Screenshot (Optional)</label>
                                 <div class="space-y-2">
-                                    <div class="flex items-center space-x-4">
-                                        <button type="button" 
-                                                @click="window.captureScreenshot()"
-                                                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                            </svg>
-                                            Capture Page
-                                        </button>
-                                        <label class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
-                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                                            </svg>
-                                            Upload File
-                                            <input type="file" accept="image/*" class="hidden" @change="window.handleScreenshotUpload($event)" />
-                                        </label>
-                                    </div>
+                                    <label class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                        </svg>
+                                        Upload Screenshot
+                                        <input type="file" accept="image/*" class="hidden" @change="window.handleScreenshotUpload($event)" />
+                                    </label>
                                     <div x-show="bugScreenshot" class="flex items-center space-x-2 p-2 bg-gray-50 rounded">
                                         <span class="text-sm text-green-600">✓ Screenshot ready</span>
                                         <button type="button" 
@@ -1163,59 +1151,6 @@
 
     <script>
         // Bug Report Functions - Available globally for Alpine.js
-        window.captureScreenshot = function() {
-            const body = document.body;
-            if (!body.__x || !body.__x.$data) {
-                window.toast?.error('Unable to capture screenshot. Please use the upload option instead.');
-                return;
-            }
-            const data = body.__x.$data;
-            
-            // Try to use html2canvas if available, otherwise use native screenshot API
-            if (typeof html2canvas !== 'undefined') {
-                window.toast?.info('Capturing screenshot...', 2000);
-                html2canvas(document.body, {
-                    logging: false,
-                    useCORS: true,
-                    scale: 0.5
-                }).then(canvas => {
-                    const base64 = canvas.toDataURL('image/png');
-                    data.bugScreenshot = base64;
-                    window.toast?.success('Screenshot captured successfully!');
-                }).catch(err => {
-                    console.error('Screenshot capture failed:', err);
-                    window.toast?.error('Failed to capture screenshot. Please use the upload option.');
-                });
-            } else {
-                // Fallback: Use native browser screenshot API (if available)
-                if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
-                    navigator.mediaDevices.getDisplayMedia({ video: true })
-                        .then(stream => {
-                            const video = document.createElement('video');
-                            video.srcObject = stream;
-                            video.play();
-                            const canvas = document.createElement('canvas');
-                            const ctx = canvas.getContext('2d');
-                            video.addEventListener('loadedmetadata', () => {
-                                canvas.width = video.videoWidth;
-                                canvas.height = video.videoHeight;
-                                ctx.drawImage(video, 0, 0);
-                                stream.getTracks().forEach(track => track.stop());
-                                const base64 = canvas.toDataURL('image/png');
-                                data.bugScreenshot = base64;
-                                window.toast?.success('Screenshot captured!');
-                            });
-                        })
-                        .catch(err => {
-                            console.error('Screen capture failed:', err);
-                            window.toast?.info('Please use the "Upload File" option to attach a screenshot.');
-                        });
-                } else {
-                    window.toast?.info('Please use the "Upload File" option to attach a screenshot.');
-                }
-            }
-        };
-        
         window.handleScreenshotUpload = function(event) {
             const body = document.body;
             if (!body.__x || !body.__x.$data) return;
