@@ -69,8 +69,16 @@ def _get_gemini_model(model_name: str = 'models/gemini-2.5-flash'):
         logger.error(f"Failed to initialize Gemini model for scoring: {e}")
         return None
 
-def _call_gemini_with_retry(model, prompt, max_retries=2, base_delay=1, timeout_seconds=15):
-    """Calls the Gemini API with retries and explicit timeout to avoid worker hangs."""
+def _call_gemini_with_retry(model, prompt, max_retries=3, base_delay=2, timeout_seconds=60):
+    """Calls the Gemini API with retries and explicit timeout to avoid worker hangs.
+    
+    Args:
+        model: The Gemini model instance
+        prompt: The prompt to send
+        max_retries: Maximum number of retry attempts (default: 3)
+        base_delay: Base delay in seconds for exponential backoff (default: 2)
+        timeout_seconds: Timeout for each API call in seconds (default: 60 for parsing operations)
+    """
     retriable_exceptions = tuple()
     try:
         from google.api_core.exceptions import DeadlineExceeded, ResourceExhausted, ServiceUnavailable
@@ -253,8 +261,10 @@ def enhance_text_with_gemini(text_to_enhance: str, context: str) -> str:
     ENHANCED TEXT:
     """
     try:
-        response = _call_gemini_with_retry(model, prompt)
+        # Use shorter timeout for enhancement operations (30 seconds)
+        response = _call_gemini_with_retry(model, prompt, max_retries=2, timeout_seconds=30)
         if not response:
+            logger.warning("Gemini API call failed for text enhancement. Returning original text.")
             return text_to_enhance
         
         enhanced_text = response.text.strip()
