@@ -931,58 +931,66 @@
                     .then(data => {
                         console.log('PDF status response:', data);
                         if (data.status === 'completed') {
-                            const downloadUrl = `{% url 'resumes:download-generated-pdf' pdf_generation_id=0 %}`.replace('/0/', `/${pdfId}/`);
+                            // Use download_url from response if available, otherwise construct it
+                            const downloadUrl = data.download_url || `{% url 'resumes:download-generated-pdf' pdf_generation_id=0 %}`.replace('/0/', `/${pdfId}/`);
                             console.log('PDF ready. Triggering download:', downloadUrl);
                             
-                            // Try multiple download methods for better compatibility
-                            let downloadTriggered = false;
+                            // Show download link immediately
+                            const downloadLinkHtml = `
+                                <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg download-link-fallback" id="pdf-download-link-${pdfId}">
+                                    <p class="text-sm text-blue-800 mb-2 font-medium">✓ PDF is ready! Click to download:</p>
+                                    <a href="${downloadUrl}" 
+                                       download="${data.filename || 'resume.pdf'}"
+                                       target="_blank"
+                                       class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium shadow-sm">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        Download PDF
+                                    </a>
+                                </div>
+                            `;
                             
-                            // Method 1: Create a temporary link and click it
-                            try {
-                                const link = document.createElement('a');
-                                link.href = downloadUrl;
-                                link.download = data.filename || 'resume.pdf';
-                                link.style.display = 'none';
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                                downloadTriggered = true;
-                                if (window.toast) window.toast.success('PDF download started!', 3000);
-                            } catch (e) {
-                                console.warn('Link click method failed:', e);
-                            }
-                            
-                            // Always show download link as fallback
-                            setTimeout(() => {
-                                const downloadLinkHtml = `
-                                    <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg download-link-fallback">
-                                        <p class="text-sm text-blue-800 mb-2">If download didn't start automatically, click here:</p>
-                                        <a href="${downloadUrl}" 
-                                           download="${data.filename || 'resume.pdf'}"
-                                           class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium">
-                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                            </svg>
-                                            Download PDF
-                                        </a>
-                                    </div>
-                                `;
-                                // Find the PDF download section and append the link
-                                const pdfSection = document.querySelector('[x-data*="pdfDownloadManager"]');
-                                if (pdfSection) {
-                                    const existingLink = pdfSection.querySelector('.download-link-fallback');
-                                    if (existingLink) existingLink.remove();
-                                    pdfSection.insertAdjacentHTML('beforeend', downloadLinkHtml);
+                            // Find the PDF download section and insert the link
+                            const pdfSection = document.querySelector('[x-data*="pdfDownloadManager"]');
+                            if (pdfSection) {
+                                // Remove any existing download link
+                                const existingLink = pdfSection.querySelector('.download-link-fallback');
+                                if (existingLink) existingLink.remove();
+                                
+                                // Insert the new download link
+                                pdfSection.insertAdjacentHTML('beforeend', downloadLinkHtml);
+                                
+                                // Scroll to the download link
+                                const newLink = document.getElementById(`pdf-download-link-${pdfId}`);
+                                if (newLink) {
+                                    newLink.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                                 }
                                 
-                                // Also try direct navigation as final fallback if download wasn't triggered
-                                if (!downloadTriggered) {
-                                    console.log('Using window.location fallback');
-                                    setTimeout(() => {
-                                        window.location.href = downloadUrl;
-                                    }, 500);
-                                }
-                            }, 1000);
+                                // Also try automatic download
+                                setTimeout(() => {
+                                    try {
+                                        const link = document.createElement('a');
+                                        link.href = downloadUrl;
+                                        link.download = data.filename || 'resume.pdf';
+                                        link.style.display = 'none';
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        setTimeout(() => document.body.removeChild(link), 100);
+                                        if (window.toast) window.toast.success('PDF download started!', 3000);
+                                    } catch (e) {
+                                        console.warn('Auto-download failed, manual link is available:', e);
+                                        if (window.toast) window.toast.info('Click the download link below to get your PDF', 5000);
+                                    }
+                                }, 500);
+                            } else {
+                                console.error('PDF download section not found');
+                                // Fallback: try direct download
+                                if (window.toast) window.toast.success('PDF ready! Opening download...', 3000);
+                                setTimeout(() => {
+                                    window.location.href = downloadUrl;
+                                }, 1000);
+                            }
                         } else if (data.status === 'failed') {
                             if (window.toast) window.toast.error(data.error || 'PDF generation failed.');
                         } else {

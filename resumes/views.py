@@ -645,7 +645,7 @@ def check_pdf_status(request, pdf_generation_id):
     
     if pdf_gen.status == 'completed' and (pdf_gen.pdf_content or pdf_gen.pdf_file):
         # PDF is available (either in database or filesystem)
-        response_data['download_url'] = reverse('resumes:download-pdf', args=[pdf_generation_id])
+        response_data['download_url'] = reverse('resumes:download-generated-pdf', args=[pdf_generation_id])
         if pdf_gen.pdf_file:
             response_data['filename'] = pdf_gen.pdf_file.name.split('/')[-1]
         else:
