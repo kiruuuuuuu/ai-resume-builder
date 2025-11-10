@@ -24,6 +24,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <style>
         body { 
@@ -421,7 +422,7 @@
     </style>
     <script src="{% static 'js/toast.js' %}"></script>
 </head>
-<body class="flex flex-col min-h-screen" x-data="{ bugReportModalOpen: false, bugMessage: '', bugUrl: window.location.href, bugFormSubmitted: false, bugScreenshot: null, bugBrowserInfo: navigator.userAgent }">
+<body class="flex flex-col min-h-screen" x-data="{ bugReportModalOpen: false, bugMessage: '', bugUrl: window.location.href, bugFormSubmitted: false, bugScreenshot: null, bugBrowserInfo: navigator.userAgent, feedbackModalOpen: false, feedbackType: 'general', feedbackMessage: '', feedbackRating: null, feedbackSubmitted: false }">
     <!-- Skip to Content Link (Accessibility) -->
     <a href="#main-content" class="skip-to-content">Skip to main content</a>
     
@@ -1018,14 +1019,25 @@
         </div>
     </div>
 
-    <!-- Bug Report Floating Button -->
-    <button @click="bugReportModalOpen = true; bugFormSubmitted = false; bugMessage = ''; bugUrl = window.location.href; bugScreenshot = null" 
-            class="fixed bottom-6 right-6 z-50 p-4 bg-red-600 text-white rounded-full shadow-lg hover:bg-red-700 transition-all transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            aria-label="Report a bug">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-    </button>
+    <!-- Feedback & Bug Report Floating Buttons -->
+    <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+        <!-- Feedback Button -->
+        <button @click="feedbackModalOpen = true; feedbackSubmitted = false; feedbackMessage = ''; feedbackRating = null" 
+                class="p-4 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                aria-label="Submit feedback">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+            </svg>
+        </button>
+        <!-- Bug Report Button -->
+        <button @click="bugReportModalOpen = true; bugFormSubmitted = false; bugMessage = ''; bugUrl = window.location.href; bugScreenshot = null" 
+                class="p-4 bg-red-600 text-white rounded-full shadow-lg hover:bg-red-700 transition-all transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                aria-label="Report a bug">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+        </button>
+    </div>
 
     <!-- Bug Report Modal -->
     <div x-show="bugReportModalOpen" 
@@ -1087,18 +1099,27 @@
                             <!-- Screenshot Capture -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Screenshot (Optional)</label>
-                                <div class="flex items-center space-x-4">
-                                    <button type="button" 
-                                            @click="window.captureScreenshot()"
-                                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        </svg>
-                                        Capture Screenshot
-                                    </button>
-                                    <div x-show="bugScreenshot" class="flex items-center space-x-2">
-                                        <span class="text-sm text-green-600">✓ Screenshot captured</span>
+                                <div class="space-y-2">
+                                    <div class="flex items-center space-x-4">
+                                        <button type="button" 
+                                                @click="window.captureScreenshot()"
+                                                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            </svg>
+                                            Capture Page
+                                        </button>
+                                        <label class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                            </svg>
+                                            Upload File
+                                            <input type="file" accept="image/*" class="hidden" @change="window.handleScreenshotUpload($event)" />
+                                        </label>
+                                    </div>
+                                    <div x-show="bugScreenshot" class="flex items-center space-x-2 p-2 bg-gray-50 rounded">
+                                        <span class="text-sm text-green-600">✓ Screenshot ready</span>
                                         <button type="button" 
                                                 @click="bugScreenshot = null"
                                                 class="text-sm text-red-600 hover:text-red-700">Remove</button>
@@ -1143,9 +1164,85 @@
     <script>
         // Bug Report Functions - Available globally for Alpine.js
         window.captureScreenshot = function() {
-            // For now, show a message that screenshot requires html2canvas library
-            // Users can manually take screenshots and we can add html2canvas later if needed
-            window.toast?.info('To capture a screenshot, please use your browser\'s screenshot tool (e.g., Snipping Tool on Windows, Screenshot on Mac) or a browser extension. You can still submit the report without a screenshot.');
+            const body = document.body;
+            if (!body.__x || !body.__x.$data) {
+                window.toast?.error('Unable to capture screenshot. Please use the upload option instead.');
+                return;
+            }
+            const data = body.__x.$data;
+            
+            // Try to use html2canvas if available, otherwise use native screenshot API
+            if (typeof html2canvas !== 'undefined') {
+                window.toast?.info('Capturing screenshot...', 2000);
+                html2canvas(document.body, {
+                    logging: false,
+                    useCORS: true,
+                    scale: 0.5
+                }).then(canvas => {
+                    const base64 = canvas.toDataURL('image/png');
+                    data.bugScreenshot = base64;
+                    window.toast?.success('Screenshot captured successfully!');
+                }).catch(err => {
+                    console.error('Screenshot capture failed:', err);
+                    window.toast?.error('Failed to capture screenshot. Please use the upload option.');
+                });
+            } else {
+                // Fallback: Use native browser screenshot API (if available)
+                if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+                    navigator.mediaDevices.getDisplayMedia({ video: true })
+                        .then(stream => {
+                            const video = document.createElement('video');
+                            video.srcObject = stream;
+                            video.play();
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            video.addEventListener('loadedmetadata', () => {
+                                canvas.width = video.videoWidth;
+                                canvas.height = video.videoHeight;
+                                ctx.drawImage(video, 0, 0);
+                                stream.getTracks().forEach(track => track.stop());
+                                const base64 = canvas.toDataURL('image/png');
+                                data.bugScreenshot = base64;
+                                window.toast?.success('Screenshot captured!');
+                            });
+                        })
+                        .catch(err => {
+                            console.error('Screen capture failed:', err);
+                            window.toast?.info('Please use the "Upload File" option to attach a screenshot.');
+                        });
+                } else {
+                    window.toast?.info('Please use the "Upload File" option to attach a screenshot.');
+                }
+            }
+        };
+        
+        window.handleScreenshotUpload = function(event) {
+            const body = document.body;
+            if (!body.__x || !body.__x.$data) return;
+            const data = body.__x.$data;
+            
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                window.toast?.error('Please select an image file.');
+                return;
+            }
+            
+            if (file.size > 10 * 1024 * 1024) {
+                window.toast?.error('Image size must be less than 10MB.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                data.bugScreenshot = e.target.result;
+                window.toast?.success('Screenshot uploaded successfully!');
+            };
+            reader.onerror = function() {
+                window.toast?.error('Failed to read image file.');
+            };
+            reader.readAsDataURL(file);
         };
 
         window.submitBugReport = function() {
@@ -1182,8 +1279,16 @@
                 },
                 body: JSON.stringify(payload)
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.message || `HTTP error! status: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
             .then(result => {
+                console.log('Bug report response:', result);
                 if (result.status === 'success') {
                     data.bugFormSubmitted = true;
                     data.bugMessage = '';
@@ -1200,11 +1305,189 @@
             .catch(error => {
                 console.error('Error submitting bug report:', error);
                 if (window.toast) {
-                    window.toast.error('An error occurred while submitting the bug report. Please try again.');
+                    window.toast.error(error.message || 'An error occurred while submitting the bug report. Please try again.');
+                }
+            });
+        };
+
+        // Feedback Functions
+        window.submitFeedback = function() {
+            const body = document.body;
+            if (!body.__x || !body.__x.$data) {
+                window.toast?.error('Form submission failed. Please refresh the page and try again.');
+                return;
+            }
+
+            const data = body.__x.$data;
+            const message = data.feedbackMessage?.trim();
+            
+            if (!message || message.length < 10) {
+                window.toast?.error('Please provide detailed feedback (at least 10 characters).');
+                return;
+            }
+
+            const payload = {
+                feedback_type: data.feedbackType || 'general',
+                message: message,
+                rating: data.feedbackRating || null
+            };
+
+            // Get CSRF token
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                            (document.cookie.match(/csrftoken=([^;]+)/) ? document.cookie.match(/csrftoken=([^;]+)/)[1] : '');
+
+            fetch("{% url 'submit-feedback' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken || ''
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.message || `HTTP error! status: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(result => {
+                console.log('Feedback response:', result);
+                if (result.status === 'success') {
+                    data.feedbackSubmitted = true;
+                    data.feedbackMessage = '';
+                    data.feedbackRating = null;
+                    if (window.toast) {
+                        window.toast.success(result.message || 'Feedback submitted successfully!');
+                    }
+                } else {
+                    if (window.toast) {
+                        window.toast.error(result.message || 'Failed to submit feedback. Please try again.');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting feedback:', error);
+                if (window.toast) {
+                    window.toast.error(error.message || 'An error occurred while submitting feedback. Please try again.');
                 }
             });
         };
     </script>
+
+    <!-- Feedback Modal -->
+    <div x-show="feedbackModalOpen" 
+         x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[60] overflow-y-auto"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="feedback-title">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75" @click="feedbackModalOpen = false"></div>
+        
+        <!-- Modal Content -->
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="relative bg-white rounded-lg shadow-xl max-w-2xl w-full p-6"
+                 @click.away="feedbackModalOpen = false">
+                <!-- Close Button -->
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="feedback-title" class="text-2xl font-bold text-gray-900">Share Your Feedback</h2>
+                    <button @click="feedbackModalOpen = false" 
+                            class="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Form Content -->
+                <div x-show="!feedbackSubmitted">
+                    <p class="text-sm text-gray-500 mb-4">We'd love to hear your thoughts! Share your feedback, suggestions, or feature requests.</p>
+                    
+                    <form @submit.prevent="window.submitFeedback()">
+                        <div class="space-y-4">
+                            <!-- Feedback Type -->
+                            <div>
+                                <label for="feedback-type" class="block text-sm font-medium text-gray-700 mb-2">Type *</label>
+                                <select x-model="feedbackType" 
+                                        id="feedback-type"
+                                        class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="general">General Feedback</option>
+                                    <option value="feature">Feature Request</option>
+                                    <option value="improvement">Improvement Suggestion</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <!-- Message -->
+                            <div>
+                                <label for="feedback-message" class="block text-sm font-medium text-gray-700 mb-2">Your Feedback *</label>
+                                <textarea x-model="feedbackMessage" 
+                                          id="feedback-message"
+                                          rows="5" 
+                                          required
+                                          minlength="10"
+                                          class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                          placeholder="Tell us what you think..."></textarea>
+                                <p class="text-xs text-gray-400 mt-1">Minimum 10 characters required</p>
+                            </div>
+
+                            <!-- Rating (Optional) -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Rating (Optional)</label>
+                                <div class="flex items-center gap-2">
+                                    <template x-for="i in 5" :key="i">
+                                        <button type="button"
+                                                @click="feedbackRating = i"
+                                                :class="feedbackRating >= i ? 'text-yellow-400' : 'text-gray-300'"
+                                                class="text-2xl hover:text-yellow-400 transition-colors focus:outline-none">
+                                            ★
+                                        </button>
+                                    </template>
+                                    <span x-show="feedbackRating" class="text-sm text-gray-600 ml-2" x-text="feedbackRating + '/5'"></span>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="flex justify-end space-x-3 pt-4">
+                                <button type="button" 
+                                        @click="feedbackModalOpen = false"
+                                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Cancel
+                                </button>
+                                <button type="submit" 
+                                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Submit Feedback
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Success Message -->
+                <div x-show="feedbackSubmitted" class="text-center py-8">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                        <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Thank You!</h3>
+                    <p class="text-sm text-gray-600 mb-4">Your feedback has been submitted successfully. We appreciate your input!</p>
+                    <button @click="feedbackModalOpen = false" 
+                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 

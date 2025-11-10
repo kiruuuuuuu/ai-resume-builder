@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils import timezone
-from .models import BugReport
+from .models import BugReport, Feedback
 
 @admin.register(BugReport)
 class BugReportAdmin(admin.ModelAdmin):
@@ -33,4 +33,31 @@ class BugReportAdmin(admin.ModelAdmin):
         elif not obj.is_resolved:
             obj.resolved_at = None
             obj.resolved_by = None
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(Feedback)
+class FeedbackAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user', 'feedback_type', 'rating', 'is_reviewed', 'created_at', 'reviewed_by']
+    list_filter = ['feedback_type', 'is_reviewed', 'created_at', 'rating']
+    search_fields = ['message', 'user__username', 'user__email']
+    readonly_fields = ['created_at']
+    fieldsets = (
+        ('Feedback Information', {
+            'fields': ('user', 'feedback_type', 'message', 'rating', 'created_at')
+        }),
+        ('Review', {
+            'fields': ('is_reviewed', 'reviewed_at', 'reviewed_by', 'admin_notes')
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        """Auto-set reviewed_by and reviewed_at when marking as reviewed"""
+        if obj.is_reviewed and not obj.reviewed_at:
+            obj.reviewed_at = timezone.now()
+            if not obj.reviewed_by:
+                obj.reviewed_by = request.user
+        elif not obj.is_reviewed:
+            obj.reviewed_at = None
+            obj.reviewed_by = None
         super().save_model(request, obj, form, change)

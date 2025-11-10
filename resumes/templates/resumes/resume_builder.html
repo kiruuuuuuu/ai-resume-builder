@@ -930,17 +930,22 @@
                     })
                     .then(data => {
                         console.log('PDF status response:', data);
-                        if (data.status === 'completed' && data.download_url) {
+                        if (data.status === 'completed') {
                             if (window.toast) window.toast.success('PDF ready. Downloading...', 3000);
-                            // Trigger browser download
+                            // Always use the download endpoint - it's more reliable than download_url
                             const downloadUrl = `{% url 'resumes:download-generated-pdf' pdf_generation_id=0 %}`.replace('/0/', `/${pdfId}/`);
                             console.log('Triggering download:', downloadUrl);
-                            window.location.href = downloadUrl;
-                        } else if (data.status === 'completed') {
-                            // If status is completed but no download_url, try the download endpoint anyway
-                            const downloadUrl = `{% url 'resumes:download-generated-pdf' pdf_generation_id=0 %}`.replace('/0/', `/${pdfId}/`);
-                            console.log('PDF completed, triggering download:', downloadUrl);
-                            window.location.href = downloadUrl;
+                            // Use a temporary link to force download
+                            const link = document.createElement('a');
+                            link.href = downloadUrl;
+                            link.download = data.filename || 'resume.pdf';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            // Also try direct navigation as fallback
+                            setTimeout(() => {
+                                window.location.href = downloadUrl;
+                            }, 500);
                         } else if (data.status === 'failed') {
                             if (window.toast) window.toast.error(data.error || 'PDF generation failed.');
                         } else {

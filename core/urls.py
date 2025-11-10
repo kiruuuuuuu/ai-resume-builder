@@ -6,12 +6,13 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
-from pages.views import home_view, report_bug_view
+from pages.views import home_view, report_bug_view, submit_feedback_view
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", home_view, name="home"),
     path("report-bug/", report_bug_view, name="report-bug"),
+    path("submit-feedback/", submit_feedback_view, name="submit-feedback"),
     
     # django-allauth URLs (must be before users.urls to override login)
     path("accounts/", include("allauth.urls")),

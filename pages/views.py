@@ -15,7 +15,7 @@ from resumes.models import Resume
 from users.models import JobSeekerProfile, CustomUser
 # Import async task for match score calculation
 from jobs.tasks import calculate_and_save_match_score_task
-from .models import BugReport
+from .models import BugReport, Feedback
 
 def home_view(request):
     # Check if the user is authenticated (logged in)
@@ -159,4 +159,56 @@ def report_bug_view(request):
         logger = logging.getLogger(__name__)
         logger.error(f"Error in report_bug_view: {e}")
         return JsonResponse({'status': 'error', 'message': 'An error occurred while submitting the bug report.'}, status=500)
+
+
+@require_POST
+def submit_feedback_view(request):
+    """
+    API endpoint to receive feedback from users.
+    Accepts JSON with feedback_type, message, and optional rating.
+    """
+    try:
+        data = json.loads(request.body)
+        feedback_type = data.get('feedback_type', 'general')
+        message = data.get('message', '')
+        rating = data.get('rating', None)
+        
+        # Validate feedback type
+        valid_types = ['feature', 'improvement', 'general', 'other']
+        if feedback_type not in valid_types:
+            feedback_type = 'general'
+        
+        # Sanitize user input
+        from core.utils import sanitize_text
+        message = sanitize_text(message)
+        
+        if not message or len(message.strip()) < 10:
+            return JsonResponse({'status': 'error', 'message': 'Please provide detailed feedback (at least 10 characters).'}, status=400)
+        
+        # Validate rating if provided
+        if rating is not None:
+            try:
+                rating = int(rating)
+                if rating < 1 or rating > 5:
+                    rating = None
+            except (ValueError, TypeError):
+                rating = None
+        
+        # Create feedback
+        feedback = Feedback.objects.create(
+            user=request.user if request.user.is_authenticated else None,
+            feedback_type=feedback_type,
+            message=message,
+            rating=rating,
+        )
+        
+        return JsonResponse({'status': 'success', 'message': 'Thank you for your feedback! We appreciate your input.'})
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON data.'}, status=400)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error in submit_feedback_view: {e}")
+        return JsonResponse({'status': 'error', 'message': 'An error occurred while submitting feedback.'}, status=500)
 

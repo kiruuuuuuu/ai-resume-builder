@@ -25,3 +25,34 @@ class BugReport(models.Model):
         user_str = self.user.username if self.user else "Anonymous"
         status = "Resolved" if self.is_resolved else "Open"
         return f"Bug #{self.id} - {user_str} - {status}"
+
+
+class Feedback(models.Model):
+    """
+    Model to store user feedback and suggestions.
+    """
+    FEEDBACK_TYPES = [
+        ('feature', 'Feature Request'),
+        ('improvement', 'Improvement Suggestion'),
+        ('general', 'General Feedback'),
+        ('other', 'Other'),
+    ]
+    
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, help_text="User who submitted feedback (null if anonymous)")
+    feedback_type = models.CharField(max_length=20, choices=FEEDBACK_TYPES, default='general', help_text="Type of feedback")
+    message = models.TextField(help_text="Feedback message")
+    rating = models.IntegerField(null=True, blank=True, help_text="Rating from 1-5 (optional)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_reviewed = models.BooleanField(default=False)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_feedback', help_text="Admin user who reviewed this feedback")
+    admin_notes = models.TextField(null=True, blank=True, help_text="Admin notes about this feedback")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Feedback"
+        verbose_name_plural = "Feedback"
+
+    def __str__(self):
+        user_str = self.user.username if self.user else "Anonymous"
+        return f"Feedback #{self.id} - {user_str} - {self.get_feedback_type_display()}"
