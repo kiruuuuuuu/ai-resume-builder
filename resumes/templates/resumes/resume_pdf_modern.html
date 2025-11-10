@@ -243,17 +243,17 @@
 
             {% if educations %}
             <h2>Education</h2>
-            {% for edu in educations %}<div class="sidebar-item"><div><strong>{{ edu.degree }}</strong><br><span style="font-size: 10pt;">{{ edu.institution }}</span><br><span style="font-size: 9.5pt; color: #bdc3c7;">{{ edu.start_date|date:"Y" }} - {{ edu.end_date|date:"Y"|default:"Present" }}</span></div></div>{% endfor %}
+            {% for edu in educations %}<div class="sidebar-item"><div><strong>{{ edu.degree }}</strong><br><span style="font-size: 10.5pt;">{{ edu.institution }}</span><br><span style="font-size: 10pt; color: #bdc3c7;">{{ edu.start_date|date:"Y" }} - {{ edu.end_date|date:"Y"|default:"Present" }}</span></div></div>{% endfor %}
             {% endif %}
 
             {% if languages %}
             <h2>Languages</h2>
-            {% for lang in languages %}<div class="sidebar-item" style="font-size: 10pt;">{{ lang.name }} ({{ lang.get_proficiency_display }})</div>{% endfor %}
+            {% for lang in languages %}<div class="sidebar-item" style="font-size: 10.5pt;">{{ lang.name }} ({{ lang.get_proficiency_display }})</div>{% endfor %}
             {% endif %}
             
             {% if hobbies %}
             <h2>Hobbies</h2>
-            <div class="sidebar-item" style="font-size: 9.5pt; color: #bdc3c7;">{{ hobbies|join:", " }}</div>
+            <div class="sidebar-item" style="font-size: 10pt; color: #bdc3c7;">{{ hobbies|join:", " }}</div>
             {% endif %}
         </div>
 
@@ -276,7 +276,7 @@
             {% if achievements or certifications %}
             <section><h2>Achievements & Certifications</h2>
                 {% if achievements %}<ul class="description-list">{% for a in achievements %}<li>{% if a.name %}<strong>{{ a.name }}:</strong> {% endif %}{{ a.description }}</li>{% endfor %}</ul>{% endif %}
-                {% if certifications %}<ul class="description-list" style="margin-top: 5px;">{% for cert in certifications %}<li><strong>{{ cert.name }}</strong> from <em>{{ cert.issuing_organization }}</em></li>{% endfor %}</ul>{% endif %}
+                {% if certifications %}<ul class="description-list" style="margin-top: 3px;">{% for cert in certifications %}<li><strong>{{ cert.name }}</strong> from <em>{{ cert.issuing_organization }}</em></li>{% endfor %}</ul>{% endif %}
             </section>
             {% endif %}
         </div>
