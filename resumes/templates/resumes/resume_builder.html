@@ -470,6 +470,9 @@
                     </a>
                 </div>
             </div>
+            
+            <!-- PDF Download Status/Link Container -->
+            <div id="pdf-download-container" class="mt-4"></div>
         </div>
     </div>
     
@@ -885,6 +888,26 @@
                         console.log(msg);
                     }
                 };
+                
+                // Show loading indicator
+                const downloadContainer = document.getElementById('pdf-download-container');
+                if (downloadContainer) {
+                    downloadContainer.innerHTML = `
+                        <div class="p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg shadow-md">
+                            <div class="flex items-center space-x-3">
+                                <svg class="animate-spin h-5 w-5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-semibold text-yellow-800">Generating PDF...</p>
+                                    <p class="text-xs text-yellow-600">Please wait, this may take a few seconds</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
                 console.log('Starting PDF generation for template:', template, 'color:', color);
                 fetch(startUrl, { 
                     headers: { 
@@ -911,6 +934,11 @@
                     .catch(err => {
                         console.error('Error starting PDF generation:', err);
                         notify('Could not start PDF generation. Please try again.', 'error');
+                        // Clear loading indicator on error
+                        const downloadContainer = document.getElementById('pdf-download-container');
+                        if (downloadContainer) {
+                            downloadContainer.innerHTML = '';
+                        }
                     });
             },
             pollPdf(pdfId, attempt) {
@@ -933,60 +961,79 @@
                         if (data.status === 'completed') {
                             // Use download_url from response if available, otherwise construct it
                             const downloadUrl = data.download_url || `{% url 'resumes:download-generated-pdf' pdf_generation_id=0 %}`.replace('/0/', `/${pdfId}/`);
-                            console.log('PDF ready. Triggering download:', downloadUrl);
+                            console.log('PDF ready. Download URL:', downloadUrl);
                             
-                            // Show download link immediately
-                            const downloadLinkHtml = `
-                                <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg download-link-fallback" id="pdf-download-link-${pdfId}">
-                                    <p class="text-sm text-blue-800 mb-2 font-medium">✓ PDF is ready! Click to download:</p>
-                                    <a href="${downloadUrl}" 
-                                       download="${data.filename || 'resume.pdf'}"
-                                       target="_blank"
-                                       class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium shadow-sm">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                        </svg>
-                                        Download PDF
-                                    </a>
-                                </div>
-                            `;
+                            // Find the download container (dedicated container)
+                            const downloadContainer = document.getElementById('pdf-download-container');
                             
-                            // Find the PDF download section and insert the link
-                            const pdfSection = document.querySelector('[x-data*="pdfDownloadManager"]');
-                            if (pdfSection) {
-                                // Remove any existing download link
-                                const existingLink = pdfSection.querySelector('.download-link-fallback');
-                                if (existingLink) existingLink.remove();
+                            if (downloadContainer) {
+                                // Clear any existing content
+                                downloadContainer.innerHTML = '';
                                 
-                                // Insert the new download link
-                                pdfSection.insertAdjacentHTML('beforeend', downloadLinkHtml);
+                                // Create and insert the download link
+                                const downloadLinkHtml = `
+                                    <div class="p-4 bg-green-50 border-2 border-green-300 rounded-lg shadow-md" id="pdf-download-link-${pdfId}">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-3">
+                                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                                <div>
+                                                    <p class="text-sm font-semibold text-green-800">PDF is ready!</p>
+                                                    <p class="text-xs text-green-600">Click the button to download your resume</p>
+                                                </div>
+                                            </div>
+                                            <a href="${downloadUrl}" 
+                                               download="${data.filename || 'resume.pdf'}"
+                                               class="inline-flex items-center px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium shadow-sm transition-colors">
+                                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                </svg>
+                                                Download PDF
+                                            </a>
+                                        </div>
+                                    </div>
+                                `;
+                                
+                                downloadContainer.innerHTML = downloadLinkHtml;
                                 
                                 // Scroll to the download link
                                 const newLink = document.getElementById(`pdf-download-link-${pdfId}`);
                                 if (newLink) {
-                                    newLink.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                    setTimeout(() => {
+                                        newLink.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }, 100);
                                 }
                                 
-                                // Also try automatic download
+                                // Show success toast
+                                if (window.toast) {
+                                    window.toast.success('PDF is ready! Click the download button below.', 5000);
+                                }
+                                
+                                // Also try automatic download after a short delay
                                 setTimeout(() => {
                                     try {
+                                        console.log('Attempting automatic download...');
                                         const link = document.createElement('a');
                                         link.href = downloadUrl;
                                         link.download = data.filename || 'resume.pdf';
                                         link.style.display = 'none';
                                         document.body.appendChild(link);
                                         link.click();
-                                        setTimeout(() => document.body.removeChild(link), 100);
-                                        if (window.toast) window.toast.success('PDF download started!', 3000);
+                                        setTimeout(() => {
+                                            document.body.removeChild(link);
+                                        }, 100);
+                                        console.log('Automatic download triggered');
                                     } catch (e) {
                                         console.warn('Auto-download failed, manual link is available:', e);
-                                        if (window.toast) window.toast.info('Click the download link below to get your PDF', 5000);
                                     }
-                                }, 500);
+                                }, 1000);
                             } else {
-                                console.error('PDF download section not found');
+                                console.error('PDF download container not found!');
                                 // Fallback: try direct download
-                                if (window.toast) window.toast.success('PDF ready! Opening download...', 3000);
+                                if (window.toast) {
+                                    window.toast.success('PDF ready! Opening download...', 3000);
+                                }
                                 setTimeout(() => {
                                     window.location.href = downloadUrl;
                                 }, 1000);
