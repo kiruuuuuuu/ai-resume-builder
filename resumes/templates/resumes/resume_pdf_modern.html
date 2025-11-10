@@ -13,8 +13,8 @@
         html, body {
             font-family: 'Inter', Arial, sans-serif;
             color: #3a3a3a;
-            font-size: 9pt; /* Reduced for better fit */
-            line-height: 1.25; /* Tighter line height */
+            font-size: 11pt; /* Increased font size */
+            line-height: 1.3; /* Comfortable line height */
             margin: 0;
             padding: 0;
             width: 210mm;
@@ -48,7 +48,7 @@
             max-height: 297mm; /* Maximum height */
             background-color: {{ accent_color|default:'#2c3e50' }} !important;
             color: #f0f0f0;
-            padding: 12px 10px; /* Adaptive padding */
+            padding: 15px 12px; /* Reduced padding to minimize gaps */
             box-sizing: border-box;
             position: relative;
             overflow: hidden; /* Prevent overflow */
@@ -60,7 +60,7 @@
             float: left;
             min-height: 297mm; /* Minimum height */
             max-height: 297mm; /* Maximum height */
-            padding: 12px 10px; /* Adaptive padding */
+            padding: 15px 12px; /* Reduced padding to minimize gaps */
             box-sizing: border-box;
             position: relative;
             overflow: hidden; /* Prevent overflow */
@@ -83,33 +83,33 @@
         /* --- Sidebar Styling --- */
         .profile-photo-container {
             text-align: center;
-            margin-bottom: 6px; /* Adaptive spacing */
+            margin-bottom: 8px; /* Reduced gap */
             flex-shrink: 0;
         }
         .profile-photo {
-            width: 65px; /* Slightly smaller */
-            height: 65px; /* Slightly smaller */
+            width: 70px; /* Slightly larger */
+            height: 70px; /* Slightly larger */
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid rgba(255, 255, 255, 0.3);
         }
         .sidebar h2 {
-            font-size: 9.5pt; /* Slightly reduced */
+            font-size: 11pt; /* Increased font size */
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #ffffff;
             border-bottom: 1px solid #7f8c8d;
-            padding-bottom: 2px;
-            margin: 8px 0 3px 0; /* Adaptive margins */
+            padding-bottom: 3px;
+            margin: 6px 0 4px 0; /* Reduced gaps between sections */
             font-weight: 700;
             flex-shrink: 0;
         }
         .contact-item, .sidebar-item {
             display: flex;
             align-items: flex-start;
-            margin-bottom: 2px; /* Minimal spacing */
-            font-size: 8.5pt; /* Slightly smaller */
-            line-height: 1.2; /* Tighter line height */
+            margin-bottom: 3px; /* Reduced gap */
+            font-size: 10pt; /* Increased font size */
+            line-height: 1.3; /* Comfortable line height */
         }
         .contact-item svg {
             width: 12px;
@@ -120,50 +120,50 @@
         }
         .contact-item-text { word-break: break-all; }
         .skill-category {
-            margin-bottom: 4px; /* Adaptive spacing */
+            margin-bottom: 5px; /* Reduced gap */
         }
         .skill-category strong {
             display: block;
             color: #ffffff;
-            margin-bottom: 1px;
-            font-size: 9pt; /* Slightly reduced */
+            margin-bottom: 2px;
+            font-size: 10.5pt; /* Increased font size */
             font-weight: 500;
         }
         .skill-category span {
-            font-size: 8.5pt; /* Slightly reduced */
+            font-size: 10pt; /* Increased font size */
             color: #bdc3c7;
-            line-height: 1.2;
+            line-height: 1.3;
         }
 
         /* --- Main Content Styling --- */
         .name {
-            font-size: 24pt; /* Slightly reduced for better fit */
+            font-size: 28pt; /* Increased font size */
             font-weight: bold;
             color: #2c3e50;
             line-height: 1.1;
-            margin-bottom: 1px;
+            margin-bottom: 2px; /* Reduced gap */
             flex-shrink: 0;
         }
         .job-title-header {
-            font-size: 12pt; /* Slightly reduced */
+            font-size: 14pt; /* Increased font size */
             color: {{ accent_color|default:'#3498db' }};
             font-weight: 500;
-            margin-bottom: 8px; /* Adaptive spacing */
+            margin-bottom: 6px; /* Reduced gap */
             flex-shrink: 0;
         }
         .content h2 {
-            font-size: 10.5pt; /* Slightly reduced */
+            font-size: 12pt; /* Increased font size */
             color: #2c3e50;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             border-bottom: 1.5px solid {{ accent_color|default:'#3498db' }};
-            padding-bottom: 2px;
-            margin: 6px 0 3px 0; /* Adaptive margins */
+            padding-bottom: 3px;
+            margin: 4px 0 4px 0; /* Reduced gaps between sections */
             font-weight: 700;
             flex-shrink: 0;
         }
         .item {
-            margin-bottom: 4px; /* Minimal spacing */
+            margin-bottom: 5px; /* Reduced gap */
             page-break-inside: avoid;
         }
         .item-header {
@@ -172,12 +172,12 @@
             align-items: baseline;
         }
         .title {
-            font-size: 11pt; /* Increased */
+            font-size: 12pt; /* Increased font size */
             font-weight: 700;
             color: #000;
         }
         .subtitle, .project-aim {
-            font-size: 10pt; /* Increased */
+            font-size: 11pt; /* Increased font size */
             color: #555;
             font-style: italic;
         }
@@ -185,30 +185,30 @@
             font-style: normal;
         }
         .date {
-            font-size: 9.5pt; /* Increased */
+            font-size: 10.5pt; /* Increased font size */
             color: #333;
             font-weight: 500;
             flex-shrink: 0;
             padding-left: 10px;
         }
         .description-list {
-            margin: 1px 0 0 0; /* Minimal spacing */
-            padding-left: 12px;
+            margin: 2px 0 0 0; /* Reduced gap */
+            padding-left: 14px;
             list-style-type: disc;
             list-style-position: outside;
         }
         .description-list li {
-            margin-bottom: 0.5px; /* Very minimal spacing */
+            margin-bottom: 2px; /* Reduced gap between items */
             padding-left: 2px;
             text-align: justify;
-            line-height: 1.15; /* Very tight */
-            font-size: 8.5pt; /* Slightly smaller */
+            line-height: 1.3; /* Comfortable line height */
+            font-size: 10pt; /* Increased font size */
         }
         .tech-details {
-            font-size: 8.5pt; /* Slightly smaller */
+            font-size: 10pt; /* Increased font size */
             color: #444;
-            margin-top: 1px; /* Minimal spacing */
-            line-height: 1.2;
+            margin-top: 3px; /* Reduced gap */
+            line-height: 1.3;
         }
         section {
             page-break-inside: avoid;
@@ -262,7 +262,7 @@
             {% if experiences.0.job_title %}<p class="job-title-header">{{ experiences.0.job_title }}</p>{% endif %}
 
             {% if resume.profile.professional_summary %}
-            <section class="item"><h2>Summary</h2><div class="description" style="text-align: justify;">{{ resume.profile.professional_summary|linebreaksbr }}</div></section>
+            <section class="item"><h2>Summary</h2><div class="description" style="text-align: justify; font-size: 10.5pt; line-height: 1.4; margin-top: 2px;">{{ resume.profile.professional_summary|linebreaksbr }}</div></section>
             {% endif %}
 
             {% if experiences %}
