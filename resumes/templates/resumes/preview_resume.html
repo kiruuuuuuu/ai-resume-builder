@@ -319,7 +319,9 @@
                         Print
                     </button>
                     
-                    <a href="{% url 'resumes:download-resume-pdf' resume_id=resume.id template_name=template_name %}?accent_color={{ selected_color }}" 
+                    <a href="#" 
+                       id="download-pdf-btn"
+                       onclick="startPdfGeneration(event)"
                        class="inline-flex items-center px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -405,6 +407,9 @@
                 </div>
             </div>
         </div>
+        
+        <!-- PDF Download Status Container -->
+        <div id="pdf-download-container" class="max-w-7xl mx-auto px-6 pb-4"></div>
     </div>
     
     <!-- Preview Container -->
@@ -511,6 +516,210 @@
                 window.location.href = '{% url 'resumes:resume-builder' %}';
             }
         });
+        
+        // PDF Download Functions (Async with polling)
+        function startPdfGeneration(event) {
+            if (event) event.preventDefault();
+            
+            const url = new URL(window.location.href);
+            const template = url.searchParams.get('template') || '{{ template_name }}';
+            const color = url.searchParams.get('accent_color') || '{{ selected_color }}';
+            
+            const startUrl = `{% url 'resumes:download-resume-pdf' resume_id=resume.id template_name='professional' %}`
+                .replace('/professional/', `/${template}/`) + `?accent_color=${color}&format=json`;
+            
+            // Show loading indicator
+            const downloadContainer = document.getElementById('pdf-download-container');
+            if (downloadContainer) {
+                downloadContainer.innerHTML = `
+                    <div class="p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg shadow-md">
+                        <div class="flex items-center space-x-3">
+                            <svg class="animate-spin h-5 w-5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <div>
+                                <p class="text-sm font-semibold text-yellow-800">Generating PDF...</p>
+                                <p class="text-xs text-yellow-600">Please wait, this may take a few seconds</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Get CSRF token
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                            (document.cookie.match(/csrftoken=([^;]+)/) ? document.cookie.match(/csrftoken=([^;]+)/)[1] : '');
+            
+            console.log('Starting PDF generation for template:', template, 'color:', color);
+            fetch(startUrl, { 
+                headers: { 
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken
+                } 
+            })
+                .then(r => {
+                    if (!r.ok) {
+                        throw new Error(`HTTP error! status: ${r.status}`);
+                    }
+                    return r.json();
+                })
+                .then(data => {
+                    console.log('PDF generation response:', data);
+                    if (data.status === 'pending' && data.pdf_generation_id) {
+                        pollPdf(data.pdf_generation_id, 0);
+                    } else {
+                        // Fallback: if server returned a file directly (sync path), just navigate
+                        window.location.href = startUrl.replace('&format=json','');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error starting PDF generation:', err);
+                    if (downloadContainer) {
+                        downloadContainer.innerHTML = `
+                            <div class="p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-md">
+                                <p class="text-sm font-semibold text-red-800">Error: Could not start PDF generation. Please try again.</p>
+                            </div>
+                        `;
+                    }
+                });
+        }
+        
+        function pollPdf(pdfId, attempt) {
+            const url = `{% url 'resumes:check-pdf-status' pdf_generation_id=0 %}`.replace('/0/', `/${pdfId}/`);
+            console.log('Polling PDF status, attempt:', attempt, 'PDF ID:', pdfId);
+            
+            // Get CSRF token
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                            (document.cookie.match(/csrftoken=([^;]+)/) ? document.cookie.match(/csrftoken=([^;]+)/)[1] : '');
+            
+            fetch(url, { 
+                headers: { 
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken
+                } 
+            })
+                .then(r => {
+                    if (!r.ok) {
+                        throw new Error(`HTTP error! status: ${r.status}`);
+                    }
+                    return r.json();
+                })
+                .then(data => {
+                    console.log('PDF status response:', data);
+                    if (data.status === 'completed') {
+                        // Use download_url from response if available, otherwise construct it
+                        const downloadUrl = data.download_url || `{% url 'resumes:download-generated-pdf' pdf_generation_id=0 %}`.replace('/0/', `/${pdfId}/`);
+                        console.log('PDF ready. Download URL:', downloadUrl);
+                        
+                        // Find the download container
+                        const downloadContainer = document.getElementById('pdf-download-container');
+                        
+                        if (downloadContainer) {
+                            // Clear any existing content
+                            downloadContainer.innerHTML = '';
+                            
+                            // Create and insert the download link
+                            const downloadLinkHtml = `
+                                <div class="p-4 bg-green-50 border-2 border-green-300 rounded-lg shadow-md" id="pdf-download-link-${pdfId}">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <div>
+                                                <p class="text-sm font-semibold text-green-800">PDF is ready!</p>
+                                                <p class="text-xs text-green-600">Click the button to download your resume</p>
+                                            </div>
+                                        </div>
+                                        <a href="${downloadUrl}" 
+                                           download="${data.filename || 'resume.pdf'}"
+                                           class="inline-flex items-center px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium shadow-sm transition-colors">
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                            Download PDF
+                                        </a>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            downloadContainer.innerHTML = downloadLinkHtml;
+                            
+                            // Scroll to the download link
+                            const newLink = document.getElementById(`pdf-download-link-${pdfId}`);
+                            if (newLink) {
+                                setTimeout(() => {
+                                    newLink.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }, 100);
+                            }
+                            
+                            // Also try automatic download after a short delay
+                            setTimeout(() => {
+                                try {
+                                    console.log('Attempting automatic download...');
+                                    const link = document.createElement('a');
+                                    link.href = downloadUrl;
+                                    link.download = data.filename || 'resume.pdf';
+                                    link.style.display = 'none';
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    setTimeout(() => {
+                                        document.body.removeChild(link);
+                                    }, 100);
+                                    console.log('Automatic download triggered');
+                                } catch (e) {
+                                    console.warn('Auto-download failed, manual link is available:', e);
+                                }
+                            }, 1000);
+                        } else {
+                            console.error('PDF download container not found!');
+                            // Fallback: try direct download
+                            setTimeout(() => {
+                                window.location.href = downloadUrl;
+                            }, 1000);
+                        }
+                    } else if (data.status === 'failed') {
+                        const downloadContainer = document.getElementById('pdf-download-container');
+                        if (downloadContainer) {
+                            downloadContainer.innerHTML = `
+                                <div class="p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-md">
+                                    <p class="text-sm font-semibold text-red-800">PDF generation failed: ${data.error || 'Unknown error'}</p>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        // Still processing or pending
+                        if (attempt < 40) {
+                            setTimeout(() => pollPdf(pdfId, attempt + 1), 2000);
+                        } else {
+                            const downloadContainer = document.getElementById('pdf-download-container');
+                            if (downloadContainer) {
+                                downloadContainer.innerHTML = `
+                                    <div class="p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-md">
+                                        <p class="text-sm font-semibold text-red-800">PDF generation is taking too long. Please try again later.</p>
+                                    </div>
+                                `;
+                            }
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error('Error checking PDF status:', err);
+                    if (attempt < 5) {
+                        setTimeout(() => pollPdf(pdfId, attempt + 1), 5000);
+                    } else {
+                        const downloadContainer = document.getElementById('pdf-download-container');
+                        if (downloadContainer) {
+                            downloadContainer.innerHTML = `
+                                <div class="p-4 bg-red-50 border-2 border-red-300 rounded-lg shadow-md">
+                                    <p class="text-sm font-semibold text-red-800">Could not check PDF status. Please try again.</p>
+                                </div>
+                            `;
+                        }
+                    }
+                });
+        }
         
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
