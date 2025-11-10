@@ -567,29 +567,35 @@
                         if (typeof Chart !== 'undefined') {
                             console.log('Chart.js loaded, initializing score display');
                             
-                            // Always check with backend first to ensure we have latest score
-                            // Show initial score if available while checking
+                            // Show initial score if available while checking backend
                             if (this.score !== null && this.score !== undefined) {
                                 console.log('Initial score available, rendering chart');
                                 this.isLoading = false;
-                                // Render chart immediately with initial data
+                                // Render chart with initial data - this will persist even if checkStatus runs
                                 setTimeout(() => {
-                                    this.renderChart();
-                                }, 500);
+                                    // Only render if chart doesn't exist yet (avoid race condition)
+                                    if (!this.chart) {
+                                        this.renderChart();
+                                    }
+                                }, 300);
                             } else {
                                 console.log('No initial score, showing loading state');
                                 this.isLoading = true;
                             }
                             
                             // Always verify with backend (this will update if score changed)
+                            // Delay slightly to let initial render complete first
                             setTimeout(() => {
                                 this.checkStatus();
-                            }, 100);
+                            }, 600);
                         } else if (attempts < 30) {
                             setTimeout(() => waitForChartJS(attempts + 1), 100);
                         } else {
                             console.error('Chart.js not loaded after 3 seconds, checking status anyway');
-                            this.isLoading = false;
+                            // Only set loading to false if we don't have a score
+                            if (this.score === null || this.score === undefined) {
+                                this.isLoading = false;
+                            }
                             // Still check with backend even if Chart.js isn't loaded
                             this.checkStatus();
                         }
@@ -790,42 +796,57 @@
                     console.log('Score status response:', data.status, 'Score:', data.score);
                     if (data.status === 'SUCCESS') { 
                         // Always update score and feedback from backend
-                        this.score = data.score; 
-                        this.feedback = Array.isArray(data.feedback) ? data.feedback : (data.feedback || []); 
+                        const newScore = data.score;
+                        const newFeedback = Array.isArray(data.feedback) ? data.feedback : (data.feedback || []);
+                        
+                        // Only update if score actually changed to avoid unnecessary re-renders
+                        const scoreChanged = this.score !== newScore;
+                        this.score = newScore; 
+                        this.feedback = newFeedback; 
                         this.isLoading = false;
                         
                         console.log('Score updated:', this.score, 'Feedback count:', this.feedback.length);
                         
-                        // Force re-render of chart if it exists or score changed
-                        if (this.chart) {
-                            try {
-                                this.chart.destroy();
-                            } catch (e) {
-                                console.warn('Error destroying chart during update:', e);
+                        // Only destroy and re-render if score changed or chart doesn't exist
+                        if (scoreChanged || !this.chart) {
+                            if (this.chart) {
+                                try {
+                                    this.chart.destroy();
+                                } catch (e) {
+                                    console.warn('Error destroying chart during update:', e);
+                                }
+                                this.chart = null;
                             }
-                            this.chart = null;
+                            
+                            // Wait a bit before rendering to ensure DOM is stable
+                            setTimeout(() => {
+                                // Verify canvas still exists before rendering
+                                const canvas = document.getElementById('score-chart');
+                                if (canvas && canvas.parentElement) {
+                                    this.renderChart();
+                                } else {
+                                    console.warn('Canvas not found or not in DOM, skipping chart render');
+                                }
+                            }, 400);
                         }
-                        
-                        // Wait a bit before rendering to ensure DOM is stable
-                        setTimeout(() => {
-                            // Verify canvas still exists before rendering
-                            const canvas = document.getElementById('score-chart');
-                            if (canvas && canvas.parentElement) {
-                                this.renderChart();
-                            } else {
-                                console.warn('Canvas not found or not in DOM, skipping chart render');
-                            }
-                        }, 400); 
                     } else if (data.status === 'PENDING') { 
                         // Keep checking if pending (with max retries to prevent infinite loops)
+                        // Don't change isLoading or score during pending - keep current state visible
                         if (retryCount < 20) {
                             setTimeout(() => this.checkStatus(retryCount + 1), 3000);
                         } else {
                             console.warn('Score check timed out after 60 seconds');
-                            this.isLoading = false;
+                            // Only set loading to false if we don't have a score yet
+                            if (this.score === null || this.score === undefined) {
+                                this.isLoading = false;
+                            }
                         }
                     } else { 
-                        this.isLoading = false; 
+                        // For other statuses, only set loading to false if we don't have a score
+                        // Preserve existing score if available
+                        if (this.score === null || this.score === undefined) {
+                            this.isLoading = false;
+                        }
                     } 
                 })
                 .catch(err => { 
@@ -836,7 +857,10 @@
                         setTimeout(() => this.checkStatus(retryCount + 1), retryDelay);
                     } else {
                         console.error('Failed to check score status after multiple retries');
-                        this.isLoading = false;
+                        // Only set loading to false if we don't have a score - preserve existing score
+                        if (this.score === null || this.score === undefined) {
+                            this.isLoading = false;
+                        }
                     }
                 });
             },
