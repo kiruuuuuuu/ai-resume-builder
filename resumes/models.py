@@ -135,6 +135,7 @@ class ResumePDFGeneration(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     task_id = models.CharField(max_length=255, null=True, blank=True, help_text="Celery task ID")
     pdf_file = models.FileField(upload_to='generated_pdfs/', null=True, blank=True)
+    pdf_content = models.BinaryField(null=True, blank=True, help_text="PDF content stored in database for Railway compatibility")
     error_message = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)

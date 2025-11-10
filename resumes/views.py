@@ -643,9 +643,13 @@ def check_pdf_status(request, pdf_generation_id):
         'pdf_generation_id': pdf_gen.id,
     }
     
-    if pdf_gen.status == 'completed' and pdf_gen.pdf_file:
-        response_data['download_url'] = pdf_gen.pdf_file.url
-        response_data['filename'] = pdf_gen.pdf_file.name.split('/')[-1]
+    if pdf_gen.status == 'completed' and (pdf_gen.pdf_content or pdf_gen.pdf_file):
+        # PDF is available (either in database or filesystem)
+        response_data['download_url'] = reverse('resumes:download-pdf', args=[pdf_generation_id])
+        if pdf_gen.pdf_file:
+            response_data['filename'] = pdf_gen.pdf_file.name.split('/')[-1]
+        else:
+            response_data['filename'] = f"{pdf_gen.resume.profile.full_name}_resume.pdf"
     elif pdf_gen.status == 'failed':
         response_data['error'] = pdf_gen.error_message or 'PDF generation failed.'
     
@@ -664,13 +668,24 @@ def download_generated_pdf(request, pdf_generation_id):
         status='completed'
     )
     
-    if not pdf_gen.pdf_file:
+    # Try to get PDF from database first (Railway compatibility), then fallback to file
+    if pdf_gen.pdf_content:
+        from io import BytesIO
+        pdf_stream = BytesIO(pdf_gen.pdf_content)
+        response = FileResponse(pdf_stream, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{pdf_gen.resume.profile.full_name}_resume.pdf"'
+        return response
+    elif pdf_gen.pdf_file:
+        try:
+            response = FileResponse(pdf_gen.pdf_file.open('rb'), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{pdf_gen.resume.profile.full_name}_resume.pdf"'
+            return response
+        except FileNotFoundError:
+            messages.error(request, 'PDF file not found. Please regenerate the PDF.')
+            return redirect('resumes:resume-builder')
+    else:
         messages.error(request, 'PDF file not found.')
         return redirect('resumes:resume-builder')
-    
-    response = FileResponse(pdf_gen.pdf_file.open('rb'), content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{pdf_gen.resume.profile.full_name}_resume.pdf"'
-    return response
 
 def _get_resume_context(resume):
     """Helper function to prepare resume context for templates."""

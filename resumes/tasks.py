@@ -199,12 +199,18 @@ def generate_resume_pdf_task(pdf_generation_id, base_url):
             page_css = '@page { size: A4; margin: 1.5cm }'
         pdf_bytes = html_obj.write_pdf(stylesheets=[CSS(string=page_css)])
         
-        # Save PDF file
+        # Save PDF file - store in database for Railway compatibility (containers have separate filesystems)
         filename = f"resume_{resume.id}_{pdf_gen.template_name}_{timezone.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        pdf_gen.pdf_file.save(filename, ContentFile(pdf_bytes), save=False)
+        # Store PDF content in database (Railway containers have separate filesystems)
+        pdf_gen.pdf_content = pdf_bytes
+        # Also try to save to file system (for local development)
+        try:
+            pdf_gen.pdf_file.save(filename, ContentFile(pdf_bytes), save=False)
+        except Exception as e:
+            logger.warning(f"Could not save PDF to filesystem (this is normal in Railway): {e}")
         pdf_gen.status = 'completed'
         pdf_gen.completed_at = timezone.now()
-        pdf_gen.save(update_fields=['status', 'pdf_file', 'completed_at'])
+        pdf_gen.save(update_fields=['status', 'pdf_file', 'pdf_content', 'completed_at'])
         
         logger.info(f"Successfully generated PDF for Resume ID: {resume.id}, PDF Generation ID: {pdf_generation_id}")
         
