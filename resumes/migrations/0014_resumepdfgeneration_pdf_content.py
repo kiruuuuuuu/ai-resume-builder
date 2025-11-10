@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('resumes', '0012_resumepdfgeneration'),
+        ('resumes', '0013_rename_resumes_res_resume__idx_resumes_res_resume__4807cf_idx_and_more'),
     ]
 
     operations = [
