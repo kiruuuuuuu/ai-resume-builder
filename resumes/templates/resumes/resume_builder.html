@@ -459,8 +459,9 @@
                         Live Preview
                     </a>
                     
-                    <!-- Download Button -->
-                    <a :href="`{% url 'resumes:download-resume-pdf' resume_id=resume.id template_name='professional' %}`.replace('/professional/', `/${selectedTemplate}/`) + `?accent_color=${selectedColor}`" 
+                    <!-- Download Button (AJAX with polling) -->
+                    <a href="#"
+                       @click.prevent="startPdfGeneration(selectedTemplate, selectedColor)"
                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors shadow-sm">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -838,6 +839,61 @@
                         this.isLoading = false;
                     }
                 });
+            },
+            // Start PDF generation via JSON endpoint and poll until ready
+            startPdfGeneration(template, color) {
+                const startUrl = `{% url 'resumes:download-resume-pdf' resume_id=resume.id template_name='professional' %}`
+                    .replace('/professional/', `/${template}/`) + `?accent_color=${color}&format=json`;
+                const notify = (msg, type='info') => {
+                    if (window.toast) {
+                        if (type === 'error') window.toast.error(msg);
+                        else if (type === 'success') window.toast.success(msg, 4000);
+                        else window.toast.info ? window.toast.info(msg) : window.toast.success(msg, 3000);
+                    }
+                };
+                fetch(startUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' }})
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.status === 'pending' && data.pdf_generation_id) {
+                            notify('PDF generation started. We will download it when it is ready.');
+                            this.pollPdf(data.pdf_generation_id, 0);
+                        } else {
+                            // Fallback: if server returned a file directly (sync path), just navigate
+                            window.location.href = startUrl.replace('&format=json','');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error starting PDF generation:', err);
+                        notify('Could not start PDF generation. Please try again.', 'error');
+                    });
+            },
+            pollPdf(pdfId, attempt) {
+                const url = `{% url 'resumes:check-pdf-status' pdf_generation_id=0 %}`.replace('/0/', `/${pdfId}/`);
+                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }})
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.status === 'completed' && data.download_url) {
+                            if (window.toast) window.toast.success('PDF ready. Downloading...', 3000);
+                            // Trigger browser download
+                            window.location.href = `{% url 'resumes:download-generated-pdf' pdf_generation_id=0 %}`.replace('/0/', `/${pdfId}/`);
+                        } else if (data.status === 'failed') {
+                            if (window.toast) window.toast.error(data.error || 'PDF generation failed.');
+                        } else {
+                            if (attempt < 40) {
+                                setTimeout(() => this.pollPdf(pdfId, attempt + 1), 3000);
+                            } else {
+                                if (window.toast) window.toast.error('PDF generation is taking too long. Please try again later.');
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error checking PDF status:', err);
+                        if (attempt < 5) {
+                            setTimeout(() => this.pollPdf(pdfId, attempt + 1), 5000);
+                        } else if (window.toast) {
+                            window.toast.error('Could not check PDF status.');
+                        }
+                    });
             }
         }
     }

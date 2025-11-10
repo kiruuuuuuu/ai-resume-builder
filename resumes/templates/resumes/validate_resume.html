@@ -207,7 +207,7 @@
                                             <div class="ml-3 p-2.5 bg-red-50 border-l-4 border-red-500 rounded-r-md hover:bg-red-100 transition-colors cursor-pointer text-sm" onclick="scrollToField('profile-{{ field }}')">
                                                 <div class="flex items-start gap-2">
                                                     <svg class="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                        <path fill-rule="evenodd" d="M18 10a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                                                     </svg>
                                                     <div class="flex-1 min-w-0">
                                                         <span class="font-semibold text-red-900 text-xs">{{ field|title|underscore_to_space }}:</span>
@@ -1024,7 +1024,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <p class="text-red-800 font-semibold">
-                        ⚠️ Please fix all <strong>{{ total_errors }} error{{ total_errors|pluralize }}</strong> shown above before you can proceed. The form cannot be submitted until all validation errors are resolved.
+                        ⚠️ Please fix all <strong>{{ total_errors }} error{{ total_errors|pluralize }}</strong> shown above before you can proceed. The form cannot be submitted until all errors are resolved.
                     </p>
                 </div>
             </div>
@@ -1079,21 +1079,30 @@
                 this.openSection = (this.openSection === section) ? null : section;
             },
             scrollToSection(section) {
-                // Expand the section if it's closed
-                if (this.openSection !== section) {
-                    this.openSection = section;
-                    // Wait for Alpine to render
-                    this.$nextTick(() => {
-                        const element = document.getElementById(`formset-${section}`);
-                        if (element) {
-                            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
-                    });
-                } else {
+                // Try Alpine controller first (if available)
+                const root = document.querySelector('[x-data="formsetManager()"]') || document.querySelector('[x-data]');
+                let manager = null;
+                if (root && typeof Alpine !== 'undefined' && Alpine.$data) {
+                    try { manager = Alpine.$data(root); } catch (e) { manager = null; }
+                }
+
+                const doScroll = () => {
                     const element = document.getElementById(`formset-${section}`);
                     if (element) {
                         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
+                };
+
+                if (manager && typeof manager === 'object') {
+                    manager.openSection = section;
+                    if (manager.$nextTick) {
+                        manager.$nextTick(() => setTimeout(doScroll, 50));
+                    } else {
+                        setTimeout(doScroll, 50);
+                    }
+                } else {
+                    // Fallback: just scroll without toggling
+                    doScroll();
                 }
             },
             addForm(prefix) {
@@ -1248,15 +1257,11 @@
 
     // Function to check if form has errors and update submit button
     function updateSubmitButtonState() {
-        const errorSummary = document.getElementById('error-summary');
         const submitBtn = document.getElementById('submit-btn');
         const submitBtnText = document.getElementById('submit-btn-text');
         const errorWarning = document.getElementById('error-warning');
         
-        // Check if error summary exists and is visible
-        const hasErrors = errorSummary && errorSummary.offsetParent !== null;
-        
-        // Also check for visible error messages in the form
+        // Check for visible error messages in the form (current DOM)
         const form = document.getElementById('validate-resume-form');
         const visibleErrors = form.querySelectorAll('.text-red-600:not([style*="display: none"]), .text-red-700:not([style*="display: none"]), .border-red-500 input, .border-red-500 textarea, .border-red-500 select');
         const hasVisibleErrors = visibleErrors.length > 0;
@@ -1268,7 +1273,8 @@
             summaryOverLimit = true;
         }
         
-        if (hasErrors || hasVisibleErrors || summaryOverLimit) {
+        // Enable/disable purely based on current DOM state
+        if (hasVisibleErrors || summaryOverLimit) {
             // Disable button and show error state
             submitBtn.disabled = true;
             submitBtn.classList.remove('hover:shadow-2xl', 'hover:-translate-y-0.5');
