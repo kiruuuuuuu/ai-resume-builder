@@ -493,19 +493,6 @@
             window.location.href = url.toString();
         }
         
-        // Update download link when selections change
-        function updateDownloadLink() {
-            const url = new URL(window.location.href);
-            const template = url.searchParams.get('template') || '{{ template_name }}';
-            const color = url.searchParams.get('accent_color') || '{{ selected_color }}';
-            const downloadLink = document.querySelector('a[href*="download"]');
-            if (downloadLink) {
-                const baseUrl = downloadLink.href.split('?')[0].split('/');
-                baseUrl[baseUrl.length - 2] = template;
-                downloadLink.href = baseUrl.join('/') + '?accent_color=' + color;
-            }
-        }
-        
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
@@ -723,7 +710,7 @@
         
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            updateDownloadLink();
+            // Page is ready
         });
     </script>
 </body>
