@@ -69,19 +69,44 @@ def _get_gemini_model(model_name: str = 'models/gemini-2.5-flash'):
         logger.error(f"Failed to initialize Gemini model for scoring: {e}")
         return None
 
-def _call_gemini_with_retry(model, prompt, max_retries=3, base_delay=1):
-    """Calls the Gemini API with exponential backoff for retries."""
+def _call_gemini_with_retry(model, prompt, max_retries=2, base_delay=1, timeout_seconds=15):
+    """Calls the Gemini API with retries and explicit timeout to avoid worker hangs."""
+    retriable_exceptions = tuple()
+    try:
+        from google.api_core.exceptions import DeadlineExceeded, ResourceExhausted, ServiceUnavailable
+        retriable_exceptions = (DeadlineExceeded, ResourceExhausted, ServiceUnavailable)
+    except ImportError:  # Fallback if google api core is unavailable
+        logger.debug("google.api_core.exceptions not available; using generic exception handling for Gemini retries.")
+
     for attempt in range(max_retries):
         try:
-            response = model.generate_content(prompt)
+            response = model.generate_content(
+                prompt,
+                request_options={"timeout": timeout_seconds}
+            )
             return response
         except Exception as e:
-            logger.warning(f"Gemini API call failed on attempt {attempt + 1}/{max_retries}. Error: {e}")
-            if attempt < max_retries - 1:
-                time.sleep(base_delay * (2 ** attempt)) # Exponential backoff
+            if retriable_exceptions and isinstance(e, retriable_exceptions):
+                logger.warning(
+                    "Gemini API timeout/resource error on attempt %s/%s: %s",
+                    attempt + 1,
+                    max_retries,
+                    e,
+                )
             else:
-                logger.error("Max retries reached. Gemini API call failed.")
-                return None
+                logger.warning(
+                    "Gemini API call failed on attempt %s/%s. Error: %s",
+                    attempt + 1,
+                    max_retries,
+                    e,
+                )
+
+        # Backoff before retrying if we have attempts left
+        if attempt < max_retries - 1:
+            time.sleep(base_delay * (2 ** attempt))
+
+    logger.error("Max retries reached. Gemini API call failed.")
+    return None
 
 def parse_text_with_gemini(text: str) -> Dict[str, Any]:
     """
