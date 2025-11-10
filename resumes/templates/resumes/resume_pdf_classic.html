@@ -49,19 +49,20 @@
             font-weight: bold;
             color: #2c3e50;
             border-bottom: 2px solid {{ accent_color|default:'#3498db' }};
-            padding-bottom: 4px;
-            margin-top: 18px; /* Reduced margin */
-            margin-bottom: 10px;
+            padding-bottom: 3px; /* Reduced */
+            margin-top: 15px; /* Reduced margin */
+            margin-bottom: 8px; /* Reduced */
             text-transform: uppercase;
-            page-break-after: avoid;
+            page-break-after: avoid; /* Don't break after title */
         }
         .section {
-            margin-bottom: 10px; /* Reduced margin */
-            page-break-inside: avoid;
+            margin-bottom: 8px; /* Allow some space between sections for page breaks */
+            page-break-inside: avoid; /* Don't break within sections */
+            page-break-after: auto; /* Allow page break after sections */
         }
         .item {
-            margin-bottom: 10px; /* Reduced margin */
-            page-break-inside: avoid;
+            margin-bottom: 8px; /* Reduced margin */
+            page-break-inside: avoid; /* Don't break within items */
         }
         .item-header {
             overflow: auto; /* Clear floats */

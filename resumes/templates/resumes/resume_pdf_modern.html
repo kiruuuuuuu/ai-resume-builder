@@ -13,8 +13,8 @@
         html, body {
             font-family: 'Inter', Arial, sans-serif;
             color: #3a3a3a;
-            font-size: 9.5pt; /* Increased for better readability */
-            line-height: 1.3; /* Tighter line height */
+            font-size: 9pt; /* Reduced for better fit */
+            line-height: 1.25; /* Tighter line height */
             margin: 0;
             padding: 0;
             width: 210mm;
@@ -31,6 +31,8 @@
             height: 297mm; /* Exact A4 page height - single page */
             overflow: hidden; /* Prevent overflow */
             position: relative;
+            page-break-after: avoid; /* Prevent page break */
+            page-break-inside: avoid; /* Prevent page break */
         }
         .page::after {
             content: "";
@@ -44,7 +46,7 @@
             min-height: 297mm; /* Ensure minimum height */
             background-color: {{ accent_color|default:'#2c3e50' }} !important;
             color: #f0f0f0;
-            padding: 20px 18px; /* Reduced padding */
+            padding: 15px 14px; /* Further reduced padding */
             box-sizing: border-box;
             position: relative;
             overflow: hidden; /* Prevent overflow */
@@ -53,7 +55,7 @@
             width: 65%;
             float: left;
             height: 297mm; /* Exact A4 page height */
-            padding: 20px 18px; /* Reduced padding */
+            padding: 15px 14px; /* Further reduced padding */
             box-sizing: border-box;
             position: relative;
             overflow: hidden; /* Prevent overflow */
@@ -74,30 +76,30 @@
         /* --- Sidebar Styling --- */
         .profile-photo-container {
             text-align: center;
-            margin-bottom: 12px; /* Reduced */
+            margin-bottom: 8px; /* Further reduced */
         }
         .profile-photo {
-            width: 75px; /* Reduced */
-            height: 75px; /* Reduced */
+            width: 70px; /* Further reduced */
+            height: 70px; /* Further reduced */
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid rgba(255, 255, 255, 0.3);
         }
         .sidebar h2 {
-            font-size: 11pt; /* Increased */
+            font-size: 10pt; /* Reduced */
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #ffffff;
             border-bottom: 1px solid #7f8c8d;
-            padding-bottom: 3px;
-            margin: 12px 0 5px 0; /* Reduced margins */
+            padding-bottom: 2px;
+            margin: 10px 0 4px 0; /* Further reduced margins */
             font-weight: 700;
         }
         .contact-item, .sidebar-item {
             display: flex;
             align-items: flex-start;
-            margin-bottom: 4px; /* Reduced */
-            font-size: 9.5pt; /* Increased */
+            margin-bottom: 3px; /* Further reduced */
+            font-size: 9pt; /* Reduced */
         }
         .contact-item svg {
             width: 12px;
@@ -137,17 +139,17 @@
             margin-bottom: 12px; /* Reduced */
         }
         .content h2 {
-            font-size: 12pt; /* Increased */
+            font-size: 11pt; /* Reduced */
             color: #2c3e50;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             border-bottom: 1.5px solid {{ accent_color|default:'#3498db' }};
-            padding-bottom: 3px;
-            margin: 10px 0 6px 0; /* Reduced margins */
+            padding-bottom: 2px;
+            margin: 8px 0 4px 0; /* Further reduced margins */
             font-weight: 700;
         }
         .item {
-            margin-bottom: 8px; /* Reduced */
+            margin-bottom: 6px; /* Further reduced */
             page-break-inside: avoid;
         }
         .item-header {
@@ -176,16 +178,16 @@
             padding-left: 10px;
         }
         .description-list {
-            margin: 3px 0 0 0; /* Reduced */
-            padding-left: 15px;
+            margin: 2px 0 0 0; /* Further reduced */
+            padding-left: 14px;
             list-style-type: disc;
             list-style-position: outside;
         }
         .description-list li {
-            margin-bottom: 2px; /* Reduced */
-            padding-left: 3px;
+            margin-bottom: 1px; /* Further reduced */
+            padding-left: 2px;
             text-align: justify;
-            line-height: 1.25; /* Tighter */
+            line-height: 1.2; /* Tighter */
         }
         .tech-details {
             font-size: 9.5pt; /* Increased */
