@@ -317,16 +317,43 @@ SITE_ID = 1
 
 # Allauth settings (using new format to avoid deprecation warnings)
 ACCOUNT_ADAPTER = 'users.adapters.CustomAccountAdapter'  # Custom adapter for user-type based redirects
+SOCIALACCOUNT_ADAPTER = 'users.adapters.CustomSocialAccountAdapter'  # Custom adapter for social account signups
 ACCOUNT_LOGIN_METHODS = {'username', 'email'}  # Can login with username or email
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']  # Required fields for signup
-ACCOUNT_EMAIL_VERIFICATION = 'none'  # Set to 'mandatory' if you want email verification
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # Set to 'mandatory' if you want email verification for signups
+# Note: Password reset always requires email verification regardless of this setting
 ACCOUNT_SESSION_REMEMBER = True
 ACCOUNT_SIGNUP_REDIRECT_URL = 'home'  # Fallback, but adapter will override
+
+# Password reset settings
+ACCOUNT_PASSWORD_RESET_REQUIRE_EMAIL = True  # Require email for password reset
+
+# Email Configuration (for password reset)
+# For development, use console backend (emails printed to console)
+# For production, configure SMTP settings via environment variables
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 't')
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() in ('true', '1', 't')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@ai-resume-builder.com')
+SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
+
+# Note: For production, set these environment variables:
+# EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+# EMAIL_HOST=smtp.gmail.com (or your SMTP server)
+# EMAIL_PORT=587
+# EMAIL_USE_TLS=True
+# EMAIL_HOST_USER=your-email@gmail.com
+# EMAIL_HOST_PASSWORD=your-app-password
+# DEFAULT_FROM_EMAIL=noreply@yourdomain.com
 
 # Social account settings
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_EMAIL_REQUIRED = True
-SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'  # Set to 'mandatory' if you want email verification
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'  # Social accounts don't need email verification (Google/GitHub already verified)
 SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_STORE_TOKENS = False
 
