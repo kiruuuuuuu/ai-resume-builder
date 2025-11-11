@@ -849,6 +849,47 @@ If you want to run both web and worker in one service (uses more resources):
 
 **Note**: The automatic fix in code should handle this, but setting it manually ensures it works immediately.
 
+### DNS Error: "This site can't be reached" / DNS_PROBE_FINISHED_NXDOMAIN
+
+**Symptoms**:
+- Browser shows "This site can't be reached"
+- Error code: `DNS_PROBE_FINISHED_NXDOMAIN`
+- Domain doesn't resolve
+
+**Solutions**:
+
+1. **Check Service Status**:
+   - Go to Railway Dashboard → Your Django service
+   - Verify status is **"Running"** (green)
+   - If paused/stopped, click **"Start"** or **"Redeploy"**
+
+2. **Verify Domain**:
+   - Go to **Settings** tab → **Networking** section
+   - Check if domain exists: `https://your-service-name.up.railway.app`
+   - If no domain, click **"Generate Domain"** button
+   - **Important**: Use the domain shown in Railway, not an old one
+
+3. **Restart Service**:
+   - Go to **Deployments** tab
+   - Click **"Redeploy"** on latest deployment
+   - Wait 2-3 minutes for redeploy
+
+4. **Check Logs**:
+   - Go to **Logs** tab
+   - Look for startup errors or crashes
+   - If service crashed, check error messages
+
+5. **Verify Service is Active**:
+   - Railway Dashboard → Your service
+   - Should show **"1 Replica"** or more
+   - Should show **"Running"** status
+
+**Common Causes**:
+- Service was paused/stopped (free tier services pause after inactivity)
+- Domain changed (Railway sometimes regenerates domains)
+- Service crashed and needs restart
+- Deployment failed
+
 ### Application Won't Start - Other Errors
 
 **Check Logs**:
