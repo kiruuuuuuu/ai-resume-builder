@@ -890,6 +890,147 @@ If you want to run both web and worker in one service (uses more resources):
 - Service crashed and needs restart
 - Deployment failed
 
+### DNS Issue: Works on Some Devices/With VPN But Not Others
+
+**Symptoms**:
+- Site works on some devices but not yours
+- Site works when using VPN but not without VPN
+- Error: `DNS_PROBE_FINISHED_NXDOMAIN` or "This site can't be reached"
+- Other devices can access the site fine
+
+**This is a DNS/Network Issue, NOT a Railway Problem!**
+
+**Solutions** (Try in order):
+
+#### Solution 1: Clear DNS Cache (Windows)
+
+1. **Open Command Prompt as Administrator**:
+   - Press `Windows + X`
+   - Select "Windows Terminal (Admin)" or "Command Prompt (Admin)"
+   - Click "Yes" when prompted
+
+2. **Flush DNS Cache**:
+   ```powershell
+   ipconfig /flushdns
+   ```
+
+3. **Reset Network**:
+   ```powershell
+   ipconfig /release
+   ipconfig /renew
+   ```
+
+4. **Restart your browser** and try again
+
+#### Solution 2: Change DNS Servers (Recommended)
+
+**Why**: Your ISP's DNS servers may not resolve Railway domains properly. Using public DNS servers (Google, Cloudflare) usually fixes this.
+
+**Windows 11/10**:
+
+1. **Open Network Settings**:
+   - Press `Windows + I` (Settings)
+   - Go to **Network & Internet** → **Wi-Fi** (or **Ethernet**)
+   - Click on your active network connection
+
+2. **Edit DNS Settings**:
+   - Scroll down and click **"Edit"** under "DNS server assignment"
+   - Select **"Manual"**
+   - Toggle **IPv4** to **On**
+
+3. **Add DNS Servers**:
+   - **Preferred DNS**: `8.8.8.8` (Google DNS)
+   - **Alternate DNS**: `8.8.4.4` (Google DNS backup)
+   - **OR use Cloudflare DNS**:
+     - Preferred: `1.1.1.1`
+     - Alternate: `1.0.0.1`
+
+4. **Save** and restart your browser
+
+**Alternative Method (Command Line)**:
+```powershell
+# Run as Administrator
+netsh interface ip set dns "Wi-Fi" static 8.8.8.8
+netsh interface ip add dns "Wi-Fi" 8.8.4.4 index=2
+```
+(Replace "Wi-Fi" with your network adapter name if different)
+
+#### Solution 3: Check Firewall/Antivirus
+
+1. **Temporarily disable Windows Firewall**:
+   - Settings → Privacy & Security → Windows Security → Firewall & network protection
+   - Turn off for your network (temporarily to test)
+
+2. **Check Antivirus**:
+   - Some antivirus software blocks certain domains
+   - Temporarily disable to test
+   - If it works, add Railway domain to whitelist
+
+#### Solution 4: Use Different Browser
+
+- Try accessing the site in:
+  - Microsoft Edge
+  - Google Chrome
+  - Firefox
+  - If one works, it's a browser cache issue
+
+#### Solution 5: Check Router Settings
+
+1. **Access Router Admin Panel** (usually `192.168.1.1` or `192.168.0.1`)
+2. **Change DNS Settings**:
+   - Look for "DNS Settings" or "Internet Settings"
+   - Change to Google DNS (`8.8.8.8`, `8.8.4.4`) or Cloudflare (`1.1.1.1`, `1.0.0.1`)
+3. **Restart Router**
+
+#### Solution 6: Test DNS Resolution
+
+**Check if DNS is resolving correctly**:
+
+```powershell
+# Test DNS resolution
+nslookup ai-resume-builder-jk.up.railway.app
+
+# Should return IP addresses
+# If it says "can't find" or times out, DNS is the issue
+```
+
+**Expected Output** (if working):
+```
+Name:    ai-resume-builder-jk.up.railway.app
+Addresses:  [some IP addresses]
+```
+
+#### Solution 7: Use Hosts File (Temporary Workaround)
+
+**Find the IP address**:
+1. Use VPN or another device to access the site
+2. Open Command Prompt and run:
+   ```powershell
+   ping ai-resume-builder-jk.up.railway.app
+   ```
+3. Note the IP address shown
+
+**Add to Hosts File**:
+1. Open Notepad as Administrator
+2. Open file: `C:\Windows\System32\drivers\etc\hosts`
+3. Add line at the end:
+   ```
+   [IP_ADDRESS] ai-resume-builder-jk.up.railway.app
+   ```
+   (Replace `[IP_ADDRESS]` with the actual IP)
+4. Save and restart browser
+
+**Note**: This is temporary - Railway IPs can change. Use DNS solutions above for permanent fix.
+
+#### Why This Happens
+
+- **ISP DNS Issues**: Some ISPs have slow or unreliable DNS servers
+- **DNS Caching**: Your device/router cached a bad DNS response
+- **Network Filtering**: Some networks (schools, offices) block certain domains
+- **Geographic DNS**: Some regions have DNS propagation delays
+
+**Best Solution**: Change to Google DNS (`8.8.8.8`) or Cloudflare DNS (`1.1.1.1`) - this fixes 90% of DNS issues.
+
 ### Application Won't Start - Other Errors
 
 **Check Logs**:
