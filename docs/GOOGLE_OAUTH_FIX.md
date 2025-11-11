@@ -29,6 +29,10 @@ You can find it in:
    ```
    https://ai-resume-builder-jk.up.railway.app/accounts/google/login/callback/
    ```
+   **Your specific redirect URI:**
+   ```
+   https://ai-resume-builder-jk.up.railway.app/accounts/google/login/callback/
+   ```
    ⚠️ **IMPORTANT**: 
    - Must use `https://` (not `http://`)
    - Must end with `/accounts/google/login/callback/`
@@ -79,10 +83,15 @@ The Site model in Django must match your Railway domain:
    ```python
    from django.contrib.sites.models import Site
    site = Site.objects.get(id=1)
-   site.domain = 'ai-resume-builder-jk.up.railway.app'  # Replace with your domain
+   site.domain = 'ai-resume-builder-jk.up.railway.app'  # Your Railway domain
    site.name = 'AI Resume Builder'
    site.save()
    print(f"Site updated: {site.domain}")
+   ```
+   
+   **Or run this single command:**
+   ```bash
+   railway run python manage.py shell -c "from django.contrib.sites.models import Site; site = Site.objects.get(id=1); site.domain = 'ai-resume-builder-jk.up.railway.app'; site.name = 'AI Resume Builder'; site.save(); print(f'Site updated: {site.domain}')"
    ```
 
 2. **Via Django Admin (if accessible):**
