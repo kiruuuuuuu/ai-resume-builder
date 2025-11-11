@@ -1031,6 +1031,53 @@ Addresses:  [some IP addresses]
 
 **Best Solution**: Change to Google DNS (`8.8.8.8`) or Cloudflare DNS (`1.1.1.1`) - this fixes 90% of DNS issues.
 
+#### Solution 8: Change Router DNS (If Affecting All Devices)
+
+**If the issue affects multiple devices** (phone, computer, etc.) on the same network:
+
+1. **Access Router Admin Panel**:
+   - Open browser and go to: `http://192.168.1.1` or `http://192.168.0.1` or `http://10.0.0.1`
+   - Login with admin credentials (check router sticker/manual)
+
+2. **Find DNS Settings**:
+   - Look for: "Internet Settings", "WAN Settings", "DNS Settings", or "Network Settings"
+   - Common path: Advanced → DNS or Internet → DNS
+
+3. **Change DNS Servers**:
+   - Change from "Automatic" to "Manual"
+   - **Primary DNS**: `8.8.8.8` (Google)
+   - **Secondary DNS**: `8.8.4.4` (Google backup)
+   - **OR Cloudflare**: `1.1.1.1` and `1.0.0.1`
+
+4. **Save and Restart Router**:
+   - Click "Save" or "Apply"
+   - Restart router (wait 2-3 minutes)
+
+5. **Test on All Devices**:
+   - Restart Wi-Fi on phone and computer
+   - Try accessing site again
+
+**Why Router DNS Change**: If multiple devices have the same issue, it's the router's DNS blocking Railway domains. Changing router DNS fixes all devices at once.
+
+#### Solution 9: Change DNS on Mobile Devices
+
+**Android**:
+1. Settings → Wi-Fi
+2. Long-press your Wi-Fi network → "Modify network"
+3. Advanced options → IP settings: Change to "Static"
+4. Scroll to DNS 1 and DNS 2:
+   - DNS 1: `8.8.8.8`
+   - DNS 2: `8.8.4.4`
+5. Save and reconnect
+
+**iPhone/iOS**:
+1. Settings → Wi-Fi
+2. Tap (i) icon next to your network
+3. Scroll to "Configure DNS" → "Manual"
+4. Remove existing DNS servers (tap minus)
+5. Add: `8.8.8.8` and `8.8.4.4`
+6. Save
+
 ### Application Won't Start - Other Errors
 
 **Check Logs**:
