@@ -17,10 +17,10 @@
                 </svg>
             </div>
             <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-4 drop-shadow-lg animate-fade-in-up delay-100">
-                Sign In Via {% if provider.name %}{{ provider.name }}{% else %}Google{% endif %}
+                Sign In Via {% if provider.id == "github" %}GitHub{% else %}Google{% endif %}
             </h1>
             <p class="text-lg text-indigo-100 animate-fade-in-up delay-200">
-                You are about to sign in using a third-party account from {% if provider.name %}{{ provider.name }}{% else %}Google{% endif %}.
+                You are about to sign in using a third-party account from {% if provider.id == "github" %}GitHub{% else %}Google{% endif %}.
             </p>
         </div>
         
@@ -55,7 +55,7 @@
                 
                 <div class="text-center space-y-4">
                     <p class="text-gray-700 text-sm">
-                        By continuing, you will be authenticated with your {% if provider.name %}{{ provider.name }}{% else %}Google{% endif %} account and redirected to your dashboard.
+                        By continuing, you will be authenticated with your {% if provider.id == "github" %}GitHub{% else %}Google{% endif %} account and redirected to your dashboard.
                     </p>
                     
                     {% if form.errors %}
