@@ -265,6 +265,27 @@ USE_GEMINI=True
 GEMINI_MODEL=models/gemini-2.5-flash
 ```
 
+#### Social Login (Google OAuth)
+
+```
+GOOGLE_OAUTH2_CLIENT_ID=your-google-oauth-client-id
+GOOGLE_OAUTH2_CLIENT_SECRET=your-google-oauth-client-secret
+```
+
+**How to Get Google OAuth Credentials**:
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable **Google+ API** (or Google Identity Services)
+4. Go to **Credentials** → **Create Credentials** → **OAuth client ID**
+5. Choose **Web application**
+6. Add authorized redirect URI: `https://your-railway-domain.up.railway.app/accounts/google/login/callback/`
+   - Replace `your-railway-domain` with your actual Railway domain
+   - Example: `https://ai-resume-builder-jk.up.railway.app/accounts/google/login/callback/`
+7. Copy the **Client ID** and **Client Secret**
+8. Add them to Railway variables as shown above
+
+**Note**: You can add multiple redirect URIs (development and production) to the same OAuth client.
+
 #### Celery Configuration (Auto-set from Redis)
 
 Railway automatically sets these when you add Redis:

@@ -330,13 +330,23 @@ SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'  # Set to 'mandatory' if you want emai
 SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_STORE_TOKENS = False
 
-# Google OAuth Settings (set these in your .env file)
-# GOOGLE_OAUTH2_CLIENT_ID = os.getenv('GOOGLE_OAUTH2_CLIENT_ID', '')
-# GOOGLE_OAUTH2_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH2_CLIENT_SECRET', '')
-
-# GitHub OAuth Settings (set these in your .env file)
-# GITHUB_CLIENT_ID = os.getenv('GITHUB_CLIENT_ID', '')
-# GITHUB_CLIENT_SECRET = os.getenv('GITHUB_CLIENT_SECRET', '')
+# Social Account Providers Configuration (django-allauth)
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': os.getenv('GOOGLE_OAUTH2_CLIENT_ID', ''),
+            'secret': os.getenv('GOOGLE_OAUTH2_CLIENT_SECRET', ''),
+            'key': ''
+        }
+    },
+    'github': {
+        'APP': {
+            'client_id': os.getenv('GITHUB_CLIENT_ID', ''),
+            'secret': os.getenv('GITHUB_CLIENT_SECRET', ''),
+            'key': ''
+        }
+    }
+}
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
