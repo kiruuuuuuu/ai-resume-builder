@@ -157,22 +157,22 @@ python manage.py runserver
 **🌐 Live Application**: [https://ai-resume-builder-jk.up.railway.app/](https://ai-resume-builder-jk.up.railway.app/)
 
 For production deployment instructions, see:
-- **[RAILWAY_DEPLOYMENT_GUIDE.md](RAILWAY_DEPLOYMENT_GUIDE.md)** - ⭐ **Recommended: FREE tier, no payment method required**
-- **[PRE_DEPLOYMENT_CHECKLIST.md](PRE_DEPLOYMENT_CHECKLIST.md)** - Pre-deployment checklist
+- **[Railway Deployment Guide](docs/RAILWAY_DEPLOYMENT_GUIDE.md)** - ⭐ **Recommended: FREE tier, no payment method required**
 - **[SECURITY_FIXES_GUIDE.md](SECURITY_FIXES_GUIDE.md)** - Security fixes and improvements
 
 ### 🎯 Quick Recommendation
 
 **For Free Deployment (No Payment Method)**:
-- Use **[Railway.app](RAILWAY_DEPLOYMENT_GUIDE.md)** - FREE tier, no credit card required, includes PostgreSQL and Redis
+- Use **[Railway.app](docs/RAILWAY_DEPLOYMENT_GUIDE.md)** - FREE tier, no credit card required, includes PostgreSQL and Redis
 
 ## 📚 Documentation
 
 ### Main Documentation Files
 
 - **[Complete Documentation](docs/DOCUMENTATION.md)** - Comprehensive setup, configuration, and feature guides
-- **[RAILWAY_DEPLOYMENT_GUIDE.md](RAILWAY_DEPLOYMENT_GUIDE.md)** - Complete Railway.app deployment guide with step-by-step instructions
-- **[PRE_DEPLOYMENT_CHECKLIST.md](PRE_DEPLOYMENT_CHECKLIST.md)** - Pre-deployment checklist and status
+- **[Railway Deployment Guide](docs/RAILWAY_DEPLOYMENT_GUIDE.md)** - Complete Railway.app deployment guide with step-by-step instructions
+- **[Admin Setup Guide](docs/ADMIN_SETUP_GUIDE.md)** - How to create admin users and access admin dashboard
+- **[Future Work](docs/FUTURE_WORK.md)** - Remaining work and future improvements
 - **[SECURITY_FIXES_GUIDE.md](SECURITY_FIXES_GUIDE.md)** - Security fixes, improvements, and checklist
 - **[ADMIN_SETUP_GUIDE.md](ADMIN_SETUP_GUIDE.md)** - How to create admin user and access admin dashboard
 - **[TEST_EXECUTION_GUIDE.md](TEST_EXECUTION_GUIDE.md)** - How to run tests and test coverage
@@ -274,7 +274,7 @@ python manage.py test
 - [ ] Set up SSL certificates
 - [ ] Configure process management (systemd/supervisor)
 
-For detailed deployment instructions, see **[RAILWAY_DEPLOYMENT_GUIDE.md](RAILWAY_DEPLOYMENT_GUIDE.md)**.
+For detailed deployment instructions, see **[Railway Deployment Guide](docs/RAILWAY_DEPLOYMENT_GUIDE.md)**.
 
 ## 🐛 Troubleshooting
 
