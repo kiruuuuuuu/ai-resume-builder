@@ -158,7 +158,6 @@ python manage.py runserver
 
 For production deployment instructions, see:
 - **[Railway Deployment Guide](docs/RAILWAY_DEPLOYMENT_GUIDE.md)** - ⭐ **Recommended: FREE tier, no payment method required**
-- **[SECURITY_FIXES_GUIDE.md](SECURITY_FIXES_GUIDE.md)** - Security fixes and improvements
 
 ### 🎯 Quick Recommendation
 
@@ -173,10 +172,6 @@ For production deployment instructions, see:
 - **[Railway Deployment Guide](docs/RAILWAY_DEPLOYMENT_GUIDE.md)** - Complete Railway.app deployment guide with step-by-step instructions
 - **[Admin Setup Guide](docs/ADMIN_SETUP_GUIDE.md)** - How to create admin users and access admin dashboard
 - **[Future Work](docs/FUTURE_WORK.md)** - Remaining work and future improvements
-- **[SECURITY_FIXES_GUIDE.md](SECURITY_FIXES_GUIDE.md)** - Security fixes, improvements, and checklist
-- **[ADMIN_SETUP_GUIDE.md](ADMIN_SETUP_GUIDE.md)** - How to create admin user and access admin dashboard
-- **[TEST_EXECUTION_GUIDE.md](TEST_EXECUTION_GUIDE.md)** - How to run tests and test coverage
-- **[REMAINING_WORK.md](REMAINING_WORK.md)** - Remaining tasks and improvements
 
 ### Quick Links
 
