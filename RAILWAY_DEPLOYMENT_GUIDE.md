@@ -1031,6 +1031,152 @@ Addresses:  [some IP addresses]
 
 **Best Solution**: Change to Google DNS (`8.8.8.8`) or Cloudflare DNS (`1.1.1.1`) - this fixes 90% of DNS issues.
 
+### Chrome-Specific Issue: Works in Other Browsers But Not Chrome
+
+**Symptoms**:
+- Site works in Edge, Firefox, Safari, etc.
+- Site doesn't work in Chrome (desktop or mobile)
+- DNS resolution works fine (other browsers can access)
+- Error: "This site can't be reached" or "DNS_PROBE_FINISHED_NXDOMAIN"
+
+**This is a Chrome-specific issue, NOT a DNS problem!**
+
+**Solutions** (Try in order):
+
+#### Solution 1: Clear Chrome DNS Cache
+
+**Desktop Chrome**:
+1. Open Chrome
+2. Go to: `chrome://net-internals/#dns`
+3. Click **"Clear host cache"** button
+4. Try accessing the site again
+
+**Mobile Chrome**:
+- Clear Chrome app cache: Settings → Apps → Chrome → Storage → Clear Cache
+- Or reinstall Chrome app
+
+#### Solution 2: Disable Chrome's DNS-over-HTTPS (DoH)
+
+**Why**: Chrome's built-in DoH might be using a DNS server that blocks Railway domains.
+
+**Desktop Chrome**:
+1. Go to: `chrome://settings/security`
+2. Scroll to **"Advanced"** → **"Privacy and security"**
+3. Find **"Use secure DNS"** or **"DNS over HTTPS"**
+4. Turn it **OFF** (or change to "With your current service provider")
+5. Restart Chrome
+
+**Alternative Method**:
+1. Go to: `chrome://flags/#dns-over-https`
+2. Set to **"Disabled"**
+3. Restart Chrome
+
+**Mobile Chrome**:
+1. Chrome → Settings (three dots) → Settings
+2. Privacy and security → Use secure DNS
+3. Turn OFF or select "With your current service provider"
+
+#### Solution 3: Clear Chrome Cache and Cookies
+
+**Desktop Chrome**:
+1. Press `Ctrl + Shift + Delete` (or `Cmd + Shift + Delete` on Mac)
+2. Select **"All time"** or **"Cached images and files"**
+3. Check **"Cookies and other site data"** (optional)
+4. Click **"Clear data"**
+5. Restart Chrome
+
+**Mobile Chrome**:
+1. Chrome → Settings → Privacy and security
+2. Clear browsing data
+3. Select "All time"
+4. Check "Cached images and files" and "Cookies and site data"
+5. Clear data
+
+#### Solution 4: Disable Chrome Extensions
+
+**Desktop Chrome**:
+1. Go to: `chrome://extensions/`
+2. Disable all extensions (toggle OFF)
+3. Try accessing the site
+4. If it works, enable extensions one by one to find the culprit
+
+**Common problematic extensions**:
+- Ad blockers
+- Privacy/VPN extensions
+- Security extensions
+
+#### Solution 5: Reset Chrome Network Settings
+
+**Desktop Chrome**:
+1. Go to: `chrome://net-internals/#dns`
+2. Click **"Clear host cache"**
+3. Go to: `chrome://net-internals/#sockets`
+4. Click **"Flush socket pools"**
+5. Restart Chrome
+
+#### Solution 6: Disable Chrome Safe Browsing (Temporary Test)
+
+**Desktop Chrome**:
+1. Go to: `chrome://settings/privacy`
+2. Scroll to **"Security"**
+3. Turn OFF **"Safe Browsing"** (temporarily to test)
+4. Try accessing the site
+5. If it works, Safe Browsing might be blocking it - turn it back ON and add exception
+
+**Note**: Only disable temporarily for testing. Re-enable for security.
+
+#### Solution 7: Use Chrome Incognito Mode
+
+**Test if it's a cache/cookie issue**:
+1. Press `Ctrl + Shift + N` (or `Cmd + Shift + N` on Mac)
+2. Try accessing the site in Incognito
+3. If it works, it's a cache/cookie issue - use Solution 3
+
+#### Solution 8: Reset Chrome Settings (Last Resort)
+
+**Desktop Chrome**:
+1. Go to: `chrome://settings/reset`
+2. Click **"Restore settings to their original defaults"**
+3. Confirm
+4. Restart Chrome
+
+**Warning**: This will reset all Chrome settings, extensions, and saved passwords.
+
+#### Solution 9: Mobile Chrome Specific Fixes
+
+**Android Chrome**:
+1. **Clear Chrome Data**:
+   - Settings → Apps → Chrome → Storage → Clear Data
+   
+2. **Disable Chrome Updates** (temporarily):
+   - Play Store → Chrome → Uninstall updates (if possible)
+   - Reinstall Chrome
+
+3. **Use Chrome Beta**:
+   - Install Chrome Beta from Play Store
+   - Test if it works
+
+4. **Reset Chrome**:
+   - Chrome → Settings → Advanced → Reset and clean up → Reset settings
+
+**iPhone Chrome**:
+1. **Clear Chrome Data**:
+   - Chrome → Settings → Privacy → Clear browsing data
+   
+2. **Reinstall Chrome**:
+   - Delete Chrome app
+   - Reinstall from App Store
+
+#### Why This Happens
+
+- **Chrome's DNS Cache**: Chrome caches DNS responses aggressively
+- **DNS-over-HTTPS**: Chrome's DoH might use different DNS servers
+- **Safe Browsing**: Chrome's security feature might flag the domain
+- **Extensions**: Ad blockers or security extensions might interfere
+- **Cache Issues**: Corrupted cache/cookies in Chrome
+
+**Most Common Fix**: Clear Chrome DNS cache (`chrome://net-internals/#dns`) + Disable DoH (`chrome://settings/security`)
+
 #### Solution 8: Change Router DNS (If Affecting All Devices)
 
 **If the issue affects multiple devices** (phone, computer, etc.) on the same network:
