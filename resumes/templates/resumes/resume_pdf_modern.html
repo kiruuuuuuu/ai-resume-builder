@@ -163,45 +163,69 @@
             letter-spacing: 0.5px;
             border-bottom: 1.5px solid {{ accent_color|default:'#3498db' }};
             padding-bottom: 2px; /* Reduced padding */
-            margin: 2px 0 0 0; /* Zero bottom margin - no gap after header */
+            margin: 2px 0 -2px 0 !important; /* Negative bottom margin to eliminate gaps */
+            line-height: 1.1 !important; /* Tight line height to reduce spacing */
             font-weight: 700;
             flex-shrink: 0;
         }
         .item {
-            margin-bottom: 3px; /* Further reduced gap between items */
-            margin-top: 0; /* No top margin to avoid gaps before first item */
+            margin-bottom: 2px; /* Minimal gap between items */
+            margin-top: 0 !important; /* Force no top margin */
+            padding-top: 0;
             page-break-inside: avoid;
         }
-        /* Remove margin from first item in each section */
+        /* Aggressively remove margin from first item in each section */
         section > .item:first-child {
-            margin-top: 0;
+            margin-top: 0 !important;
+            padding-top: 0 !important;
         }
         /* Reduce spacing for list items within achievements/certifications */
         section > .description-list {
-            margin-top: 0; /* No top margin - h2 bottom margin is enough */
+            margin-top: -1px !important; /* Negative margin to eliminate gap after h2 */
+            padding-top: 0;
         }
         /* Reduce spacing between consecutive items */
         .item + .item {
-            margin-top: 1px; /* Minimal spacing between consecutive items */
+            margin-top: 0 !important; /* No spacing between consecutive items */
         }
-        /* Ensure no gap after h2 before first content */
+        /* Aggressively ensure no gap after h2 before first content */
         section h2 + .item,
-        section h2 + .description-list {
-            margin-top: 0 !important; /* Force no gap */
+        section h2 + .description-list,
+        section h2 + div {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
         }
-        /* Remove any margin/padding from section that might create gaps */
+        /* Remove ALL margins/padding from section that might create gaps */
         section {
-            padding-top: 0;
-            padding-bottom: 0;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin-top: 0;
+            margin-bottom: 0;
         }
-        /* Ensure items have minimal spacing */
+        /* Force items to have zero spacing */
         section .item {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        /* Remove default margins from p, ul, li elements inside sections */
+        section p,
+        section ul,
+        section li {
+            margin-top: 0;
+            margin-bottom: 0;
+            padding-top: 0;
+        }
+        /* Remove spacing from subtitle and project-aim after h2 */
+        section h2 + * .subtitle,
+        section h2 + * .project-aim {
             margin-top: 0;
         }
         .item-header {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
         .title {
             font-size: 12pt; /* Increased font size */
@@ -212,6 +236,9 @@
             font-size: 11pt; /* Increased font size */
             color: #555;
             font-style: italic;
+            margin-top: 0;
+            margin-bottom: 2px; /* Minimal margin */
+            line-height: 1.2; /* Tighter line height */
         }
         .project-aim {
             font-style: normal;
@@ -224,23 +251,28 @@
             padding-left: 10px;
         }
         .description-list {
-            margin: 1px 0 0 0; /* Further reduced gap */
+            margin: 0 !important; /* Zero margin - no gap */
             padding-left: 14px;
+            padding-top: 0;
             list-style-type: disc;
             list-style-position: outside;
         }
         .description-list li {
-            margin-bottom: 2px; /* Reduced gap between items */
+            margin-bottom: 1px; /* Minimal gap between items */
+            margin-top: 0;
             padding-left: 2px;
+            padding-top: 0;
             text-align: justify;
-            line-height: 1.3; /* Comfortable line height */
+            line-height: 1.25; /* Tighter line height */
             font-size: 10pt; /* Increased font size */
         }
         .tech-details {
             font-size: 10pt; /* Increased font size */
             color: #444;
-            margin-top: 2px; /* Further reduced gap */
-            line-height: 1.3;
+            margin-top: 0 !important; /* Zero margin */
+            margin-bottom: 0;
+            padding-top: 0;
+            line-height: 1.25; /* Tighter line height */
         }
         section {
             page-break-inside: avoid;
