@@ -16,12 +16,25 @@ class CustomAccountAdapter(DefaultAccountAdapter):
     def get_login_redirect_url(self, request):
         """
         Override the default login redirect URL to redirect based on user type.
+        For new social signups, redirect to dashboard if they don't have a resume yet.
         """
         user = request.user
         
         # Check if user is authenticated and has a user_type
         if user.is_authenticated and hasattr(user, 'user_type'):
             if user.user_type == 'job_seeker':
+                # Check if this is a new user (first login via social) without a resume
+                try:
+                    profile = user.jobseekerprofile
+                    from resumes.models import Resume
+                    # Check if user has any resume
+                    if not Resume.objects.filter(profile=profile).exists():
+                        # New user - redirect to dashboard to show upload/build options
+                        return reverse('resumes:resume-dashboard')
+                except:
+                    # Profile doesn't exist - redirect to dashboard
+                    return reverse('resumes:resume-dashboard')
+                # User has resume - go to builder
                 return reverse('resumes:resume-builder')
             elif user.user_type == 'employer':
                 return reverse('jobs:my-jobs')
@@ -32,12 +45,26 @@ class CustomAccountAdapter(DefaultAccountAdapter):
     def get_signup_redirect_url(self, request):
         """
         Override the default signup redirect URL to redirect based on user type.
+        For new job seekers, redirect to dashboard (upload/build options) instead of builder.
         """
         user = request.user
         
         # Check if user is authenticated and has a user_type
         if user.is_authenticated and hasattr(user, 'user_type'):
             if user.user_type == 'job_seeker':
+                # For new users, redirect to dashboard to show upload/build options
+                # Check if user has a resume - if not, go to dashboard
+                try:
+                    profile = user.jobseekerprofile
+                    # Check if resume exists
+                    from resumes.models import Resume
+                    if not Resume.objects.filter(profile=profile).exists():
+                        # New user without resume - show dashboard with options
+                        return reverse('resumes:resume-dashboard')
+                except:
+                    # Profile doesn't exist yet - go to dashboard
+                    return reverse('resumes:resume-dashboard')
+                # User has a resume - go to builder
                 return reverse('resumes:resume-builder')
             elif user.user_type == 'employer':
                 return reverse('users:employer-onboarding')
@@ -86,4 +113,17 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
             EmployerProfile.objects.get_or_create(user=user)
         
         return user
+    
+    def get_connect_redirect_url(self, request, socialaccount):
+        """
+        Redirect URL after connecting a social account.
+        """
+        # Use the same logic as signup redirect
+        return super().get_connect_redirect_url(request, socialaccount)
+    
+    def is_auto_signup_allowed(self, request, sociallogin):
+        """
+        Allow automatic signup for social accounts.
+        """
+        return True
 
