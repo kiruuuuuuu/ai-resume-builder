@@ -204,12 +204,16 @@ def edit_profile_view(request):
         elif request.POST.get('active_tab'):
             active_tab = request.POST.get('active_tab')
     
+    # Get list of connected provider IDs for template
+    connected_providers = [account.provider for account in social_accounts]
+    
     context = {
         'credentials_form': credentials_form,
         'password_form': password_form,
         'active_tab': active_tab,
         'has_password': has_password,
         'social_accounts': social_accounts,
+        'connected_providers': connected_providers,
     }
     
     return render(request, 'users/edit_profile.html', context)
