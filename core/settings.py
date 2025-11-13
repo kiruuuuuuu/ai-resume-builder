@@ -55,6 +55,21 @@ if not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ['.railway.app', '.up.railway.app']
     # Also add specific common Railway patterns
     ALLOWED_HOSTS.extend(['railway.app', 'up.railway.app'])
+    
+    # Try to get actual Railway domain from environment variables
+    # Railway provides these automatically in production
+    railway_public_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN') or os.getenv('RAILWAY_STATIC_URL')
+    if railway_public_domain:
+        # Remove http:// or https:// if present
+        railway_public_domain = railway_public_domain.replace('http://', '').replace('https://', '').strip()
+        if railway_public_domain:
+            # Add the actual Railway domain to ALLOWED_HOSTS
+            ALLOWED_HOSTS.append(railway_public_domain)
+            # Also add without www if present
+            if railway_public_domain.startswith('www.'):
+                ALLOWED_HOSTS.append(railway_public_domain.replace('www.', ''))
+            else:
+                ALLOWED_HOSTS.append(f'www.{railway_public_domain}')
 
 # Production Security Settings (only enabled when DEBUG=False)
 if not DEBUG:
@@ -100,12 +115,28 @@ if not DEBUG:
                 railway_domain = f'https://{railway_domain}'
             CSRF_TRUSTED_ORIGINS = [railway_domain]
         # If ALLOWED_HOSTS is set with specific domains, use those for CSRF
-        elif ALLOWED_HOSTS and ALLOWED_HOSTS != ['.railway.app', '.up.railway.app']:
-            # Use the first allowed host (assuming it's the main domain)
-            # Note: This is a fallback - ideally set CSRF_TRUSTED_ORIGINS explicitly
-            main_host = ALLOWED_HOSTS[0]
-            if not main_host.startswith('.'):
-                CSRF_TRUSTED_ORIGINS = [f'https://{main_host}']
+        elif ALLOWED_HOSTS:
+            # Build CSRF_TRUSTED_ORIGINS from ALLOWED_HOSTS
+            # Skip wildcard domains (those starting with .)
+            trusted_origins = []
+            for host in ALLOWED_HOSTS:
+                if not host.startswith('.'):
+                    # Add both http and https (though https is preferred)
+                    trusted_origins.append(f'https://{host}')
+                    # Also add www variant if not present
+                    if not host.startswith('www.'):
+                        trusted_origins.append(f'https://www.{host}')
+            if trusted_origins:
+                CSRF_TRUSTED_ORIGINS = list(set(trusted_origins))  # Remove duplicates
+            else:
+                # Fallback: try to construct from Railway environment
+                railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN') or os.getenv('RAILWAY_STATIC_URL')
+                if railway_domain:
+                    railway_domain = railway_domain.replace('http://', '').replace('https://', '').strip()
+                    if railway_domain:
+                        CSRF_TRUSTED_ORIGINS = [f'https://{railway_domain}']
+                        if not railway_domain.startswith('www.'):
+                            CSRF_TRUSTED_ORIGINS.append(f'https://www.{railway_domain}')
 else:
     # Development settings (less strict for local development)
     SECURE_SSL_REDIRECT = False
