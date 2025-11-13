@@ -343,7 +343,9 @@ if RESEND_API_KEY:
     ANYMAIL = {
         "RESEND_API_KEY": RESEND_API_KEY,
     }
-    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@ai-resume-builder.com').strip()
+    # Default from email - Resend free tier allows onboarding@resend.dev without verification
+    # You can override this with DEFAULT_FROM_EMAIL env variable to use your own email
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'onboarding@resend.dev').strip()
     SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL).strip()
 else:
     # Fallback to console backend (development)

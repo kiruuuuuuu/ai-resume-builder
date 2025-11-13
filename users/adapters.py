@@ -27,20 +27,25 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         """
         try:
             return super().send_mail(template_prefix, email, context)
-        except OSError as e:
-            # Network errors (e.g., Railway blocking SMTP)
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Failed to send email: {str(e)}")
-            logger.error("Email sending failed - this may be due to Railway network restrictions.")
-            logger.error("Consider using an email service like SendGrid, Mailgun, or Resend.")
-            # Re-raise to let django-allauth handle the error
-            raise
         except Exception as e:
-            # Other email errors
+            # Handle all email errors (network, API, validation, etc.)
             import logging
             logger = logging.getLogger(__name__)
-            logger.error(f"Failed to send email: {str(e)}")
+            error_msg = str(e)
+            logger.error(f"Failed to send email: {error_msg}")
+            
+            # Check if it's a domain verification error from Resend
+            if 'domain is not verified' in error_msg.lower() or 'validation_error' in error_msg.lower():
+                logger.error("Resend Error: Domain verification required")
+                logger.error("ACTION: Use onboarding@resend.dev as from email (works without verification)")
+                logger.error("ACTION: Or verify your domain at https://resend.com/domains")
+                logger.error("ACTION: Or set DEFAULT_FROM_EMAIL to an email address you own")
+            elif isinstance(e, OSError):
+                # Network errors (e.g., Railway blocking SMTP)
+                logger.error("Email sending failed - this may be due to Railway network restrictions.")
+                logger.error("Consider using an email service like SendGrid, Mailgun, or Resend.")
+            
+            # Re-raise to let django-allauth handle the error
             raise
     
     def get_login_redirect_url(self, request):
