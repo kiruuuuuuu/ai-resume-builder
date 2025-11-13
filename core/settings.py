@@ -387,36 +387,65 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-# Log OAuth configuration status (for debugging - always log in production)
+# OAuth configuration validation (prints to stdout for Railway logs)
 # This helps diagnose OAuth issues in Railway logs
-import logging
-oauth_logger = logging.getLogger(__name__)
+# Using print() to ensure messages appear in Railway logs immediately
+print("\n" + "="*60)
+print("OAuth Configuration Check")
+print("="*60)
 
 if GOOGLE_OAUTH2_CLIENT_ID:
     # Validate Client ID format
     if GOOGLE_OAUTH2_CLIENT_ID.endswith('.apps.googleusercontent.com'):
-        oauth_logger.info(f'✅ Google OAuth Client ID configured: {GOOGLE_OAUTH2_CLIENT_ID[:30]}...')
+        print(f"✅ Google OAuth Client ID configured: {GOOGLE_OAUTH2_CLIENT_ID[:30]}...")
     else:
-        oauth_logger.error(f'❌ Google OAuth Client ID format is INCORRECT: {GOOGLE_OAUTH2_CLIENT_ID[:50]}...')
-        oauth_logger.error('   Client ID should end with .apps.googleusercontent.com')
-        oauth_logger.error('   This will cause "invalid_client" error!')
+        print(f"❌ Google OAuth Client ID format is INCORRECT: {GOOGLE_OAUTH2_CLIENT_ID[:50]}...")
+        print("   ERROR: Client ID should end with .apps.googleusercontent.com")
+        print("   ERROR: This will cause 'invalid_client' error!")
+        print("   ERROR: Please check Railway variable GOOGLE_OAUTH2_CLIENT_ID")
 else:
-    oauth_logger.warning('⚠️ Google OAuth Client ID NOT SET - Google login will not work')
+    print("⚠️  WARNING: Google OAuth Client ID NOT SET - Google login will not work")
+    print("   ACTION: Set GOOGLE_OAUTH2_CLIENT_ID in Railway Variables")
 
 if GOOGLE_OAUTH2_CLIENT_SECRET:
-    oauth_logger.info('✅ Google OAuth Client Secret configured')
+    print("✅ Google OAuth Client Secret configured")
 else:
-    oauth_logger.warning('⚠️ Google OAuth Client Secret NOT SET - Google login will not work')
+    print("⚠️  WARNING: Google OAuth Client Secret NOT SET - Google login will not work")
+    print("   ACTION: Set GOOGLE_OAUTH2_CLIENT_SECRET in Railway Variables")
 
 if GITHUB_CLIENT_ID:
-    oauth_logger.info(f'✅ GitHub OAuth Client ID configured: {GITHUB_CLIENT_ID[:20]}...')
+    print(f"✅ GitHub OAuth Client ID configured: {GITHUB_CLIENT_ID[:20]}...")
 else:
-    oauth_logger.warning('⚠️ GitHub OAuth Client ID NOT SET - GitHub login will not work')
+    print("⚠️  WARNING: GitHub OAuth Client ID NOT SET - GitHub login will not work")
 
 if GITHUB_CLIENT_SECRET:
-    oauth_logger.info('✅ GitHub OAuth Client Secret configured')
+    print("✅ GitHub OAuth Client Secret configured")
 else:
-    oauth_logger.warning('⚠️ GitHub OAuth Client Secret NOT SET - GitHub login will not work')
+    print("⚠️  WARNING: GitHub OAuth Client Secret NOT SET - GitHub login will not work")
+
+print("="*60 + "\n")
+
+# Also log using Django logging (for completeness)
+import logging
+oauth_logger = logging.getLogger(__name__)
+
+if GOOGLE_OAUTH2_CLIENT_ID:
+    if GOOGLE_OAUTH2_CLIENT_ID.endswith('.apps.googleusercontent.com'):
+        oauth_logger.info(f'Google OAuth Client ID configured: {GOOGLE_OAUTH2_CLIENT_ID[:30]}...')
+    else:
+        oauth_logger.error(f'Google OAuth Client ID format is INCORRECT: {GOOGLE_OAUTH2_CLIENT_ID[:50]}...')
+        oauth_logger.error('Client ID should end with .apps.googleusercontent.com')
+else:
+    oauth_logger.warning('Google OAuth Client ID NOT SET')
+
+if not GOOGLE_OAUTH2_CLIENT_SECRET:
+    oauth_logger.warning('Google OAuth Client Secret NOT SET')
+
+if not GITHUB_CLIENT_ID:
+    oauth_logger.warning('GitHub OAuth Client ID NOT SET')
+
+if not GITHUB_CLIENT_SECRET:
+    oauth_logger.warning('GitHub OAuth Client Secret NOT SET')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
