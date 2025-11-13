@@ -381,6 +381,17 @@ elif EMAIL_BACKEND == 'anymail.backends.resend.EmailBackend':
         print("   ACTION: Set RESEND_API_KEY in Railway Variables")
         print("   ACTION: Get your API key from https://resend.com/api-keys")
     print(f"✅ Default from email: {DEFAULT_FROM_EMAIL}")
+    
+    # Warn if using a custom domain that might not be verified
+    if '@resend.dev' not in DEFAULT_FROM_EMAIL:
+        print("⚠️  WARNING: Using custom domain in FROM email address")
+        print(f"   Domain: {DEFAULT_FROM_EMAIL.split('@')[1] if '@' in DEFAULT_FROM_EMAIL else 'unknown'}")
+        print("   ACTION: Verify this domain in Resend at https://resend.com/domains")
+        print("   ACTION: Or use 'onboarding@resend.dev' (works without verification)")
+        print("   ACTION: Or remove DEFAULT_FROM_EMAIL from Railway to use default")
+    else:
+        print("✅ Using Resend default domain (no verification needed)")
+    
     print("✅ Resend free tier: 100 emails/day")
 else:
     print(f"✅ Email backend configured: {EMAIL_BACKEND}")
