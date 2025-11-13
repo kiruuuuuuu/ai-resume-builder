@@ -26,6 +26,41 @@
         </div>
         
         <div class="bg-white/95 backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-white/20 animate-scale-in delay-300">
+            <!-- Check if there are errors indicating existing account -->
+            {% if form.email.errors or form.username.errors %}
+                {% for error in form.email.errors %}
+                    {% if "already exists" in error|lower or "sign in" in error|lower %}
+                        <div class="mb-6 rounded-md bg-yellow-50 p-4 border border-yellow-200" role="alert">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-yellow-800 mb-2">Account Already Exists</h3>
+                                    <p class="text-sm text-yellow-700 mb-3">
+                                        An account with this email address already exists. You can either:
+                                    </p>
+                                    <div class="space-y-2">
+                                        <a href="{% url 'users:login' %}" 
+                                           class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                                            </svg>
+                                            Login and Connect Account
+                                        </a>
+                                        <p class="text-xs text-yellow-600">
+                                            After logging in, go to Edit Profile → Social Accounts to connect your {% if provider %}{% if provider.id == "github" %}GitHub{% else %}Google{% endif %}{% else %}Google{% endif %} account.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+
             <form method="post" class="space-y-6">
                 {% csrf_token %}
                 
@@ -44,10 +79,15 @@
                                id="{{ form.email.id_for_label }}"
                                value="{{ form.email.value|default:'' }}"
                                required
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white text-gray-900"
-                               placeholder="Enter your email">
+                               class="w-full px-4 py-3 border-2 {% if form.email.errors %}border-red-500 bg-red-50{% else %}border-gray-300{% endif %} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white text-gray-900"
+                               placeholder="Enter your email"
+                               autocomplete="email">
                         {% if form.email.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                            {% for error in form.email.errors %}
+                                {% if "already exists" not in error|lower and "sign in" not in error|lower %}
+                                    <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                                {% endif %}
+                            {% endfor %}
                         {% endif %}
                     </div>
                     {% endif %}
@@ -62,15 +102,33 @@
                                id="{{ form.username.id_for_label }}"
                                value="{{ form.username.value|default:'' }}"
                                required
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white text-gray-900"
-                               placeholder="Username">
+                               class="w-full px-4 py-3 border-2 {% if form.username.errors %}border-red-500 bg-red-50{% else %}border-gray-300{% endif %} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white text-gray-900"
+                               placeholder="Username"
+                               autocomplete="username">
                         {% if form.username.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.username.errors.0 }}</p>
+                            {% for error in form.username.errors %}
+                                {% if "already exists" not in error|lower %}
+                                    <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        {% if form.username.errors %}
+                            {% for error in form.username.errors %}
+                                {% if "already exists" in error|lower %}
+                                    <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <p class="text-sm text-blue-800">
+                                            <strong>Tip:</strong> This username is already taken. Please choose a different username, or 
+                                            <a href="{% url 'users:login' %}" class="font-medium text-blue-600 hover:text-blue-800 underline">login to your existing account</a> 
+                                            and connect your {% if provider %}{% if provider.id == "github" %}GitHub{% else %}Google{% endif %}{% else %}Google{% endif %} account.
+                                        </p>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
                         {% endif %}
                     </div>
                     {% endif %}
                     
-                    {% if form.errors %}
+                    {% if form.non_field_errors %}
                         <div class="rounded-md bg-red-50 p-4 border border-red-200" role="alert">
                             <div class="flex">
                                 <div class="flex-shrink-0">
@@ -81,10 +139,8 @@
                                 <div class="ml-3">
                                     <h3 class="text-sm font-medium text-red-800">Error</h3>
                                     <div class="mt-2 text-sm text-red-700">
-                                        {% for field, errors in form.errors.items %}
-                                            {% for error in errors %}
-                                                <p>{{ error }}</p>
-                                            {% endfor %}
+                                        {% for error in form.non_field_errors %}
+                                            <p>{{ error }}</p>
                                         {% endfor %}
                                     </div>
                                 </div>
@@ -140,4 +196,3 @@
     }
 </script>
 {% endblock %}
-

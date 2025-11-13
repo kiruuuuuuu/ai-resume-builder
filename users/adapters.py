@@ -3,8 +3,15 @@ Custom adapter for django-allauth to handle login redirects based on user type.
 """
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from allauth.account.utils import user_email
+from allauth.exceptions import ImmediateHttpResponse
 from django.urls import reverse
+from django.contrib import messages
+from django.http import HttpResponseRedirect
+from django.contrib.auth import get_user_model
 from .models import JobSeekerProfile, EmployerProfile
+
+User = get_user_model()
 
 
 class CustomAccountAdapter(DefaultAccountAdapter):
@@ -75,24 +82,103 @@ class CustomAccountAdapter(DefaultAccountAdapter):
 
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     """
-    Custom adapter for social account signups to handle user_type assignment.
+    Custom adapter for social account signups to handle user_type assignment
+    and automatically connect social accounts to existing users.
     """
     
     def pre_social_login(self, request, sociallogin):
         """
         Called before a social account is logged in.
-        If the user doesn't exist yet, we'll create them with default user_type.
+        Automatically connects social accounts to existing users with matching emails.
         """
         # If user is already authenticated, just connect the account
         if request.user.is_authenticated:
             return
         
-        # If social account already exists, nothing to do
+        # If social account already exists, nothing to do (user will be logged in automatically)
         if sociallogin.is_existing:
             return
         
-        # For new users, we'll set default user_type in save_user
-        pass
+        # Get email from social account
+        # Try multiple ways to get the email
+        email = None
+        if hasattr(sociallogin, 'account') and sociallogin.account.extra_data:
+            email = sociallogin.account.extra_data.get('email') or sociallogin.account.extra_data.get('emailAddress')
+        
+        # Also try to get email from the social account's email field
+        if not email and hasattr(sociallogin, 'email_addresses') and sociallogin.email_addresses:
+            email = sociallogin.email_addresses[0].email
+        
+        # Fallback to user_email utility
+        if not email:
+            try:
+                email = user_email(sociallogin.account)
+            except:
+                pass
+        
+        if not email:
+            # No email available - allow normal signup flow
+            return
+        
+        # Check if a user with this email already exists
+        try:
+            user = User.objects.get(email__iexact=email)  # Case-insensitive email match
+            
+            # Check if the social account is already connected to a different user
+            from allauth.socialaccount.models import SocialAccount
+            existing_social_account = SocialAccount.objects.filter(
+                provider=sociallogin.account.provider,
+                uid=sociallogin.account.uid
+            ).first()
+            
+            if existing_social_account and existing_social_account.user != user:
+                # Social account is already connected to a different user
+                # Don't connect - let django-allauth handle this
+                return
+            
+            # User exists and social account is not connected to another user
+            # Connect the social account to the existing user
+            # This will automatically log the user in
+            try:
+                sociallogin.connect(request, user)
+                # Log the user in explicitly to ensure session is set
+                from allauth.account.utils import perform_login
+                perform_login(request, user, email_verification='none')
+                # Add success message
+                messages.success(request, f"Your {sociallogin.account.provider} account has been connected to your existing account!")
+                # Redirect to appropriate page
+                adapter = CustomAccountAdapter()
+                redirect_url = adapter.get_login_redirect_url(request)
+                raise ImmediateHttpResponse(HttpResponseRedirect(redirect_url))
+            except Exception as e:
+                # Connection failed - log error and allow normal signup flow
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to connect social account: {str(e)}")
+                # Allow normal signup flow to continue
+                pass
+        except User.DoesNotExist:
+            # User doesn't exist - allow normal signup flow to continue
+            pass
+        except User.MultipleObjectsReturned:
+            # Multiple users with same email (shouldn't happen, but handle it)
+            # Get the first one and connect
+            user = User.objects.filter(email__iexact=email).first()
+            if user:
+                try:
+                    sociallogin.connect(request, user)
+                    from allauth.account.utils import perform_login
+                    perform_login(request, user, email_verification='none')
+                    messages.success(request, f"Your {sociallogin.account.provider} account has been connected!")
+                    adapter = CustomAccountAdapter()
+                    redirect_url = adapter.get_login_redirect_url(request)
+                    raise ImmediateHttpResponse(HttpResponseRedirect(redirect_url))
+                except Exception as e:
+                    # Connection failed - allow normal signup flow
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Failed to connect social account: {str(e)}")
+                    pass
     
     def save_user(self, request, sociallogin, form=None):
         """
@@ -118,12 +204,22 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         """
         Redirect URL after connecting a social account.
         """
-        # Use the same logic as signup redirect
-        return super().get_connect_redirect_url(request, socialaccount)
+        # Redirect to edit profile page to show connected accounts
+        return reverse('users:edit-profile')
     
     def is_auto_signup_allowed(self, request, sociallogin):
         """
         Allow automatic signup for social accounts.
         """
         return True
-
+    
+    def populate_user(self, request, sociallogin, data):
+        """
+        Populate user fields from social account data.
+        """
+        user = super().populate_user(request, sociallogin, data)
+        # Ensure email is set
+        email = user_email(sociallogin.account)
+        if email and not user.email:
+            user.email = email
+        return user

@@ -336,26 +336,61 @@ EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 't')
 EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() in ('true', '1', 't')
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@ai-resume-builder.com')
-SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '').strip()
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '').strip()
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@ai-resume-builder.com').strip()
+SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL).strip()
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))  # 10 second timeout
 
-# Note: For production, set these environment variables:
+# Email configuration diagnostics (for Railway logs)
+# Using print() to ensure messages appear in Railway logs immediately
+print("\n" + "="*60)
+print("Email Configuration Check")
+print("="*60)
+
+if EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
+    print("⚠️  WARNING: Using console email backend - emails will NOT be sent")
+    print("   ACTION: Set EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend in Railway Variables")
+    print("   ACTION: Configure EMAIL_HOST_USER and EMAIL_HOST_PASSWORD in Railway Variables")
+else:
+    print(f"✅ Email backend configured: {EMAIL_BACKEND}")
+    if EMAIL_HOST_USER:
+        print(f"✅ Email host user configured: {EMAIL_HOST_USER}")
+    else:
+        print("⚠️  WARNING: EMAIL_HOST_USER NOT SET - emails will fail to send")
+        print("   ACTION: Set EMAIL_HOST_USER in Railway Variables")
+    
+    if EMAIL_HOST_PASSWORD:
+        print("✅ Email host password configured")
+    else:
+        print("⚠️  WARNING: EMAIL_HOST_PASSWORD NOT SET - emails will fail to send")
+        print("   ACTION: Set EMAIL_HOST_PASSWORD in Railway Variables")
+    
+    print(f"✅ Email host: {EMAIL_HOST}")
+    print(f"✅ Email port: {EMAIL_PORT}")
+    print(f"✅ Email TLS: {EMAIL_USE_TLS}")
+    print(f"✅ Default from email: {DEFAULT_FROM_EMAIL}")
+
+print("="*60 + "\n")
+
+# Note: For production on Railway, set these environment variables:
 # EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
 # EMAIL_HOST=smtp.gmail.com (or your SMTP server)
 # EMAIL_PORT=587
 # EMAIL_USE_TLS=True
 # EMAIL_HOST_USER=your-email@gmail.com
-# EMAIL_HOST_PASSWORD=your-app-password
+# EMAIL_HOST_PASSWORD=your-app-password (use App Password for Gmail)
 # DEFAULT_FROM_EMAIL=noreply@yourdomain.com
+# EMAIL_TIMEOUT=10
 
 # Social account settings
-SOCIALACCOUNT_AUTO_SIGNUP = True
-SOCIALACCOUNT_EMAIL_REQUIRED = True
+SOCIALACCOUNT_AUTO_SIGNUP = True  # Allow automatic signup for social accounts
+SOCIALACCOUNT_EMAIL_REQUIRED = True  # Require email from social accounts
 SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'  # Social accounts don't need email verification (Google/GitHub already verified)
-SOCIALACCOUNT_QUERY_EMAIL = True
-SOCIALACCOUNT_STORE_TOKENS = False
+SOCIALACCOUNT_QUERY_EMAIL = True  # Request email from social provider
+SOCIALACCOUNT_STORE_TOKENS = False  # Don't store OAuth tokens
+# Note: The adapter (CustomSocialAccountAdapter) handles automatic connection of social accounts
+# to existing users with matching emails in pre_social_login method
 
 # Social Account Providers Configuration (django-allauth)
 # Get OAuth credentials from environment variables
