@@ -178,6 +178,7 @@ INSTALLED_APPS = [
     # Third-party apps
     'crispy_forms',
     'crispy_tailwind',
+    'anymail',  # Email backend for Resend (and other providers)
 ]
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
@@ -329,17 +330,34 @@ ACCOUNT_SIGNUP_REDIRECT_URL = 'home'  # Fallback, but adapter will override
 ACCOUNT_PASSWORD_RESET_REQUIRE_EMAIL = True  # Require email for password reset
 
 # Email Configuration (for password reset)
+# Using Resend (HTTPS API) which works on Railway
 # For development, use console backend (emails printed to console)
-# For production, configure SMTP settings via environment variables
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+# For production, use Resend API
+
+# Check if Resend API key is set (production)
+RESEND_API_KEY = os.getenv('RESEND_API_KEY', '').strip()
+
+if RESEND_API_KEY:
+    # Use Resend (HTTPS API - works on Railway)
+    EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+    ANYMAIL = {
+        "RESEND_API_KEY": RESEND_API_KEY,
+    }
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@ai-resume-builder.com').strip()
+    SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL).strip()
+else:
+    # Fallback to console backend (development)
+    EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@ai-resume-builder.com').strip()
+    SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL).strip()
+
+# Legacy SMTP settings (not used with Resend, but kept for backward compatibility)
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 't')
 EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() in ('true', '1', 't')
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '').strip()
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '').strip()
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@ai-resume-builder.com').strip()
-SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL).strip()
 EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))  # 10 second timeout
 
 # Email configuration diagnostics (for Railway logs)
@@ -350,8 +368,18 @@ print("="*60)
 
 if EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
     print("⚠️  WARNING: Using console email backend - emails will NOT be sent")
-    print("   ACTION: Set EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend in Railway Variables")
-    print("   ACTION: Configure EMAIL_HOST_USER and EMAIL_HOST_PASSWORD in Railway Variables")
+    print("   ACTION: Set RESEND_API_KEY in Railway Variables to use Resend")
+    print("   ACTION: Get your API key from https://resend.com/api-keys")
+elif EMAIL_BACKEND == 'anymail.backends.resend.EmailBackend':
+    print("✅ Email backend: Resend (HTTPS API - works on Railway)")
+    if RESEND_API_KEY:
+        print("✅ Resend API key configured")
+    else:
+        print("⚠️  WARNING: RESEND_API_KEY NOT SET - emails will fail to send")
+        print("   ACTION: Set RESEND_API_KEY in Railway Variables")
+        print("   ACTION: Get your API key from https://resend.com/api-keys")
+    print(f"✅ Default from email: {DEFAULT_FROM_EMAIL}")
+    print("✅ Resend free tier: 100 emails/day")
 else:
     print(f"✅ Email backend configured: {EMAIL_BACKEND}")
     if EMAIL_HOST_USER:
@@ -373,43 +401,26 @@ else:
 
 print("="*60 + "\n")
 
-# Note: Railway BLOCKS direct SMTP connections to Gmail and other email providers
+# Email Service: Resend (configured above)
+# 
+# Railway BLOCKS direct SMTP connections to Gmail and other email providers
 # This is a Railway security policy to prevent spam/abuse - it applies to ALL plans
 # 
-# Why Railway blocks SMTP:
-# - Security: Prevents spam/abuse from their infrastructure
-# - Policy: All outbound SMTP ports are blocked
-# - Reliability: Transactional email services are more reliable
+# Resend uses HTTPS API (not SMTP), so it works perfectly on Railway!
 #
-# Your Options:
-# 1. SendGrid (recommended - easiest): https://sendgrid.com/
-#    - Free tier: 100 emails/day
-#    - Set EMAIL_HOST=smtp.sendgrid.net
-#    - Set EMAIL_PORT=587
-#    - Set EMAIL_HOST_USER=apikey
-#    - Set EMAIL_HOST_PASSWORD=your-sendgrid-api-key
+# Setup Instructions for Resend:
+# 1. Sign up at https://resend.com/ (free tier: 100 emails/day)
+# 2. Go to https://resend.com/api-keys
+# 3. Create a new API key
+# 4. In Railway, add environment variable:
+#    - RESEND_API_KEY=your-api-key-here
+# 5. Optional: Set DEFAULT_FROM_EMAIL (defaults to noreply@ai-resume-builder.com)
 #
-# 2. Resend (modern API): https://resend.com/
-#    - Free tier: 100 emails/day
-#    - Uses HTTPS API (no SMTP needed)
-#
-# 3. Mailgun: https://mailgun.com/
-#    - Free tier: 5,000 emails/month for 3 months
-#
-# 4. Gmail API (if you really want Gmail):
-#    - Uses HTTPS API instead of SMTP
-#    - More complex setup (OAuth credentials required)
-#    - See docs/GMAIL_API_SETUP.md for instructions
-#
-# For production on Railway, set these environment variables:
-# EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-# EMAIL_HOST=smtp.sendgrid.net (or your SMTP server)
-# EMAIL_PORT=587
-# EMAIL_USE_TLS=True
-# EMAIL_HOST_USER=apikey (for SendGrid) or your-email@gmail.com
-# EMAIL_HOST_PASSWORD=your-api-key (for SendGrid) or your-app-password (for Gmail)
-# DEFAULT_FROM_EMAIL=noreply@yourdomain.com
-# EMAIL_TIMEOUT=10
+# That's it! Resend will handle all emails automatically.
+# 
+# Note: For the "from" email address, you can use:
+# - Any email address (Resend allows this)
+# - Or verify a domain in Resend for better deliverability
 
 # Social account settings
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Allow automatic signup for social accounts
