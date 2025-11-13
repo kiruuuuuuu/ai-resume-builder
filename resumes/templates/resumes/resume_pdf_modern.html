@@ -13,13 +13,18 @@
         html, body {
             font-family: 'Inter', Arial, sans-serif;
             color: #3a3a3a;
-            font-size: 11pt; /* Increased font size */
-            line-height: 1.3; /* Comfortable line height */
+            font-size: 12pt; /* Base font size - will scale dynamically */
+            line-height: 1.4; /* Comfortable line height */
             margin: 0;
             padding: 0;
             width: 210mm;
             height: 297mm;
             -webkit-print-color-adjust: exact;
+        }
+        /* Dynamic font sizing - adjust based on content */
+        :root {
+            --base-font-size: 12pt;
+            --scale-factor: 1;
         }
         * {
             box-sizing: border-box;
@@ -28,7 +33,7 @@
         }
         .page {
             width: 100%;
-            min-height: 297mm; /* Minimum A4 page height */
+            height: 297mm; /* Fixed A4 page height - single page */
             max-height: 297mm; /* Maximum A4 page height - single page */
             overflow: hidden; /* Prevent overflow */
             position: relative;
@@ -217,6 +222,82 @@
             flex: 1 1 auto; /* Allow sections to grow/shrink */
         }
     </style>
+    <!-- JavaScript-based dynamic font sizing for single page -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const page = document.querySelector('.page');
+        const contentArea = document.querySelector('.content');
+        const sidebar = document.querySelector('.sidebar');
+        
+        if (!page || !contentArea) return;
+        
+        function adjustFontSizes() {
+            const pageHeight = 297; // mm
+            const maxHeight = pageHeight * 3.779527559; // Convert mm to px (1mm = 3.779527559px)
+            
+            let scaleFactor = 1;
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            while (attempts < maxAttempts) {
+                const actualHeight = Math.max(
+                    contentArea.scrollHeight || contentArea.offsetHeight,
+                    sidebar.scrollHeight || sidebar.offsetHeight
+                );
+                
+                if (actualHeight <= maxHeight) {
+                    // Content fits, increase font size if there's extra space
+                    const extraSpace = (maxHeight - actualHeight) / maxHeight;
+                    if (extraSpace > 0.1 && scaleFactor < 1.3) {
+                        scaleFactor += 0.02;
+                        document.documentElement.style.setProperty('--scale-factor', scaleFactor);
+                        updateFontSizes(scaleFactor);
+                    } else {
+                        break;
+                    }
+                } else {
+                    // Content overflows, decrease font size
+                    scaleFactor -= 0.02;
+                    if (scaleFactor < 0.85) scaleFactor = 0.85; // Minimum scale
+                    document.documentElement.style.setProperty('--scale-factor', scaleFactor);
+                    updateFontSizes(scaleFactor);
+                }
+                
+                attempts++;
+            }
+        }
+        
+        function updateFontSizes(scale) {
+            document.body.style.fontSize = (12 * scale) + 'pt';
+            const styles = {
+                '.sidebar h2': (11 * scale) + 'pt',
+                '.contact-item, .sidebar-item': (10 * scale) + 'pt',
+                '.skill-category strong': (10.5 * scale) + 'pt',
+                '.skill-category span': (10 * scale) + 'pt',
+                '.name': (28 * scale) + 'pt',
+                '.job-title-header': (14 * scale) + 'pt',
+                '.content h2': (12 * scale) + 'pt',
+                '.title': (12 * scale) + 'pt',
+                '.subtitle, .project-aim': (11 * scale) + 'pt',
+                '.date': (10.5 * scale) + 'pt',
+                '.description-list li': (10 * scale) + 'pt',
+                '.tech-details': (10 * scale) + 'pt'
+            };
+            
+            for (const [selector, fontSize] of Object.entries(styles)) {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(el => {
+                    el.style.fontSize = fontSize;
+                });
+            }
+        }
+        
+        // Initial adjustment
+        setTimeout(adjustFontSizes, 100);
+        // Re-adjust after a short delay to ensure content is rendered
+        setTimeout(adjustFontSizes, 500);
+    });
+    </script>
 </head>
 <body>
     <div class="page clearfix">

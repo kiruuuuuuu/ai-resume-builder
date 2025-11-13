@@ -43,14 +43,14 @@
         }
         .section {
             page-break-inside: avoid;
-            margin-bottom: 8px; /* Allow some space between sections for page breaks */
+            margin-bottom: 6px; /* Reduced margin to minimize gaps */
             page-break-after: auto; /* Allow page break after sections */
         }
         .section-header {
             display: flex;
             align-items: center;
-            margin-top: 10px; /* Reduced margin */
-            margin-bottom: 5px; /* Reduced margin */
+            margin-top: 6px; /* Further reduced margin to minimize gaps */
+            margin-bottom: 4px; /* Reduced margin */
             border-bottom: 1px solid {{ accent_color|default:'#003366' }};
             padding-bottom: 3px; /* Reduced */
             page-break-after: avoid; /* Don't break after header */

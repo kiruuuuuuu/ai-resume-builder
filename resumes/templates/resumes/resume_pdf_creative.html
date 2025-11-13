@@ -18,11 +18,16 @@
         body {
             font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
             color: #2d3748;
-            font-size: 7.5pt; /* Further reduced for single page */
-            line-height: 1.2; /* Tighter line height */
+            font-size: 8.5pt; /* Base font size - will scale dynamically */
+            line-height: 1.3; /* Comfortable line height */
             background-color: white;
             margin: 0;
             padding: 0;
+        }
+        /* Dynamic font sizing - adjust based on content */
+        :root {
+            --base-font-size: 8.5pt;
+            --scale-factor: 1;
         }
         
         .resume-container {
@@ -30,7 +35,7 @@
             padding: 0;
             max-width: 100%;
             max-height: 286mm; /* Strict limit for single page */
-            height: 286mm; /* Fixed height */
+            height: 286mm; /* Fixed height for single page */
             overflow: hidden;
             page-break-after: avoid; /* Prevent page break */
             page-break-inside: avoid; /* Prevent page break */
@@ -446,6 +451,83 @@
             }
         }
     </style>
+    <!-- JavaScript-based dynamic font sizing for single page -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.querySelector('.resume-container');
+        
+        if (!container) return;
+        
+        function adjustFontSizes() {
+            const maxHeight = 286; // mm
+            const maxHeightPx = maxHeight * 3.779527559; // Convert mm to px
+            
+            let scaleFactor = 1;
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            while (attempts < maxAttempts) {
+                const actualHeight = container.scrollHeight || container.offsetHeight;
+                
+                if (actualHeight <= maxHeightPx) {
+                    // Content fits, increase font size if there's extra space
+                    const extraSpace = (maxHeightPx - actualHeight) / maxHeightPx;
+                    if (extraSpace > 0.1 && scaleFactor < 1.4) {
+                        scaleFactor += 0.02;
+                        document.documentElement.style.setProperty('--scale-factor', scaleFactor);
+                        updateFontSizes(scaleFactor);
+                    } else {
+                        break;
+                    }
+                } else {
+                    // Content overflows, decrease font size
+                    scaleFactor -= 0.02;
+                    if (scaleFactor < 0.8) scaleFactor = 0.8; // Minimum scale
+                    document.documentElement.style.setProperty('--scale-factor', scaleFactor);
+                    updateFontSizes(scaleFactor);
+                }
+                
+                attempts++;
+            }
+        }
+        
+        function updateFontSizes(scale) {
+            document.body.style.fontSize = (8.5 * scale) + 'pt';
+            const styles = {
+                '.name': (22 * scale) + 'pt',
+                '.contact-info': (7 * scale) + 'pt',
+                '.summary': (8 * scale) + 'pt',
+                '.section-title': (9.5 * scale) + 'pt',
+                '.item-title': (9 * scale) + 'pt',
+                '.item-subtitle': (7.5 * scale) + 'pt',
+                '.item-date': (7 * scale) + 'pt',
+                '.item-description': (7 * scale) + 'pt',
+                '.item-description li': (7 * scale) + 'pt',
+                '.grade-info': (8 * scale) + 'pt',
+                '.project-tech': (7 * scale) + 'pt',
+                '.skill-category-title': (8.5 * scale) + 'pt',
+                '.skill-name': (8 * scale) + 'pt',
+                '.skill-level': (7.5 * scale) + 'pt',
+                '.language-name': (8.5 * scale) + 'pt',
+                '.proficiency-text': (7.5 * scale) + 'pt',
+                '.cert-item, .achieve-item': (7.5 * scale) + 'pt',
+                '.hobby-tag': (7.5 * scale) + 'pt'
+            };
+            
+            for (const [selector, fontSize] of Object.entries(styles)) {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(el => {
+                    el.style.fontSize = fontSize;
+                });
+            }
+        }
+        
+        // Initial adjustment
+        setTimeout(adjustFontSizes, 100);
+        // Re-adjust after a short delay to ensure content is rendered
+        setTimeout(adjustFontSizes, 500);
+    });
+    </script>
 </head>
 <body>
     <div class="resume-container">
