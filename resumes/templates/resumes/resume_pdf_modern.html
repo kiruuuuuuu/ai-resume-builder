@@ -162,8 +162,8 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             border-bottom: 1.5px solid {{ accent_color|default:'#3498db' }};
-            padding-bottom: 3px;
-            margin: 2px 0 1px 0; /* Minimized gaps - top 2px, bottom 1px */
+            padding-bottom: 2px; /* Reduced padding */
+            margin: 2px 0 0 0; /* Zero bottom margin - no gap after header */
             font-weight: 700;
             flex-shrink: 0;
         }
@@ -187,6 +187,15 @@
         /* Ensure no gap after h2 before first content */
         section h2 + .item,
         section h2 + .description-list {
+            margin-top: 0 !important; /* Force no gap */
+        }
+        /* Remove any margin/padding from section that might create gaps */
+        section {
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+        /* Ensure items have minimal spacing */
+        section .item {
             margin-top: 0;
         }
         .item-header {

@@ -183,31 +183,60 @@
         
         /* Print styles */
         @media print {
+            @page {
+                size: A4;
+                margin: 0;
+            }
+            
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            
             body {
                 background: white;
                 padding: 0;
                 margin: 0;
             }
             
-            .controls {
+            .controls,
+            #pdf-download-container {
                 display: none !important;
             }
             
             .preview-container {
                 padding: 0;
                 margin: 0;
+                background: white;
             }
             
             .resume-wrapper {
-                box-shadow: none;
-                border: none;
-                border-radius: 0;
-                margin: 0;
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                transform: none !important;
+                transform-origin: unset !important;
+                width: 100% !important;
+                height: auto !important;
                 page-break-after: always;
             }
             
             .resume-wrapper:last-child {
                 page-break-after: auto;
+            }
+            
+            /* Ensure resume content prints correctly */
+            .resume-wrapper iframe,
+            .resume-wrapper embed,
+            .resume-wrapper object {
+                width: 100% !important;
+                height: auto !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
         }
         
@@ -311,7 +340,7 @@
                 </div>
                 
                 <div class="flex items-center gap-3">
-                    <button onclick="window.print()" 
+                    <button onclick="printResume()" 
                             class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-indigo-400 transition-all duration-300">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -493,11 +522,50 @@
             window.location.href = url.toString();
         }
         
+        // Print function - ensures proper print layout
+        function printResume() {
+            // Remove transform scaling for print
+            const resumeWrappers = document.querySelectorAll('.resume-wrapper');
+            resumeWrappers.forEach(wrapper => {
+                wrapper.style.transform = 'none';
+                wrapper.style.marginBottom = '0';
+            });
+            
+            // Hide controls
+            const controls = document.querySelectorAll('.controls');
+            controls.forEach(control => {
+                control.style.display = 'none';
+            });
+            
+            // Hide download container
+            const downloadContainer = document.getElementById('pdf-download-container');
+            if (downloadContainer) {
+                downloadContainer.style.display = 'none';
+            }
+            
+            // Trigger print dialog
+            window.print();
+            
+            // Restore after print (in case user cancels)
+            setTimeout(() => {
+                resumeWrappers.forEach(wrapper => {
+                    wrapper.style.transform = '';
+                    wrapper.style.marginBottom = '';
+                });
+                controls.forEach(control => {
+                    control.style.display = '';
+                });
+                if (downloadContainer) {
+                    downloadContainer.style.display = '';
+                }
+            }, 1000);
+        }
+        
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
                 e.preventDefault();
-                window.print();
+                printResume();
             }
             if (e.key === 'Escape') {
                 window.location.href = '{% url 'resumes:resume-builder' %}';
@@ -606,27 +674,46 @@
                             // Clear any existing content
                             downloadContainer.innerHTML = '';
                             
-                            // Create and insert the download link
+                            // Create and insert the download link with fallback message
                             const downloadLinkHtml = `
                                 <div class="p-4 bg-green-50 border-2 border-green-300 rounded-lg shadow-md" id="pdf-download-link-${pdfId}">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center space-x-3">
-                                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                            <div>
-                                                <p class="text-sm font-semibold text-green-800">PDF is ready!</p>
-                                                <p class="text-xs text-green-600">Click the button to download your resume</p>
+                                    <div class="space-y-3">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-3">
+                                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                                <div>
+                                                    <p class="text-sm font-semibold text-green-800">PDF is ready!</p>
+                                                    <p class="text-xs text-green-600">Click the button to download your resume</p>
+                                                </div>
                                             </div>
+                                            <a href="${downloadUrl}" 
+                                               download="${data.filename || 'resume.pdf'}"
+                                               id="auto-download-link-${pdfId}"
+                                               class="inline-flex items-center px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium shadow-sm transition-colors">
+                                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                </svg>
+                                                Download PDF
+                                            </a>
                                         </div>
-                                        <a href="${downloadUrl}" 
-                                           download="${data.filename || 'resume.pdf'}"
-                                           class="inline-flex items-center px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium shadow-sm transition-colors">
-                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                            </svg>
-                                            Download PDF
-                                        </a>
+                                        <div class="pt-2 border-t border-green-200">
+                                            <p class="text-xs text-green-700 mb-2">
+                                                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                                If the download doesn't start automatically, click the button above to download.
+                                            </p>
+                                            <a href="${downloadUrl}" 
+                                               download="${data.filename || 'resume.pdf'}"
+                                               class="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-md hover:bg-green-200 text-xs font-medium transition-colors border border-green-300">
+                                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                </svg>
+                                                Click here to download
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             `;
