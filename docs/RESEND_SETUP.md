@@ -31,8 +31,10 @@ This guide explains how to set up Resend for sending emails on Railway.
 2. Click on "Variables" tab
 3. Add a new variable:
    - **Name**: `RESEND_API_KEY`
-   - **Value**: Your API key from step 2
+   - **Value**: Your API key from step 2 (e.g., `re_xxxxx...`)
 4. Click "Add"
+
+**That's it!** You can now send emails. Domain verification is NOT required.
 
 ### 4. Configure From Email (Optional)
 
@@ -42,9 +44,23 @@ To change this, add another Railway variable:
 - **Name**: `DEFAULT_FROM_EMAIL`
 - **Value**: Your preferred email address (e.g., `noreply@yourdomain.com`)
 
-**Note**: You can use any email address, but for better deliverability, you can verify your domain in Resend.
+**Important**: On Resend's free tier, you can send from ANY email address without domain verification. Domain verification is optional and only needed if you want:
+- Better deliverability (slightly)
+- To send from a custom domain you own
+- More professional email addresses
 
-### 5. Verify Domain (Optional - Recommended)
+### 5. Verify Domain (Optional - Only if you own a custom domain)
+
+**⚠️ IMPORTANT**: You don't need to verify a domain to use Resend! You can skip this step.
+
+Domain verification is only needed if:
+- You own a custom domain (e.g., `yourdomain.com`)
+- You want to send from `noreply@yourdomain.com` for better deliverability
+- You want a more professional email address
+
+**DO NOT** try to verify Railway subdomains like `ai-resume-builder-jk.up.railway.app` - these are not your domains and cannot be verified.
+
+If you do want to verify a custom domain you own:
 
 For better email deliverability:
 
@@ -78,8 +94,25 @@ After deploying, test the email functionality:
 ## Free Tier Limits
 
 - **100 emails/day** (free tier)
+- **Can send from any email address** (no domain verification needed!)
 - More than enough for most applications
 - Upgrade if you need more
+
+## Common Mistakes
+
+### ❌ Don't Enter Railway Subdomain in Resend
+- **Wrong**: `https://ai-resume-builder-jk.up.railway.app/`
+- **Wrong**: `ai-resume-builder-jk.up.railway.app`
+- **Why**: You don't own Railway subdomains, so you can't verify them in Resend
+
+### ✅ You Don't Need Domain Verification!
+- You can send emails immediately with just the API key
+- Resend free tier allows sending from any email address
+- Domain verification is only for custom domains you own
+
+### ✅ What to Enter in Domain Field (Only if You Own a Domain)
+- **Correct**: `yourdomain.com` (just the domain, no `https://`, no paths)
+- **Example**: If you own `example.com`, enter `example.com`
 
 ## Troubleshooting
 
