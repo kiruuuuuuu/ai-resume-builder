@@ -277,10 +277,24 @@
         section {
             page-break-inside: avoid;
             page-break-after: avoid;
-            margin-bottom: 2px; /* Minimal margin between sections */
-            margin-top: 0; /* No top margin */
-            padding-top: 0; /* No padding top */
+            margin-bottom: 2px !important; /* Minimal margin between sections */
+            margin-top: 0 !important; /* No top margin */
+            padding-top: 0 !important; /* No padding top */
+            padding-bottom: 0 !important;
             flex: 1 1 auto; /* Allow sections to grow/shrink */
+        }
+        /* Global reset for content area to eliminate all gaps */
+        .content * {
+            box-sizing: border-box;
+        }
+        .content section,
+        .content section * {
+            margin-top: 0;
+        }
+        /* Force immediate children after h2 to have no gap */
+        .content section h2 ~ * {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
         }
     </style>
     <!-- JavaScript-based dynamic font sizing for single page -->
