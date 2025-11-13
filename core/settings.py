@@ -373,16 +373,33 @@ else:
 
 print("="*60 + "\n")
 
-# Note: Railway may block direct SMTP connections to Gmail
-# If you see "Network is unreachable" errors, consider using:
-# 1. SendGrid (recommended for Railway): https://sendgrid.com/
+# Note: Railway BLOCKS direct SMTP connections to Gmail and other email providers
+# This is a Railway security policy to prevent spam/abuse - it applies to ALL plans
+# 
+# Why Railway blocks SMTP:
+# - Security: Prevents spam/abuse from their infrastructure
+# - Policy: All outbound SMTP ports are blocked
+# - Reliability: Transactional email services are more reliable
+#
+# Your Options:
+# 1. SendGrid (recommended - easiest): https://sendgrid.com/
+#    - Free tier: 100 emails/day
 #    - Set EMAIL_HOST=smtp.sendgrid.net
 #    - Set EMAIL_PORT=587
 #    - Set EMAIL_HOST_USER=apikey
 #    - Set EMAIL_HOST_PASSWORD=your-sendgrid-api-key
-# 2. Mailgun: https://mailgun.com/
-# 3. Resend: https://resend.com/
-# 4. Or use Railway's email service if available
+#
+# 2. Resend (modern API): https://resend.com/
+#    - Free tier: 100 emails/day
+#    - Uses HTTPS API (no SMTP needed)
+#
+# 3. Mailgun: https://mailgun.com/
+#    - Free tier: 5,000 emails/month for 3 months
+#
+# 4. Gmail API (if you really want Gmail):
+#    - Uses HTTPS API instead of SMTP
+#    - More complex setup (OAuth credentials required)
+#    - See docs/GMAIL_API_SETUP.md for instructions
 #
 # For production on Railway, set these environment variables:
 # EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
