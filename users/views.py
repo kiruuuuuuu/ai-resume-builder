@@ -5,7 +5,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from django.utils import timezone
-from .forms import CustomUserCreationForm, EmployerOnboardingForm, UserCredentialsForm, CustomPasswordChangeForm
+from allauth.socialaccount.models import SocialAccount
+from .forms import CustomUserCreationForm, EmployerOnboardingForm, UserCredentialsForm, CustomPasswordChangeForm, SetPasswordForm
 from .models import JobSeekerProfile, EmployerProfile
 
 def register_view(request):
@@ -136,9 +137,20 @@ def edit_profile_view(request):
     """Dedicated edit profile page for managing login credentials and password."""
     user = request.user
     
+    # Check if user has a usable password (not a social account user)
+    has_password = user.has_usable_password()
+    
+    # Get social accounts linked to this user
+    social_accounts = SocialAccount.objects.filter(user=user)
+    
     # Initialize forms with current user data
     credentials_form = UserCredentialsForm(instance=user)
-    password_form = CustomPasswordChangeForm(user)
+    
+    # Use SetPasswordForm if user doesn't have a password, otherwise use CustomPasswordChangeForm
+    if has_password:
+        password_form = CustomPasswordChangeForm(user)
+    else:
+        password_form = SetPasswordForm(user)
     
     # Handle credentials update
     if request.method == 'POST':
@@ -151,14 +163,36 @@ def edit_profile_view(request):
             # If form is invalid, credentials_form already has errors, password_form stays fresh
         
         elif 'change_password' in request.POST:
-            password_form = CustomPasswordChangeForm(user, request.POST)
+            if has_password:
+                password_form = CustomPasswordChangeForm(user, request.POST)
+            else:
+                password_form = SetPasswordForm(user, request.POST)
+            
             if password_form.is_valid():
                 password_form.save()
                 # Update session to prevent logout after password change
                 update_session_auth_hash(request, password_form.user)
-                messages.success(request, "Your password has been changed successfully!")
+                if has_password:
+                    messages.success(request, "Your password has been changed successfully!")
+                else:
+                    messages.success(request, "Password has been set successfully! You can now login with your email and password.")
                 return redirect('users:edit-profile')
             # If form is invalid, password_form already has errors, credentials_form stays fresh
+        
+        elif 'disconnect_account' in request.POST:
+            # Handle disconnecting a social account
+            provider_id = request.POST.get('provider_id')
+            try:
+                social_account = SocialAccount.objects.get(user=user, provider=provider_id)
+                # Only allow disconnecting if user has a password or other social accounts
+                if user.has_usable_password() or social_accounts.count() > 1:
+                    social_account.delete()
+                    messages.success(request, f"Your {provider_id} account has been disconnected successfully.")
+                else:
+                    messages.error(request, "You cannot disconnect your last login method. Please set a password first.")
+            except SocialAccount.DoesNotExist:
+                messages.error(request, "Social account not found.")
+            return redirect('users:edit-profile')
     
     # Determine which tab should be active based on form errors
     active_tab = 'credentials'
@@ -167,11 +201,15 @@ def edit_profile_view(request):
             active_tab = 'password'
         elif 'update_credentials' in request.POST and credentials_form.errors:
             active_tab = 'credentials'
+        elif request.POST.get('active_tab'):
+            active_tab = request.POST.get('active_tab')
     
     context = {
         'credentials_form': credentials_form,
         'password_form': password_form,
         'active_tab': active_tab,
+        'has_password': has_password,
+        'social_accounts': social_accounts,
     }
     
     return render(request, 'users/edit_profile.html', context)
