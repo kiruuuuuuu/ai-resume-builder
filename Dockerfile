@@ -44,6 +44,6 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD curl -f http://localhost:8000/ || exit 1
 
-# Run migrations, collect static files (if needed), create superuser (if env vars set), and start server
-CMD python manage.py migrate && (python manage.py collectstatic --noinput || echo "Collectstatic warning, but continuing...") && (python manage.py create_superuser_from_env || echo "Superuser creation skipped or failed, continuing...") && gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
+# Run migrations, collect static files (if needed), update site domain, create superuser (if env vars set), and start server
+CMD python manage.py migrate && (python manage.py collectstatic --noinput || echo "Collectstatic warning, but continuing...") && (python manage.py update_site_domain || echo "Site domain update skipped or failed, continuing...") && (python manage.py create_superuser_from_env || echo "Superuser creation skipped or failed, continuing...") && gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
 
