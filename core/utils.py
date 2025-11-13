@@ -1,62 +1,73 @@
 """
-Utility functions for security and validation.
+Utility functions for the core app.
 """
-from django.core.exceptions import ValidationError
-from django.conf import settings
-import bleach
+import os
+import logging
 
-def validate_file_size(file, max_size, field_name="File"):
-    """
-    Validate file size.
-    
-    Args:
-        file: Uploaded file object
-        max_size: Maximum file size in bytes
-        field_name: Name of the field for error message
-    
-    Raises:
-        ValidationError: If file size exceeds limit
-    """
-    if file.size > max_size:
-        size_mb = max_size / (1024 * 1024)
-        raise ValidationError(f"{field_name} size exceeds {size_mb:.1f}MB limit.")
+logger = logging.getLogger(__name__)
 
 
-def sanitize_html(text):
+def validate_oauth_config():
     """
-    Sanitize HTML input to prevent XSS attacks.
-    
-    Args:
-        text: HTML text to sanitize
-    
-    Returns:
-        str: Sanitized HTML text
+    Validate OAuth configuration and return status.
+    Returns a dict with validation results.
     """
-    if not text:
-        return text
+    result = {
+        'google': {
+            'client_id_set': False,
+            'client_secret_set': False,
+            'client_id_valid': False,
+            'client_id_value': None,
+            'issues': []
+        },
+        'github': {
+            'client_id_set': False,
+            'client_secret_set': False,
+            'client_id_valid': False,
+            'client_id_value': None,
+            'issues': []
+        }
+    }
     
-    # Allowed HTML tags
-    allowed_tags = ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'b', 'i', 'u']
+    # Check Google OAuth
+    google_client_id = os.getenv('GOOGLE_OAUTH2_CLIENT_ID', '').strip()
+    google_client_secret = os.getenv('GOOGLE_OAUTH2_CLIENT_SECRET', '').strip()
     
-    # Sanitize HTML
-    sanitized = bleach.clean(text, tags=allowed_tags, strip=True)
+    if google_client_id:
+        result['google']['client_id_set'] = True
+        result['google']['client_id_value'] = google_client_id
+        
+        # Validate Client ID format
+        if google_client_id.startswith(('http://', 'https://')):
+            result['google']['issues'].append('Client ID has http:// or https:// prefix')
+        elif not google_client_id.endswith('.apps.googleusercontent.com'):
+            result['google']['issues'].append('Client ID format is incorrect (should end with .apps.googleusercontent.com)')
+        elif google_client_id.count('-') < 1:
+            result['google']['issues'].append('Client ID format is incorrect')
+        else:
+            result['google']['client_id_valid'] = True
+    else:
+        result['google']['issues'].append('Client ID is not set')
     
-    return sanitized
-
-
-def sanitize_text(text):
-    """
-    Escape HTML characters in plain text.
+    if google_client_secret:
+        result['google']['client_secret_set'] = True
+    else:
+        result['google']['issues'].append('Client Secret is not set')
     
-    Args:
-        text: Text to escape
+    # Check GitHub OAuth
+    github_client_id = os.getenv('GITHUB_CLIENT_ID', '').strip()
+    github_client_secret = os.getenv('GITHUB_CLIENT_SECRET', '').strip()
     
-    Returns:
-        str: Escaped text
-    """
-    if not text:
-        return text
+    if github_client_id:
+        result['github']['client_id_set'] = True
+        result['github']['client_id_value'] = github_client_id
+        result['github']['client_id_valid'] = True
+    else:
+        result['github']['issues'].append('Client ID is not set')
     
-    from django.utils.html import escape
-    return escape(text)
-
+    if github_client_secret:
+        result['github']['client_secret_set'] = True
+    else:
+        result['github']['issues'].append('Client Secret is not set')
+    
+    return result

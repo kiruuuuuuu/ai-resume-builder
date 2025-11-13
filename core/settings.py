@@ -358,22 +358,65 @@ SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_STORE_TOKENS = False
 
 # Social Account Providers Configuration (django-allauth)
+# Get OAuth credentials from environment variables
+GOOGLE_OAUTH2_CLIENT_ID = os.getenv('GOOGLE_OAUTH2_CLIENT_ID', '').strip()
+GOOGLE_OAUTH2_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH2_CLIENT_SECRET', '').strip()
+GITHUB_CLIENT_ID = os.getenv('GITHUB_CLIENT_ID', '').strip()
+GITHUB_CLIENT_SECRET = os.getenv('GITHUB_CLIENT_SECRET', '').strip()
+
+# Remove any http:// or https:// prefixes from Client ID if present
+if GOOGLE_OAUTH2_CLIENT_ID:
+    GOOGLE_OAUTH2_CLIENT_ID = GOOGLE_OAUTH2_CLIENT_ID.replace('http://', '').replace('https://', '').strip()
+if GITHUB_CLIENT_ID:
+    GITHUB_CLIENT_ID = GITHUB_CLIENT_ID.replace('http://', '').replace('https://', '').strip()
+
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'APP': {
-            'client_id': os.getenv('GOOGLE_OAUTH2_CLIENT_ID', ''),
-            'secret': os.getenv('GOOGLE_OAUTH2_CLIENT_SECRET', ''),
+            'client_id': GOOGLE_OAUTH2_CLIENT_ID,
+            'secret': GOOGLE_OAUTH2_CLIENT_SECRET,
             'key': ''
         }
     },
     'github': {
         'APP': {
-            'client_id': os.getenv('GITHUB_CLIENT_ID', ''),
-            'secret': os.getenv('GITHUB_CLIENT_SECRET', ''),
+            'client_id': GITHUB_CLIENT_ID,
+            'secret': GITHUB_CLIENT_SECRET,
             'key': ''
         }
     }
 }
+
+# Log OAuth configuration status (for debugging - always log in production)
+# This helps diagnose OAuth issues in Railway logs
+import logging
+oauth_logger = logging.getLogger(__name__)
+
+if GOOGLE_OAUTH2_CLIENT_ID:
+    # Validate Client ID format
+    if GOOGLE_OAUTH2_CLIENT_ID.endswith('.apps.googleusercontent.com'):
+        oauth_logger.info(f'✅ Google OAuth Client ID configured: {GOOGLE_OAUTH2_CLIENT_ID[:30]}...')
+    else:
+        oauth_logger.error(f'❌ Google OAuth Client ID format is INCORRECT: {GOOGLE_OAUTH2_CLIENT_ID[:50]}...')
+        oauth_logger.error('   Client ID should end with .apps.googleusercontent.com')
+        oauth_logger.error('   This will cause "invalid_client" error!')
+else:
+    oauth_logger.warning('⚠️ Google OAuth Client ID NOT SET - Google login will not work')
+
+if GOOGLE_OAUTH2_CLIENT_SECRET:
+    oauth_logger.info('✅ Google OAuth Client Secret configured')
+else:
+    oauth_logger.warning('⚠️ Google OAuth Client Secret NOT SET - Google login will not work')
+
+if GITHUB_CLIENT_ID:
+    oauth_logger.info(f'✅ GitHub OAuth Client ID configured: {GITHUB_CLIENT_ID[:20]}...')
+else:
+    oauth_logger.warning('⚠️ GitHub OAuth Client ID NOT SET - GitHub login will not work')
+
+if GITHUB_CLIENT_SECRET:
+    oauth_logger.info('✅ GitHub OAuth Client Secret configured')
+else:
+    oauth_logger.warning('⚠️ GitHub OAuth Client Secret NOT SET - GitHub login will not work')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
