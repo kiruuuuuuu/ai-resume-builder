@@ -4,7 +4,7 @@ Custom adapter for django-allauth to handle login redirects based on user type.
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.account.utils import user_email
-from allauth.exceptions import ImmediateHttpResponse
+from allauth.core.exceptions import ImmediateHttpResponse
 from django.urls import reverse
 from django.contrib import messages
 from django.http import HttpResponseRedirect
@@ -102,19 +102,18 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         # Get email from social account
         # Try multiple ways to get the email
         email = None
-        if hasattr(sociallogin, 'account') and sociallogin.account.extra_data:
-            email = sociallogin.account.extra_data.get('email') or sociallogin.account.extra_data.get('emailAddress')
         
-        # Also try to get email from the social account's email field
-        if not email and hasattr(sociallogin, 'email_addresses') and sociallogin.email_addresses:
+        # First, try to get email from sociallogin's email addresses
+        if hasattr(sociallogin, 'email_addresses') and sociallogin.email_addresses:
             email = sociallogin.email_addresses[0].email
         
-        # Fallback to user_email utility
-        if not email:
-            try:
-                email = user_email(sociallogin.account)
-            except:
-                pass
+        # If not found, try to get from account's extra_data
+        if not email and hasattr(sociallogin, 'account') and sociallogin.account.extra_data:
+            email = sociallogin.account.extra_data.get('email') or sociallogin.account.extra_data.get('emailAddress')
+        
+        # For Google, email might be in 'email' key directly
+        if not email and hasattr(sociallogin, 'account') and sociallogin.account.extra_data:
+            email = sociallogin.account.extra_data.get('email')
         
         if not email:
             # No email available - allow normal signup flow
@@ -218,8 +217,18 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         Populate user fields from social account data.
         """
         user = super().populate_user(request, sociallogin, data)
-        # Ensure email is set
-        email = user_email(sociallogin.account)
-        if email and not user.email:
-            user.email = email
+        # Ensure email is set if not already set
+        if not user.email:
+            # Try to get email from sociallogin's email addresses
+            email = None
+            if hasattr(sociallogin, 'email_addresses') and sociallogin.email_addresses:
+                email = sociallogin.email_addresses[0].email
+            
+            # If not found, try to get from account's extra_data
+            if not email and hasattr(sociallogin, 'account') and sociallogin.account.extra_data:
+                email = sociallogin.account.extra_data.get('email') or sociallogin.account.extra_data.get('emailAddress')
+            
+            # Set email if found
+            if email:
+                user.email = email
         return user
