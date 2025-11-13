@@ -373,13 +373,24 @@ else:
 
 print("="*60 + "\n")
 
-# Note: For production on Railway, set these environment variables:
+# Note: Railway may block direct SMTP connections to Gmail
+# If you see "Network is unreachable" errors, consider using:
+# 1. SendGrid (recommended for Railway): https://sendgrid.com/
+#    - Set EMAIL_HOST=smtp.sendgrid.net
+#    - Set EMAIL_PORT=587
+#    - Set EMAIL_HOST_USER=apikey
+#    - Set EMAIL_HOST_PASSWORD=your-sendgrid-api-key
+# 2. Mailgun: https://mailgun.com/
+# 3. Resend: https://resend.com/
+# 4. Or use Railway's email service if available
+#
+# For production on Railway, set these environment variables:
 # EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-# EMAIL_HOST=smtp.gmail.com (or your SMTP server)
+# EMAIL_HOST=smtp.sendgrid.net (or your SMTP server)
 # EMAIL_PORT=587
 # EMAIL_USE_TLS=True
-# EMAIL_HOST_USER=your-email@gmail.com
-# EMAIL_HOST_PASSWORD=your-app-password (use App Password for Gmail)
+# EMAIL_HOST_USER=apikey (for SendGrid) or your-email@gmail.com
+# EMAIL_HOST_PASSWORD=your-api-key (for SendGrid) or your-app-password (for Gmail)
 # DEFAULT_FROM_EMAIL=noreply@yourdomain.com
 # EMAIL_TIMEOUT=10
 

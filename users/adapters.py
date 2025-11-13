@@ -17,8 +17,31 @@ User = get_user_model()
 class CustomAccountAdapter(DefaultAccountAdapter):
     """
     Custom adapter that redirects users to appropriate pages after login
-    based on their user type.
+    based on their user type, and handles email sending errors gracefully.
     """
+    
+    def send_mail(self, template_prefix, email, context):
+        """
+        Override to handle email sending errors gracefully.
+        Railway may block direct SMTP connections, so we catch errors and log them.
+        """
+        try:
+            return super().send_mail(template_prefix, email, context)
+        except OSError as e:
+            # Network errors (e.g., Railway blocking SMTP)
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to send email: {str(e)}")
+            logger.error("Email sending failed - this may be due to Railway network restrictions.")
+            logger.error("Consider using an email service like SendGrid, Mailgun, or Resend.")
+            # Re-raise to let django-allauth handle the error
+            raise
+        except Exception as e:
+            # Other email errors
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to send email: {str(e)}")
+            raise
     
     def get_login_redirect_url(self, request):
         """
@@ -149,6 +172,9 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
                 adapter = CustomAccountAdapter()
                 redirect_url = adapter.get_login_redirect_url(request)
                 raise ImmediateHttpResponse(HttpResponseRedirect(redirect_url))
+            except ImmediateHttpResponse:
+                # This is expected - re-raise to allow the redirect to happen
+                raise
             except Exception as e:
                 # Connection failed - log error and allow normal signup flow
                 import logging
@@ -172,6 +198,9 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
                     adapter = CustomAccountAdapter()
                     redirect_url = adapter.get_login_redirect_url(request)
                     raise ImmediateHttpResponse(HttpResponseRedirect(redirect_url))
+                except ImmediateHttpResponse:
+                    # This is expected - re-raise to allow the redirect to happen
+                    raise
                 except Exception as e:
                     # Connection failed - allow normal signup flow
                     import logging
