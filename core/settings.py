@@ -71,6 +71,15 @@ if not ALLOWED_HOSTS:
             else:
                 ALLOWED_HOSTS.append(f'www.{railway_public_domain}')
 
+# Development convenience: when DEBUG=True, allow common local hosts so
+# running the dev server (127.0.0.1, localhost) doesn't trigger DisallowedHost.
+# We add these after the ALLOWED_HOSTS fallback logic above so production
+# Railway defaults remain unchanged when DEBUG=False.
+if DEBUG:
+    for dev_host in ('127.0.0.1', 'localhost', '0.0.0.0'):
+        if dev_host not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(dev_host)
+
 # Production Security Settings (only enabled when DEBUG=False)
 if not DEBUG:
     # HTTPS Settings
